@@ -13,11 +13,11 @@ newton_commit: 1a230702
 
 # 02 Newton 总体架构
 
-## 0. 本章目标
+## 0. GAMES103 回顾与 gap
 
-- 用一个 week-1 级别的框架，把 Newton 看成“例子入口 + 四层对象 + solver 家族”，先建立方向感。
-- 先能解释 `basic_pendulum` 这种最小例子为何能跑起来，再把不同 solver 分流到后续章节。
-- 把 GAMES103 里的抽象概念绑到 Newton 的真实入口：`newton.examples`、`newton/__init__.py`、`newton/_src/core/`。
+- GAMES103 已经给了“模型、状态、积分、约束求解”这类仿真抽象，但通常不会替你把它们绑定到某个真实代码库的入口。
+- 本章要补的 gap 是：把这些抽象概念落到 Newton 的 `basic_pendulum`、`newton.examples`、`newton/__init__.py` 和 `newton/_src/core/` 上，先建立“例子入口 + 四层对象 + solver 家族”的 week-1 心智模型。
+- 读完这一节后，目标不是立刻吃透所有 solver，而是先能解释 `basic_pendulum` 为什么能跑起来，并知道后续该去哪个章节继续深挖。
 
 ## 1. 从例子入口看最小执行链
 
