@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.uv/
+*.egg-info/
+
+# Editors / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Newton / Warp 运行产物
+*.usd
+*.usda
+*.usdc
+*.usdz
+!chapters/**/assets/*.usd
+*.obj.cache/
+warp_cache/
+.warp/
+
+# 实验输出
+experiments/**/output/
+experiments/**/runs/
+experiments/**/*.png
+experiments/**/*.mp4
+experiments/**/*.json
+!experiments/**/findings.md
+!experiments/**/why.md
+!experiments/**/run.py
+
+# 临时
+tmp/
+*.tmp
+*.bak
+*.log
