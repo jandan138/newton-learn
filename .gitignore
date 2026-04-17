@@ -41,6 +41,7 @@ experiments/**/*.json
 !experiments/**/run.py
 
 # 临时
+.worktrees/
 tmp/
 *.tmp
 *.bak
