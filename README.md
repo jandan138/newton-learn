@@ -56,7 +56,7 @@
 | `09_variational_solvers` | 变分求解器族 | `newton/_src/solvers/xpbd/`、`newton/_src/solvers/vbd/`、`newton/_src/solvers/style3d/` | `cloth_style3d`, `cable_twist` | 统一看投影/变分视角。 |
 | `10_softbody_cloth_cable` | 软体、布料与 Cable | `newton/_src/solvers/semi_implicit/`、`newton/_src/solvers/xpbd/`、`newton/_src/solvers/vbd/`、`newton/_src/solvers/style3d/` | `cloth_hanging`, `cloth_style3d`, `cable_twist` | 对比 FEM、XPBD、AVBD/VBD。 |
 | `11_mpm` | MPM 双路径 | `newton/_src/solvers/implicit_mpm/` | `mpm_granular`, `mpm_twoway_coupling` | 同时覆盖显式 APIC 与隐式 MPM。 |
-| `12_sensors_ik` | 传感器与 IK | `newton/_src/sensors/`、`newton/ik.py` | `sensor_contact`, `ik_franka` | 聚焦数据流与求解入口。 |
+| `12_sensors_ik` | 传感器与 IK | `newton/_src/sensors/`、`newton/_src/sim/ik.py`、`newton/ik.py` | `sensor_contact`, `ik_franka` | 聚焦数据流与求解入口。 |
 | `13_diffsim` | 可微分仿真 | `newton/examples/diffsim/` + 多 solver adjoint 路径 | `diffsim_ball`, `diffsim_soft_body`, `diffsim_drone`, `diffsim_spring_cage` | 必产出各 solver 可微性矩阵表。 |
 | `14_viewer_integration` | Viewer 与生态集成 | `newton/_src/viewer/`、`newton/viewer.py` | - | 看显示链路与外部集成边界。 |
 | `15_multiphysics_pipeline` | 多物理耦合流水线 | `newton/examples/multiphysics/` | `mpm_twoway_coupling`, `softbody_dropping_to_cloth` | 关注端到端数据流，而不追求铺全所有耦合。 |

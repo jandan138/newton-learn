@@ -21,6 +21,7 @@
 | `newton/_src/solvers/style3d/` | `09_variational_solvers`, `10_softbody_cloth_cable` |
 | `newton/_src/solvers/implicit_mpm/` | `11_mpm` |
 | `newton/_src/sensors/` | `12_sensors_ik` |
+| `newton/_src/sim/ik.py` | `12_sensors_ik` |
 | `newton/ik.py` | `12_sensors_ik` |
 | `newton/examples/diffsim/` | `13_diffsim` |
 | `newton/_src/viewer/` | `14_viewer_integration` |
