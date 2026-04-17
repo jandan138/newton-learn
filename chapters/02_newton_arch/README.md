@@ -30,7 +30,7 @@ newton_commit: 1a230702
 ## 前置依赖
 
 - `00_prerequisites`：补齐刚体、约束、优化和 GPU/Warp 的最低限度词汇表。
-- `01_warp_basics`：先理解 kernel、array、launch 这些 Newton 示例会直接碰到的 Warp 基础。
+- `01_warp_basics`：目标上应先理解 kernel、array、launch 这些 Newton 示例会直接碰到的 Warp 基础，但当前仍是骨架，现阶段先用 `00_prerequisites` 里的 Warp 1 页速查作临时桥接。
 - `[MUST] mujoco-warp-paper`：本章把它作为 MuJoCo Warp 路线的背景锚点，不要求现在吃透全部推导，但要知道它为何存在。
 
 ## GAMES103 已有 vs 本章新增
@@ -45,7 +45,7 @@ newton_commit: 1a230702
 
 1. 先读 `principle.md`，把四层关系和 8 个 solver 的全景图记住。
 2. 再实际运行 `basic_pendulum`，用例子把图里的四层对象对上号。
-3. 如果中途发现对 Warp、空间代数或约束术语不稳，立刻跳回 `00_prerequisites` 或 `01_warp_basics` 补洞，再回到本章。
+3. 如果中途发现对 Warp、空间代数或约束术语不稳，立刻跳回 `00_prerequisites` 补洞；其中 `01_warp_basics` 当前仍是骨架，所以先把 00 章的 Warp 速查当临时桥接，再回到本章。
 
 ## 预期产出
 

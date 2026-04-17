@@ -33,4 +33,4 @@
 
 1. 每次上游 Newton commit 更新后，先在 `PROGRESS.md` 更新 commit hash，再回查本索引是否需要新增或拆分模块项。
 2. 章节名变更时，同步修改本索引、根 README 的章节索引表，以及相关章节 README 的反向引用，避免路径漂移。
-3. 涉及源码行号的细粒度引用不要写在这里；本文件只维护模块级映射。Task 2 创建 `conventions/source-refs.md` 后，章节笔记中的行号引用统一遵循该文件。
+3. 涉及源码行号的细粒度引用不要写在这里；本文件只维护模块级映射。章节笔记中的行号引用统一遵循现有的 `conventions/source-refs.md`。

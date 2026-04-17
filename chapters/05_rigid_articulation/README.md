@@ -3,7 +3,9 @@ chapter: 05
 title: 05 刚体与关节动力学
 last_updated: 2026-04-17
 source_paths: []
-paper_keys: []
+paper_keys:
+  - featherstone-book
+  - aba-crba-notes
 newton_commit: 1a230702
 ---
 

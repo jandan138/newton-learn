@@ -3,7 +3,10 @@ chapter: 09
 title: 09 变分求解器族
 last_updated: 2026-04-17
 source_paths: []
-paper_keys: []
+paper_keys:
+  - xpbd-paper
+  - vbd-paper
+  - style3d-paper
 newton_commit: 1a230702
 ---
 

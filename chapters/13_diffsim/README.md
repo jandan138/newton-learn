@@ -3,7 +3,13 @@ chapter: 13
 title: 13 可微分仿真
 last_updated: 2026-04-17
 source_paths: []
-paper_keys: []
+paper_keys:
+  - difftaichi-paper
+  - brax-paper
+  - warp-adjoint-paper
+  - ift-survey
+  - contact-randomized-smoothing
+  - shac-paper
 newton_commit: 1a230702
 ---
 

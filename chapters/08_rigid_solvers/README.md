@@ -3,7 +3,10 @@ chapter: 08
 title: 08 刚体求解器家族
 last_updated: 2026-04-17
 source_paths: []
-paper_keys: []
+paper_keys:
+  - mujoco-warp-paper
+  - kamino-report
+  - featherstone-book
 newton_commit: 1a230702
 ---
 

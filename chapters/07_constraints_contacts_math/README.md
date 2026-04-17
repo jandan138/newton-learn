@@ -3,7 +3,10 @@ chapter: 07
 title: 07 约束与接触数学总论
 last_updated: 2026-04-17
 source_paths: []
-paper_keys: []
+paper_keys:
+  - lcp-ncp-survey
+  - proximal-admm-contact
+  - cg-newton-contact
 newton_commit: 1a230702
 ---
 

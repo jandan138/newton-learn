@@ -3,7 +3,9 @@ chapter: 01
 title: 01 Warp 编程模型
 last_updated: 2026-04-17
 source_paths: []
-paper_keys: []
+paper_keys:
+  - warp-paper
+  - mujoco-warp-paper
 newton_commit: 1a230702
 ---
 

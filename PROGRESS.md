@@ -6,7 +6,7 @@
 - 当前追踪的 Newton commit：`1a230702`
 - 对应设计 spec：`docs/superpowers/specs/2026-04-17-newton-learn-structure-design.md`
 - 最近同步日期：`2026-04-17`
-- 行号维护规则：Task 2 创建 `conventions/source-refs.md` 后，以它作为统一规范；当前先按“保留函数名并重新绑定行号”的规则维护。
+- 行号维护规则：`conventions/source-refs.md` 已创建，可作为统一规范；当前按“保留函数名并重新绑定行号”的规则维护并在需要时回填行号。
 
 ## Milestones
 

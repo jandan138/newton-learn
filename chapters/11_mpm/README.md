@@ -3,7 +3,11 @@ chapter: 11
 title: 11 MPM：显式 APIC + 隐式 MPM
 last_updated: 2026-04-17
 source_paths: []
-paper_keys: []
+paper_keys:
+  - apic-paper
+  - mls-mpm-paper
+  - implicit-mpm-paper
+  - mls-mpm-gpu
 newton_commit: 1a230702
 ---
 
