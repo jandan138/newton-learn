@@ -8,6 +8,7 @@
 
 ## 线程与索引
 
+- `wp.launch` 要写清 kernel 名、dim 含义，以及输入输出 `wp.array` 分别对应哪一层并行实体。
 - `wp.tid()` 的语义要写清：它对应 body、contact、particle 还是 grid cell。
 - 若一个 kernel 做多维索引映射，明确写出逻辑坐标到线性索引的变换。
 
@@ -15,6 +16,7 @@
 
 - 只有真的存在并发写冲突时才用 atomic，并在注释里解释冲突来源。
 - 文档里统一标记 atomic 风险：非确定性、吞吐瓶颈、调试难度。
+- `wp.synchronize()` 只在 host 必须观察 device 结果、计时边界或跨 stream / graph 边界时显式记录；不要把它写成默认步骤。
 - 遇到 host 读取 device 结果时，写清 host/device sync boundary 与数据流向。
 
 ## Device / Stream 记号
@@ -26,5 +28,6 @@
 ## Graph 与性能
 
 - 记录是否进入 CUDA graph capture。
+- 若使用 `wp.Graph`，记录 capture 包含的 `wp.launch` 序列、复用边界，以及哪些输入被视为静态。
 - 记录 graph capture 对 dynamic shape 的限制与 caveat。
 - 性能讨论统一从 launch overhead、内存访问、atomic 冲突三方面描述。

@@ -29,9 +29,9 @@
 | 窄相碰撞 | narrowphase | 精细接触检测阶段 |
 | OpenUSD | OpenUSD | 通用场景描述与资产交换格式 |
 | 近端 ADMM | proximal ADMM | 带近端项的交替方向乘子法 |
-| 反向模式自动微分 | reverse-mode AD | 从标量损失反传梯度 |
 | RNEA | recursive Newton-Euler algorithm | 反向动力学经典算法 |
 | 随机平滑 | randomized smoothing | 缓和不可微接触的技巧 |
+| 反向模式自动微分 | reverse-mode AD | 从标量损失反传梯度 |
 | 有符号距离场 | signed distance field | 几何到边界的带符号距离 |
 | 软约束 | soft constraint | 允许少量违反的惩罚式约束 |
 | 空间向量 | spatial vector | 组合线速度/角速度或力/力矩的 6D 量 |
