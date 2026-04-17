@@ -26,6 +26,8 @@
 
 ## Local Mirrors In This Workspace
 
+以下路径是当前机器 / 当前工作区的本地镜像位置，只用于这套开发环境，不应视为可移植路径。
+
 - Newton source: `/shared/smartbot/zhuzihou/dev/newton/newton`
 - Newton docs: `/shared/smartbot/zhuzihou/dev/newton/docs`
 - Example entrypoint: `/shared/smartbot/zhuzihou/dev/newton/newton/examples/__main__.py`

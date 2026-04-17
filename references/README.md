@@ -2,7 +2,7 @@
 
 ## 使用规则
 
-1. 每篇论文先在 `papers/<chapter>.md` 写 2-3 句摘要，再决定是否精读。
+1. 每篇论文先在 `papers/<chapter>.md` 写至少 1 句摘要，再决定是否精读；随着仓库内容成熟，优先扩展到 2-3 句。
 2. 只有确认元数据后，才把 BibTeX 条目写进 `papers.bib`。
 3. `[MUST]` 必读全文；`[RECOMMENDED]` 至少读摘要；`[OPTIONAL]` 只在卡住时回头查。
 
