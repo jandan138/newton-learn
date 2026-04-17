@@ -48,7 +48,7 @@
 | `01_warp_basics` | Warp 编程模型 | Warp 用法 + Newton 中的调用模式 | - | 以最小 kernel 心智模型为主。 |
 | `02_newton_arch` | Newton 总体架构 | `newton/__init__.py`、`newton/_src/core/`、`newton/examples/` | `basic_pendulum` | 首个快速胜利章。 |
 | `03_math_geometry` | 数学与几何基础 | `newton/_src/math/`、`newton/_src/geometry/` | - | 为碰撞、场景和 solver 做几何准备。 |
-| `04_scene_usd` | 场景描述与 USD 解析 | `newton/_src/usd/`、`newton/_src/sim/` | - | 聚焦 Model 构建与载入链路。 |
+| `04_scene_usd` | 场景描述与 USD 解析 | `newton/_src/usd/`、`newton/_src/sim/` | `basic_urdf` | 聚焦 Model 构建与载入链路。 |
 | `05_rigid_articulation` | 刚体与关节动力学 | `newton/_src/sim/`、`newton/_src/solvers/featherstone/` | `basic_pendulum`, `basic_joints`, `robot_cartpole`, `robot_g1` | 从 articulation 和 Featherstone 切入。 |
 | `06_collision` | 碰撞系统 | `newton/_src/geometry/`、`newton/_src/sim/` | `contacts_pyramid` | CLI 名称为 `pyramid`。 |
 | `07_constraints_contacts_math` | 约束与接触数学 | 约束数学与接触中间量 | `robot_cartpole`, `contacts_pyramid` | 先搭数学骨架，再进具体 solver。 |
