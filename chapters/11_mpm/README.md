@@ -1,13 +1,13 @@
 ---
 chapter: 11
-title: 11 MPM 双路径
+title: 11 MPM：显式 APIC + 隐式 MPM
 last_updated: 2026-04-17
 source_paths: []
 paper_keys: []
 newton_commit: 1a230702
 ---
 
-# 11 MPM 双路径
+# 11 MPM：显式 APIC + 隐式 MPM
 
 ## 完成门槛
 

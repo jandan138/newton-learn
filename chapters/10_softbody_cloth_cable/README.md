@@ -1,13 +1,13 @@
 ---
 chapter: 10
-title: 10 软体 + 布料 + cable
+title: 10 软体 + 布料 + Cable
 last_updated: 2026-04-17
 source_paths: []
 paper_keys: []
 newton_commit: 1a230702
 ---
 
-# 10 软体 + 布料 + cable
+# 10 软体 + 布料 + Cable
 
 ## 完成门槛
 
