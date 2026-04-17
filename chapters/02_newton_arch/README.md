@@ -50,5 +50,5 @@ newton_commit: 1a230702
 ## 预期产出
 
 - 一张 `Model / State / Control / Solver` 四层关系图。
-- 一张 8-solver panorama，全景标出 Featherstone、MuJoCo、SemiImplicit、Kamino、XPBD、VBD、Style3D、ImplicitMPM。
-- 能在不看稿的情况下，口述 `basic_pendulum` 从 examples 入口到 solver step 的最小 walkthrough。
+- 一张 8-solver 全景图，标出 Featherstone、MuJoCo、SemiImplicit、Kamino、XPBD、VBD、Style3D、ImplicitMPM。
+- 能在不看稿的情况下，口述 `basic_pendulum` 从 examples 入口到 solver step 的最小讲解链。

@@ -13,10 +13,10 @@ newton_commit: 1a230702
 
 # 02 Newton 总体架构
 
-## 0. GAMES103 回顾与 gap
+## 0. GAMES103 回顾与差距
 
 - GAMES103 已经给了“模型、状态、积分、约束求解”这类仿真抽象，但通常不会替你把它们绑定到某个真实代码库的入口。
-- 本章要补的 gap 是：把这些抽象概念落到 Newton 的 `basic_pendulum`、`newton.examples`、`newton/__init__.py` 和 `newton/_src/core/` 上，先建立“例子入口 + 四层对象 + solver 家族”的 week-1 心智模型。
+- 本章要补的差距是：把这些抽象概念落到 Newton 的 `basic_pendulum`、`newton.examples`、`newton/__init__.py` 和 `newton/_src/core/` 上，先建立“例子入口 + 四层对象 + solver 家族”的第一周心智模型。
 - 读完这一节后，目标不是立刻吃透所有 solver，而是先能解释 `basic_pendulum` 为什么能跑起来，并知道后续该去哪个章节继续深挖。
 
 ## 1. 从例子入口看最小执行链
@@ -61,7 +61,7 @@ newton_commit: 1a230702
 | Style3D | 面向布料的工程化 solver 名字，先记住它是 cloth 路线里的专门选手。 | `09_variational_solvers`, `10_softbody_cloth_cable` |
 | ImplicitMPM | 进入粒子-网格与隐式材料系统的入口，不属于刚体线。 | `11_mpm`, `15_multiphysics_pipeline` |
 
-## 4. 快速胜利 demo
+## 4. 快速胜利示例
 
 先把下面四条命令跑过一遍，不求一次讲透全部内部实现，只求建立“例子名字 -> 四层对象 -> solver 家族”的直觉。
 
