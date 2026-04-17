@@ -1,9 +1,13 @@
 ---
 chapter: 02
-title: 02 Newton 总体架构
+title: Newton 总体架构
 last_updated: 2026-04-17
-source_paths: []
-paper_keys: []
+source_paths:
+  - newton/__init__.py
+  - newton/_src/core/
+  - newton/examples/
+paper_keys:
+  - mujoco-warp-paper
 newton_commit: 1a230702
 ---
 
@@ -11,39 +15,40 @@ newton_commit: 1a230702
 
 ## 完成门槛
 
-- 能用自己的话讲清本章核心对象、关键变量与 GAMES103 之外的新内容。
-- 能把至少一条 Newton 源码路径串成稳定的数据流或调用链，并回指到对应原理。
-- 能留下最小闭环证据：例子注释、pitfalls 记录或 exercises 草题至少一项，支撑后续复习。
+```text
+[ ] 我能解释 Model / State / Control / Solver 四层分别负责什么
+[ ] 我能跑通并口述 basic_pendulum 的最小执行链
+[ ] 我能指出一个具体例子如何从 examples 入口落到四层结构
+```
 
 ## 本章目标
 
-- 本章要回答什么问题？
-- 读完后应该能独立讲清哪些对象、流程和边界？
-- 本章优先保住的最小闭环是什么？
+- 用 `basic_pendulum` 把 Newton 的最小执行链先拉通，而不是一开始就陷进某个 solver 的细节。
+- 建立 `Model / State / Control / Solver` 四层心智模型，知道每一层大致放什么、改什么、看什么。
+- 对 8 个 solver 先有全景感，后续再按章节拆开深入。
 
 ## 前置依赖
 
-- 必读前置章节：
-- 需要先会的数学 / 几何 / GPU / Warp 概念：
-- 可选回看例子：
+- `00_prerequisites`：补齐刚体、约束、优化和 GPU/Warp 的最低限度词汇表。
+- `01_warp_basics`：先理解 kernel、array、launch 这些 Newton 示例会直接碰到的 Warp 基础。
+- `[MUST] mujoco-warp-paper`：本章把它作为 MuJoCo Warp 路线的背景锚点，不要求现在吃透全部推导，但要知道它为何存在。
 
 ## GAMES103 已有 vs 本章新增
 
 | 维度 | GAMES103 已有 | 本章新增 |
 |------|----------------|----------|
-| 物理 / 数学视角 |  |  |
-| Newton 工程视角 |  |  |
-| GPU / Warp 视角 |  |  |
+| 物理 / 数学视角 | 知道仿真会分模型、状态、积分与约束求解。 | 把这些抽象对象对应到 Newton 的真实 API 和例子入口。 |
+| Newton 工程视角 | 对具体代码库组织通常没有要求。 | 先看 `newton/__init__.py` 暴露了哪些公共对象，再看 `newton/examples/` 怎样把它们串起来。 |
+| GPU / Warp 视角 | 对 GPU 数据布局和 kernel 调度着墨较少。 | 知道 Newton 不是单一 solver 教具，而是一组基于 Warp 的 solver 家族入口。 |
 
 ## 阅读顺序
 
-1. 先把本文件写到可用，明确本章目标、边界、入口例子和完成门槛。
-2. `principle.md` 和 `source-walkthrough.md` 二选一先开写，但只在当前最清楚的一条主线上推进。
-3. 如果另一份已经存在，就在两者之间交替推进，避免只堆原理或只抄源码。
-4. `examples.md`、`pitfalls.md`、`exercises.md` 按需补充；它们服务理解，但不阻塞主线推进。
+1. 先读 `principle.md`，把四层关系和 8 个 solver 的全景图记住。
+2. 再实际运行 `basic_pendulum`，用例子把图里的四层对象对上号。
+3. 如果中途发现对 Warp、空间代数或约束术语不稳，立刻跳回 `00_prerequisites` 或 `01_warp_basics` 补洞，再回到本章。
 
 ## 预期产出
 
-- 本章最终应有哪些文件：
-- 至少覆盖哪些 source paths / examples / papers：
-- 本章完成后，后续章节会如何复用这里的结论：
+- 一张 `Model / State / Control / Solver` 四层关系图。
+- 一张 8-solver panorama，全景标出 Featherstone、MuJoCo、SemiImplicit、Kamino、XPBD、VBD、Style3D、ImplicitMPM。
+- 能在不看稿的情况下，口述 `basic_pendulum` 从 examples 入口到 solver step 的最小 walkthrough。

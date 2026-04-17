@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="380" viewBox="0 0 1400 380" role="img" aria-labelledby="title desc">
+  <title id="title">Newton solver family map</title>
+  <desc id="desc">A panorama of eight Newton solvers grouped into two families.</desc>
+  <style>
+    .title { font: 700 30px sans-serif; fill: #172033; }
+    .group { font: 700 24px sans-serif; fill: #22314d; }
+    .label { font: 700 20px sans-serif; fill: #172033; }
+    .sub { font: 400 16px sans-serif; fill: #41556f; }
+    .cardA { fill: #f5f8ff; stroke: #8ba0ca; stroke-width: 2.5; }
+    .cardB { fill: #f8f7ff; stroke: #9a93cf; stroke-width: 2.5; }
+  </style>
+
+  <text x="50" y="48" class="title">Newton solver panorama: 8 named routes</text>
+
+  <text x="50" y="92" class="group">Group 1: 刚体与通用动力学主线</text>
+  <rect x="50" y="118" width="300" height="92" rx="16" class="cardA"/>
+  <text x="200" y="154" text-anchor="middle" class="label">Featherstone</text>
+  <text x="200" y="182" text-anchor="middle" class="sub">关节树 / ABA 主线</text>
+
+  <rect x="380" y="118" width="300" height="92" rx="16" class="cardA"/>
+  <text x="530" y="154" text-anchor="middle" class="label">MuJoCo</text>
+  <text x="530" y="182" text-anchor="middle" class="sub">接触与优化路线</text>
+
+  <rect x="710" y="118" width="300" height="92" rx="16" class="cardA"/>
+  <text x="860" y="154" text-anchor="middle" class="label">SemiImplicit</text>
+  <text x="860" y="182" text-anchor="middle" class="sub">基础一步推进</text>
+
+  <rect x="1040" y="118" width="300" height="92" rx="16" class="cardA"/>
+  <text x="1190" y="154" text-anchor="middle" class="label">Kamino</text>
+  <text x="1190" y="182" text-anchor="middle" class="sub">Prox / ADMM 风格</text>
+
+  <text x="50" y="270" class="group">Group 2: 约束投影、布料软体与 MPM</text>
+  <rect x="50" y="296" width="300" height="92" rx="16" class="cardB"/>
+  <text x="200" y="332" text-anchor="middle" class="label">XPBD</text>
+  <text x="200" y="360" text-anchor="middle" class="sub">约束投影视角</text>
+
+  <rect x="380" y="296" width="300" height="92" rx="16" class="cardB"/>
+  <text x="530" y="332" text-anchor="middle" class="label">VBD</text>
+  <text x="530" y="360" text-anchor="middle" class="sub">变分块坐标下降</text>
+
+  <rect x="710" y="296" width="300" height="92" rx="16" class="cardB"/>
+  <text x="860" y="332" text-anchor="middle" class="label">Style3D</text>
+  <text x="860" y="360" text-anchor="middle" class="sub">布料工程化路线</text>
+
+  <rect x="1040" y="296" width="300" height="92" rx="16" class="cardB"/>
+  <text x="1190" y="332" text-anchor="middle" class="label">ImplicitMPM</text>
+  <text x="1190" y="360" text-anchor="middle" class="sub">隐式粒子-网格系统</text>
+</svg>
