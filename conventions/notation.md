@@ -28,5 +28,6 @@
 ## MPM / FEM 额外约定
 
 - 粒子索引用 `p`，网格节点索引用 `g`。
-- 形变梯度写 `F`，应力写 `P` 或 `sigma`，不混用。
+- 形变梯度写 `F`；`P` 默认表示 first Piola-Kirchhoff stress，`sigma` 默认表示 Cauchy stress。
+- 不要把 `P` 和 `sigma` 折叠成同一个符号；若需互相转换，必须显式写出采用的映射与前提。
 - `P2G` / `G2P` 保留英文缩写，不翻译。
