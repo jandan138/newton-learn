@@ -52,9 +52,9 @@
 | `05_rigid_articulation` | 刚体与关节动力学 | `newton/_src/sim/`、`newton/_src/solvers/featherstone/` | `basic_pendulum`, `basic_joints`, `robot_cartpole`, `robot_g1` | 从 articulation 和 Featherstone 切入。 |
 | `06_collision` | 碰撞系统 | `newton/_src/geometry/`、`newton/_src/sim/` | `contacts_pyramid` | CLI 名称为 `pyramid`。 |
 | `07_constraints_contacts_math` | 约束与接触数学 | 约束数学与接触中间量 | `robot_cartpole`, `contacts_pyramid` | 先搭数学骨架，再进具体 solver。 |
-| `08_rigid_solvers` | 刚体求解器家族 | `newton/_src/solvers/featherstone/`、`mujoco/`、`semi_implicit/`、`kamino/` | `robot_cartpole`, `robot_g1`, `contacts_pyramid` | `contacts_pyramid` 的 CLI 名称为 `pyramid`。 |
-| `09_variational_solvers` | 变分求解器族 | `newton/_src/solvers/xpbd/`、`vbd/`、`style3d/` | `cloth_style3d`, `cable_twist` | 统一看投影/变分视角。 |
-| `10_softbody_cloth_cable` | 软体、布料与 Cable | `newton/_src/solvers/semi_implicit/`、`xpbd/`、`vbd/`、`style3d/` | `cloth_hanging`, `cloth_style3d`, `cable_twist` | 对比 FEM、XPBD、AVBD/VBD。 |
+| `08_rigid_solvers` | 刚体求解器家族 | `newton/_src/solvers/featherstone/`、`newton/_src/solvers/mujoco/`、`newton/_src/solvers/semi_implicit/`、`newton/_src/solvers/kamino/` | `robot_cartpole`, `robot_g1`, `contacts_pyramid` | `contacts_pyramid` 的 CLI 名称为 `pyramid`。 |
+| `09_variational_solvers` | 变分求解器族 | `newton/_src/solvers/xpbd/`、`newton/_src/solvers/vbd/`、`newton/_src/solvers/style3d/` | `cloth_style3d`, `cable_twist` | 统一看投影/变分视角。 |
+| `10_softbody_cloth_cable` | 软体、布料与 Cable | `newton/_src/solvers/semi_implicit/`、`newton/_src/solvers/xpbd/`、`newton/_src/solvers/vbd/`、`newton/_src/solvers/style3d/` | `cloth_hanging`, `cloth_style3d`, `cable_twist` | 对比 FEM、XPBD、AVBD/VBD。 |
 | `11_mpm` | MPM 双路径 | `newton/_src/solvers/implicit_mpm/` | `mpm_granular`, `mpm_twoway_coupling` | 同时覆盖显式 APIC 与隐式 MPM。 |
 | `12_sensors_ik` | 传感器与 IK | `newton/_src/sensors/`、`newton/ik.py` | `sensor_contact`, `ik_franka` | 聚焦数据流与求解入口。 |
 | `13_diffsim` | 可微分仿真 | `newton/examples/diffsim/` + 多 solver adjoint 路径 | `diffsim_ball`, `diffsim_soft_body`, `diffsim_drone`, `diffsim_spring_cage` | 必产出各 solver 可微性矩阵表。 |
@@ -72,23 +72,11 @@
 
 ## 首周冲刺
 
-### Day 1-2
+首周冲刺只保留方向摘要，具体可执行清单以 `PROGRESS.md` 为准。
 
-- 跑通 `basic_pendulum`、`robot_cartpole`、`cloth_hanging` 三个代表性例子。
-- 记录上游 Newton commit，并搭起元文件与骨架目录。
-- 改少量参数观察现象，确认环境与最小仿真回路正常。
-
-### Day 3-5
-
-- 优先落地 `02_newton_arch` 的 README 与 principle。
-- 画清楚 `Model / State / Control / Solver` 四层关系和 8 大 solver 全景。
-- 目标是跑通一章 workflow，而不是一次写完。
-
-### Day 6-7
-
-- 回补 `00_prerequisites` 的轻量入口和前两项速查表。
-- 回看 `basic_pendulum`，记录第一个 pitfalls 条目。
-- 根据手感微调模板，但不扩大范围。
+- Day 1-2：环境就绪、跑通首批代表性例子、记录上游基线。
+- Day 3-5：优先推进 `02_newton_arch`，拉通四层关系与 8 大 solver 全景。
+- Day 6-7：回补 `00_prerequisites` 轻量入口，并做首轮 pitfalls / 模板复盘。
 
 ## 总纲建议
 
