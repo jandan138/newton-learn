@@ -6,18 +6,20 @@
 
 1. 先读本文件，确认整体路径、章节入口和代表性示例。
 2. 再看 `PROGRESS.md`，用统一表格记录章节推进、里程碑证据和每周节奏。
-3. 开始填内容前，先对照 `conventions/` 与 `templates/`，保证符号、结构和记录方式一致。
-4. 引用 Newton 源码时统一遵循 `conventions/source-refs.md` 的 source-ref 格式，避免模糊指代。
+3. 后续任务创建 `conventions/` 与 `templates/` 后，开始填内容前先对照它们，保证符号、结构和记录方式一致。
+4. `conventions/source-refs.md` 会在后续 bootstrap 任务中补齐；创建后统一按其中的 source-ref 格式引用 Newton 源码，避免模糊指代。
 
 ## 仓库布局
 
+下表描述的是本仓库的目标 bootstrap 结构：`PROGRESS.md`、`INDEX_by_module.md`、`README.md` 与 `assets/` 已就位，其余目录将在后续任务中按这个布局逐步创建。
+
 | 路径 | 作用 |
 |------|------|
-| `conventions/` | 跨章节统一约定，如符号、术语、source-ref、GPU 和 diffsim 记录规范。 |
-| `templates/` | 章节模板，保证 README / principle / source-walkthrough 等文件结构统一。 |
-| `references/` | 外部资料导航、BibTeX 条目、按章节整理的论文摘要与链接。 |
-| `chapters/` | 17 章主学习骨架，按物理层次和 Newton 心智模型推进。 |
-| `assets/` | 仓库级公共图和跨章节复用资产。 |
+| `conventions/` | 计划中的跨章节统一约定目录，如符号、术语、source-ref、GPU 和 diffsim 记录规范。 |
+| `templates/` | 计划中的章节模板目录，用来统一 README / principle / source-walkthrough 等文件结构。 |
+| `references/` | 计划中的外部资料目录，用来整理资料导航、BibTeX 条目、论文摘要与链接。 |
+| `chapters/` | 计划中的 17 章主学习骨架目录，按物理层次和 Newton 心智模型推进。 |
+| `assets/` | 已创建的仓库级公共图和跨章节复用资产目录。 |
 | `PROGRESS.md` | 章节进度、里程碑证据、冲刺清单与复盘模板。 |
 | `INDEX_by_module.md` | 反向索引：上游模块路径对应到学习章节。 |
 
