@@ -45,8 +45,9 @@ newton_commit: 1a230702
 
 1. 先通读 `principle.md` 的 `0-3` 节，把 `kernel`、`wp.array`、`wp.launch`、`wp.tid()` 的关系读顺。
 2. 再读 `4-6` 节，先建立对 `atomic_add`、`tile`、`Graph` 的直觉，不必第一遍就深挖优化细节。
-3. 读完后立刻进入 `02_newton_arch`，把这些 Warp 概念对到 Newton 的 `Model / State / Control / Solver` 上。
-4. 以后读 `11_mpm`、`13_diffsim` 时，如果又遇到更重的 Warp 细节，再回本章复看。
+3. 然后读 `source-walkthrough.md`，把这些 Warp 词直接对到 Newton 里的 `Model / State / Control / Solver / Example` 代码角色。
+4. 读完后再进入 `02_newton_arch`，把这套读法扩展到 Newton 的对象分层和例子入口。
+5. 以后读 `11_mpm`、`13_diffsim` 时，如果又遇到更重的 Warp 细节，再回本章复看。
 
 ## 预期产出
 

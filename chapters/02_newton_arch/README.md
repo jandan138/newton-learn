@@ -46,14 +46,18 @@ newton_commit: 1a230702
 ## 阅读顺序
 
 1. 先带着 `00` 和 `01` 的答案进入本章：这里不再重讲前置词和 Warp 执行模型，而是开始问“Newton 自己怎样把这些东西组织起来”。
-2. 先读 `principle.md`，顺着“`basic_pendulum` -> examples 入口 -> 公共 API -> `Model / State / Control / Solver` -> 一次 step -> solver family 地图”这条链往下走。
-3. 再实际运行 `basic_pendulum`，把图里的四层对象和一步更新过程对上号。
-4. 如果中途发现某个动力学词或 Warp 机制又松了，就分别回 `00_prerequisites` 或 `01_warp_basics` 补洞，再回到本章。
+2. 先读 `principle.md`，顺着“`basic_pendulum` -> examples 入口 -> 公共 API -> `Model / State / Control / Solver` -> 一次 step -> solver family 地图”这条概念链往下走。
+3. 再读 `examples.md`，把 `basic_pendulum`、`robot_cartpole --world-count 100`、`cloth_hanging --solver xpbd` 先变成观察任务，明确每次运行要改什么、看什么。
+4. 再读 `source-walkthrough.md`，把这条概念链对到真实源码路径，尤其先纠正“真正的 orchestrator 在 `examples/__main__.py`”这个常见误解。
+5. 再实际运行 `basic_pendulum`，先做 `examples.md` 里的最小改动观察，再把 walkthrough 里的源码锚点和图里的四层对象、一轮 step 过程对上号。
+6. 如果中途发现某个动力学词或 Warp 机制又松了，就分别回 `00_prerequisites` 或 `01_warp_basics` 补洞，再回到本章。
 
 ## 预期产出
 
 - 一张 `Model / State / Control / Solver` 四层关系图。
 - 一张 8 个 solver 的全景图，标出 Featherstone、MuJoCo、SemiImplicit、Kamino、XPBD、VBD、Style3D、ImplicitMPM。
+- 一份 `examples.md` 观察单，把三个 quick-win 命令改写成“改哪里、看哪里”的实验入口。
+- 一份 `basic_pendulum` 的源码锚点清单，能指出 examples 薄入口、真实 launcher、runtime objects 分层以及一次 `step` 落在哪些文件上。
 - 能在不看稿的情况下，口述 `basic_pendulum` 从 examples 入口到 solver step 的最小讲解链。
 
 读完这一章后，如果你想先把 `Model` 背后的数学和场景构建补稳，就继续到 `03_math_geometry` 和 `04_scene_usd`；如果你已经确定自己要沿刚体主线往下走，就直接去 `05_rigid_articulation`，再到 `08_rigid_solvers` 看刚体 solver 家族怎样真正展开。
