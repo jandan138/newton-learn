@@ -1,7 +1,7 @@
 ---
 chapter: 02
 title: Newton 总体架构
-last_updated: 2026-04-17
+last_updated: 2026-04-18
 source_paths:
   - newton/__init__.py
   - newton/_src/core/
@@ -13,6 +13,8 @@ newton_commit: 1a230702
 
 # 02 Newton 总体架构
 
+`00_prerequisites` 先回答了“这些前置词到底是什么意思”，`01_warp_basics` 再回答了“Warp 的批量执行模型到底怎样工作”。到了这一章，才正式开始进入 Newton 本体：先从 `basic_pendulum` 和 `newton.examples` 接住读者，再把公共 API、`Model / State / Control / Solver` 四层和 8 个 solver 的地形图串起来。
+
 ## 完成门槛
 
 ```text
@@ -23,14 +25,14 @@ newton_commit: 1a230702
 
 ## 本章目标
 
-- 用 `basic_pendulum` 把 Newton 的最小执行链先拉通，而不是一开始就陷进某个 solver 的细节。
+- 用 `basic_pendulum` 把“examples 入口 -> 公共 API -> `Model / State / Control / Solver` -> 一次 step”这条最小执行链先拉通，而不是一开始就陷进某个 solver 的细节。
 - 建立 `Model / State / Control / Solver` 四层心智模型，知道每一层大致放什么、改什么、看什么。
-- 对 8 个 solver 先有全景感，后续再按章节拆开深入。
+- 对 8 个 solver 先有全景感，先知道它们各在什么路线里，后续再按章节拆开深入。
 
 ## 前置依赖
 
-- `00_prerequisites`：补齐刚体、约束、优化和 GPU/Warp 的最低限度词汇表。
-- `01_warp_basics`：目标上应先理解 kernel、array、launch 这些 Newton 示例会直接碰到的 Warp 基础，但当前仍是骨架，现阶段先用 `00_prerequisites` 里的 Warp 1 页速查作临时桥接。
+- `00_prerequisites`：已经先解决“这些前置词到底是什么意思”，包括仿真一步框架、`articulation`、`M`、`J` 以及最小 Warp 词汇。
+- `01_warp_basics`：已经先解决“Warp 的批量执行模型是怎么工作的”，包括 `kernel`、`wp.array`、`wp.launch`、`wp.tid()`、`wp.atomic_add` 的第一层心智模型。
 - `[MUST] mujoco-warp-paper`：本章把它作为 MuJoCo Warp 路线的背景锚点，不要求现在吃透全部推导，但要知道它为何存在。
 
 ## GAMES103 已有 vs 本章新增
@@ -43,12 +45,15 @@ newton_commit: 1a230702
 
 ## 阅读顺序
 
-1. 先读 `principle.md`，把四层关系和 8 个 solver 的全景图记住。
-2. 再实际运行 `basic_pendulum`，用例子把图里的四层对象对上号。
-3. 如果中途发现对 Warp、空间代数或约束术语不稳，立刻跳回 `00_prerequisites` 补洞；其中 `01_warp_basics` 当前仍是骨架，所以先把 00 章的 Warp 速查当临时桥接，再回到本章。
+1. 先带着 `00` 和 `01` 的答案进入本章：这里不再重讲前置词和 Warp 执行模型，而是开始问“Newton 自己怎样把这些东西组织起来”。
+2. 先读 `principle.md`，顺着“`basic_pendulum` -> examples 入口 -> 公共 API -> `Model / State / Control / Solver` -> 一次 step -> solver family 地图”这条链往下走。
+3. 再实际运行 `basic_pendulum`，把图里的四层对象和一步更新过程对上号。
+4. 如果中途发现某个动力学词或 Warp 机制又松了，就分别回 `00_prerequisites` 或 `01_warp_basics` 补洞，再回到本章。
 
 ## 预期产出
 
 - 一张 `Model / State / Control / Solver` 四层关系图。
-- 一张 8-solver 全景图，标出 Featherstone、MuJoCo、SemiImplicit、Kamino、XPBD、VBD、Style3D、ImplicitMPM。
+- 一张 8 个 solver 的全景图，标出 Featherstone、MuJoCo、SemiImplicit、Kamino、XPBD、VBD、Style3D、ImplicitMPM。
 - 能在不看稿的情况下，口述 `basic_pendulum` 从 examples 入口到 solver step 的最小讲解链。
+
+读完这一章后，如果你想先把 `Model` 背后的数学和场景构建补稳，就继续到 `03_math_geometry` 和 `04_scene_usd`；如果你已经确定自己要沿刚体主线往下走，就直接去 `05_rigid_articulation`，再到 `08_rigid_solvers` 看刚体 solver 家族怎样真正展开。

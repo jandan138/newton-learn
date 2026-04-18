@@ -1,7 +1,7 @@
 ---
 chapter: 02
 title: Newton 总体架构
-last_updated: 2026-04-17
+last_updated: 2026-04-18
 source_paths:
   - newton/__init__.py
   - newton/_src/core/
@@ -13,57 +13,63 @@ newton_commit: 1a230702
 
 # 02 Newton 总体架构
 
-## 0. GAMES103 回顾与差距
+## 0. 从 `00` 和 `01` 走到 Newton 本体
 
-- GAMES103 已经给了“模型、状态、积分、约束求解”这类仿真抽象，但通常不会替你把它们绑定到某个真实代码库的入口。
-- 本章要补的差距是：把这些抽象概念落到 Newton 的 `basic_pendulum`、`newton.examples`、`newton/__init__.py` 和 `newton/_src/core/` 上，先建立“例子入口 + 四层对象 + solver 家族”的第一周心智模型。
-- 读完这一节后，目标不是立刻吃透所有 solver，而是先能解释 `basic_pendulum` 为什么能跑起来，并知道后续该去哪个章节继续深挖。
+`00_prerequisites` 已经先把“这些前置词到底是什么意思”补到够用：你见到 `articulation`、`M`、`J`、`kernel`、`wp.array` 这些词时，不会再完全失去方向。`01_warp_basics` 又把另一块地基铺平了：你已经知道 Warp 里的批量执行模型大致是什么，知道 `kernel + wp.launch + wp.tid()` 是怎样把一条规则批量施加到很多对象上的。
 
-## 1. 从例子入口看最小执行链
+所以到了这一章，问题就不再是“这些词是什么意思”，而是“Newton 自己怎样把这些词组织成一个能跑起来的架构”。这也是为什么 `02` 应该读起来像 `00 -> 01` 之后的下一阶台阶，而不是一份孤立的架构备忘录。
 
-`newton/examples/__main__.py` 很薄，它只是把 `python -m newton.examples <example_name>` 转发到 examples 主入口。对学习来说，这很重要：你不需要先理解整个仓库，只要知道所有 demo 都从同一个命令面板进入。
+本章只做三件事：先用 `basic_pendulum` 接住读者，再从 `newton.examples` 和公共 API 看清 Newton 暴露了哪些核心对象，最后把这些对象收束成 `Model / State / Control / Solver` 四层，并给 8 个 solver 一张鸟瞰地图。目标不是立刻吃透所有 solver，而是先把“一个例子为什么能跑起来”讲顺。
 
-围绕 `basic_pendulum`，可以先用三步把执行链讲清楚：
+## 1. 从 `basic_pendulum` 走到一次 step
 
-1. `Model`
-   `Model` 是静态描述层，回答“世界里有什么”。它包含刚体、关节、几何、质量属性以及 solver 需要读取的结构化常量。`newton/__init__.py` 也明确把 `Model` 暴露成公共 API，说明它不是内部细节。
-2. `State + Control`
-   `State` 是随时间变化的仿真量，回答“这一帧系统在哪里、速度是多少”；`Control` 是外部输入层，回答“这一帧我想施加什么驱动、目标或命令”。学习时可以把它们看成“系统当前快照”和“这一拍给系统的操作杆”。
-3. `Solver`
-   `Solver` 读 `Model`、当前 `State` 和可能的 `Control`，做一步推进，产出新的 `State`。对初学者最关键的不是每个 solver 的数学细节，而是知道 Newton 把不同物理路径都包装成可替换的求解阶段。
+最省力的读法不是一上来扑向某个 solver 源码，而是先跟着一个能跑起来的例子走一遍。`basic_pendulum` 适合作为第一站，不是因为它代表了全部 Newton，而是因为它足够小，却已经把“例子从哪里进来、核心对象怎样接力、一步更新在哪里发生”这条主链完整摆出来了。
 
-这三步背后其实展开成四层关系：`Model` 提供不变量，`State` 提供时变量，`Control` 提供外部输入，`Solver` 把前三者接起来完成一步更新。
+第一站是 examples 入口。`python -m newton.examples basic_pendulum` 这类命令提醒你：Newton 不是一堆互不相干的 demo，例子先从同一个入口进来。对初学者来说，这一步的意义不是研究 CLI 包装，而是先接受“学习入口是 example name，后面再顺着例子找到真正的对象和 step”。
+
+第二站是公共 API。沿着 `basic_pendulum` 往里看时，最值得先抓住的不是内部模块树，而是 Newton 选择把哪些名字暴露给用户。把 `newton/__init__.py` 当成目录来读，会更容易看清哪些对象是你应该先认得的核心表面，再决定哪些实现细节可以晚一点追。
+
+第三站才是把这些对象重新放回你在 `00` 里见过的“一步仿真”框架里。到了这里，`basic_pendulum` 的最小执行链就可以顺成下面四句话：
+
+1. 例子先选定一个场景和一组参数，把“我要模拟什么”说清楚。
+2. 它通过公共 API 触达核心对象，其中 `Model` 负责把这个场景写成静态描述，也就是“世界里有什么、怎样连着、哪些量通常不会每步重建”。
+3. 然后例子准备会随时间变化的 `State`，以及这一拍可能会施加的 `Control`。把它们分别看成“当前快照”和“当前输入”就够支撑第一遍阅读。
+4. 最后 `Solver` 读入 `Model`、当前 `State` 和可能存在的 `Control`，完成一次 step，把系统推进到下一拍。
+
+这样读时，`basic_pendulum` 就不再只是一个“能跑的 demo 名字”，而是一个教学入口：它把 examples 入口、公共 API、四层对象和一次 step 串成了同一条链。只要你能用这四句话复述它，后面看更大的例子就有抓手了。
 
 ## 2. 四层关系图
 
 ![Model / State / Control / Solver 四层关系](assets/02_model_state_control_solver.svg)
 
-- `Model` 先定边界：拓扑、质量、关节、碰撞形状通常不在每步里重建。
-- `State` 是时间轴上的快照：位置、速度、接触中间量等都会跟着 step 更新。
-- `Control` 不是每个例子都复杂，但它给了“目标轨迹、力矩、驱动命令”一个独立入口。
-- `Solver` 不是孤立算法名词，而是把前三层组装成一次数值推进的执行器。
-- 真正深入某个例子前，先把例子里的变量映射到这四层，阅读成本会立刻下降。
+这张图不是在引入新的抽象，而是在把 `00` 章的四格直觉换成 Newton 的真实名字。读图时，重点不是背定义，而是看它们在一次 step 里怎样接力：`Model` 先给出边界，`State` 提供当前快照，`Control` 提供这一拍的外部输入，`Solver` 再把前三者组装成一次推进。
+
+- `Model` 先定边界：拓扑、质量、关节、碰撞形状这类结构，通常不在每步里重建。
+- `State` 是时间轴上的快照：位置、速度以及 solver 运行时会更新的量，都放在这一层。
+- `Control` 让“这一拍要施加什么命令或目标”有一个独立入口；不是每个例子都复杂，但概念上值得单独分层。
+- `Solver` 不是孤立算法名词，而是把前三层接起来完成一次 step 的执行器。
+- 真正深入某个例子前，先问变量各自落在哪一层，阅读成本会立刻下降。
 
 ## 3. 8 个 solver 的全景图
 
 ![8 个 solver 的全景图](assets/02_solver_family_map.svg)
 
-8 个 solver 可以先粗分成两簇：一簇偏刚体与通用动力学主线，另一簇偏约束投影、布料软体和 MPM。第一周不求精读源码，先记住地形图。
+8 个 solver 可以先粗分成两簇：一簇偏刚体与通用动力学主线，另一簇偏约束投影、布料软体和 MPM。第一遍只要先记住“各自大概在哪条路线上、以后去哪一章再展开”，不急着提前吃数学细节。
 
 | Solver | 这一章先记住什么 | 后续章节 |
 |--------|------------------|----------|
-| Featherstone | 刚体 articulation 的经典主线，适合把关节树和 ABA 心智模型落地。 | `05_rigid_articulation`, `08_rigid_solvers` |
-| MuJoCo | Newton 里另一条刚体接触与优化主路径，本章只先把它和 paper 关联起来。 | `07_constraints_contacts_math`, `08_rigid_solvers` |
-| SemiImplicit | 最容易拿来解释“先有系统再做一步更新”的基础求解路径。 | `08_rigid_solvers`, `10_softbody_cloth_cable` |
-| Kamino | 刚体求解中的优化/ADMM 路线，本章只需要知道它属于高级刚体路线。 | `08_rigid_solvers` |
-| XPBD | 约束投影视角的代表，布料和软约束会频繁回到它。 | `09_variational_solvers`, `10_softbody_cloth_cable` |
-| VBD | 变分块坐标下降路线，和 XPBD/Style3D 适合做并排比较。 | `09_variational_solvers`, `10_softbody_cloth_cable` |
-| Style3D | 面向布料的工程化 solver 名字，先记住它是 cloth 路线里的专门选手。 | `09_variational_solvers`, `10_softbody_cloth_cable` |
-| ImplicitMPM | 进入粒子-网格与隐式材料系统的入口，不属于刚体线。 | `11_mpm`, `15_multiphysics_pipeline` |
+| Featherstone | 刚体 articulation 主线里的经典名字，先把它和关节树求解联系起来。 | `05_rigid_articulation`, `08_rigid_solvers` |
+| MuJoCo | 刚体接触与约束路线里的另一条主路径，先把它和 paper、刚体主线关联起来。 | `07_constraints_contacts_math`, `08_rigid_solvers` |
+| SemiImplicit | 最适合帮助你保持“有系统、做一步更新”这条基本节奏的基础路线。 | `08_rigid_solvers`, `10_softbody_cloth_cable` |
+| Kamino | 刚体 solver 家族中的另一条高级路线，先记住它属于 rigid path。 | `08_rigid_solvers` |
+| XPBD | 约束投影家族的代表，后面读布料和软约束时会频繁回到它。 | `09_variational_solvers`, `10_softbody_cloth_cable` |
+| VBD | 变分思路的一条代表路线，后面适合和 XPBD、布料 solver 放在一起看。 | `09_variational_solvers`, `10_softbody_cloth_cable` |
+| Style3D | 布料路线里的专门名字，先把它当成 cloth-oriented solver。 | `09_variational_solvers`, `10_softbody_cloth_cable` |
+| ImplicitMPM | 粒子-网格材料系统的入口，先记住它明显不在刚体主线里。 | `11_mpm`, `15_multiphysics_pipeline` |
 
 ## 4. 快速胜利示例
 
-先把下面四条命令跑过一遍，不求一次讲透全部内部实现，只求建立“例子名字 -> 四层对象 -> solver 家族”的直觉。
+先把下面四条命令跑过一遍，不求一次讲透全部内部实现，只求把刚才那条主链再走稳一遍：例子名字怎样落到四层对象，又怎样把你带到不同 solver 家族。
 
 ```bash
 uv sync --extra examples
@@ -80,13 +86,15 @@ uv run -m newton.examples cloth_hanging --solver xpbd
 
 ## 5. 与后续章节的接口
 
-- `03_math_geometry`：本章只说“对象如何分层”，下一章补这些对象内部依赖的坐标、变换、几何与距离计算基础。
-- `04_scene_usd`：本章先把 `Model` 当黑盒静态描述，`04` 再拆它是怎样从 USD/URDF/MJCF 之类输入被构建出来的。
-- `05_rigid_articulation`：本章只把 Featherstone 放进全景图，`05` 才真正进入刚体树、关节与 ABA 的细节。
-- `08_rigid_solvers`：本章给刚体 solver 地图，`08` 再正面对比 Featherstone、MuJoCo、SemiImplicit、Kamino 四条路线。
+- `03_math_geometry`：本章只先分清对象角色，下一章再补这些对象背后的坐标、变换和几何基础。
+- `04_scene_usd`：本章先把 `Model` 当静态描述，`04` 再拆它是怎样从场景输入被构建出来的。
+- `05_rigid_articulation`：本章只把 Featherstone 放进地图，`05` 才真正进入刚体树、关节和 articulation 本身。
+- `08_rigid_solvers`：本章只给刚体 solver 地图，`08` 再正面对比 Featherstone、MuJoCo、SemiImplicit、Kamino 这些 rigid routes。
 
 ## 6. 与 Newton 实现的映射
 
-- `newton/examples/__main__.py`：说明 examples 的运行入口非常薄，学习重点应该落在被调起的 example 和其使用的公共 API，而不是 CLI 包装本身。
-- `newton/__init__.py`：这里能直接看到 Newton 暴露给用户的基础对象，包括 `Model`、`State`、`Control`、`CollisionPipeline` 等；它是“哪些概念属于公共表面”的最好目录。
-- `newton/_src/core/`：当前 core 层很薄，主要暴露基础类型和少量跨模块核心常量/类型；这提醒我们 Newton 的“总体架构”并不只在某个 core 大文件里，而是分散在 public API、sim、solver 与 examples 的协作关系中。
+- `newton/examples/__main__.py`：提醒你 examples 的运行入口本身很薄，阅读重点应该落在被调起的 example 和它使用的核心对象上。
+- `newton/__init__.py`：这里能直接看到 Newton 暴露给用户的基础对象，包括 `Model`、`State`、`Control`、`CollisionPipeline` 等；它是“先认哪些公共名字”的最好目录。
+- `newton/_src/core/`：它帮助你理解这些对象背后的基础类型和共用骨架，但 Newton 的总体架构并不只藏在某个 core 大文件里，而是分散在 public API、sim、solver 与 examples 的协作关系中。
+
+如果你读到这里，已经能把 `basic_pendulum` 讲成一条完整链：examples 入口先接住读者，公共 API 给出核心对象名，`Model / State / Control / Solver` 组成一次 step。接下来有两条自然分叉：想先把 `Model` 背后的数学和场景构建补稳，就继续到 `03_math_geometry` 和 `04_scene_usd`；想沿刚体主线往下走，就去 `05_rigid_articulation`，再到 `08_rigid_solvers` 看刚体 solver 家族怎样真正展开。
