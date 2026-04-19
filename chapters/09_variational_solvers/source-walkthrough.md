@@ -5,14 +5,13 @@ last_updated: 2026-04-19
 source_paths:
   - newton/solvers.py
   - newton/examples/cloth/example_cloth_hanging.py
-  - newton/examples/softbody/example_softbody_hanging.py
   - newton/_src/solvers/xpbd/solver_xpbd.py
   - newton/_src/solvers/xpbd/kernels.py
   - newton/_src/solvers/vbd/solver_vbd.py
   - newton/_src/solvers/vbd/particle_vbd_kernels.py
   - newton/_src/solvers/style3d/solver_style3d.py
-  - newton/_src/solvers/style3d/kernels.py
   - newton/_src/solvers/style3d/linear_solver.py
+  - newton/examples/softbody/example_softbody_hanging.py
 paper_keys:
   - xpbd-paper
   - vbd-paper
@@ -22,240 +21,322 @@ newton_commit: 1a230702
 
 # 09 变分求解器族 源码走读
 
-这份 walkthrough 只追一条线:
+如果你是第一次读这一章，最好先配合 `principle.md` 一起读；如果你是直接跳进源码走读也没关系，但一旦发现术语开始变快，就先回到 `principle.md` 把对象关系补齐，再回来追源码。
+
+这份主 walkthrough 是给第一次追 chapter 09 源码的人准备的。目标不是把 cloth / softbody solver 的所有变体摊平，而是让你不离开这页，也能把本章主线读成一条连续 handoff：`shared variational problem -> XPBD -> VBD -> Style3D`。
+
+## What This Walkthrough Follows
+
+只追这一条主线：
 
 ```text
-shared solver surface
--> shared cloth example
--> XPBD per-constraint path
--> VBD per-vertex / per-block path
--> Style3D global PD / PCG path
--> VBD softbody extension
-```
-
-第 08 章教你同一个 `step(...)` contract 后面可以接不同 solver family。第 09 章的源码走读继续保留这种节奏，但把主问题换成: **同一块 hanging cloth 的稳定修正，在源码里到底怎样分叉成三条路线？**
-
-如果你只想做一次最小 first pass，先看这五站就够了:
-
-1. `newton/solvers.py:L91-L114`
-2. `newton/examples/cloth/example_cloth_hanging.py:L40-L45`、`L111-L144`、`L165-L175`
-3. `newton/_src/solvers/xpbd/solver_xpbd.py:L245-L309` 和 `L350-L609`
-4. `newton/_src/solvers/vbd/solver_vbd.py:L1338-L1381` 和 `L1704-L1888`
-5. `newton/_src/solvers/style3d/solver_style3d.py:L155-L333`
-
-## 先带着哪四个问题读
-
-1. 三家共享的 outer problem 到底是什么？
-2. `XPBD` 为什么最像逐约束修正，而不是局部 Hessian solve？
-3. `VBD` 为什么更像围着一个 vertex / block 累积 force + Hessian？
-4. `Style3D` 为什么更像 cloth-specialized 的 global PD / PCG 路线？
-
-## Tier 1: 先看 shared surface 和 shared example
-
-这一层只做一件事: 先把三家重新拉回同一个 hanging-cloth 画面里。你先不要急着看哪家更“高级”。
-
-| 路径 | 角色 | 先读原因 |
-|------|------|----------|
-| `newton/solvers.py` | solver 全景、feature matrix、家族边界 | `L91-L114` 直接把 `Style3D / VBD / XPBD` 放在同一张 feature table 里；`L129-L135` 又提醒你 joints / coordinates 的边界在哪里。 |
-| `newton/examples/cloth/example_cloth_hanging.py` | shared example | 同一个 scene 里同时出现 `semi_implicit / xpbd / vbd / style3d`，是 chapter 09 最省力的共同锚点。 |
-
-### 先看 `solvers.py`: 三家为什么会被放到同一章
-
-第一遍只要看两件事就够了:
-
-- `L91-L114`: `SolverStyle3D`、`SolverVBD`、`SolverXPBD` 都被归在 implicit solver 视角下，而且都和 cloth / particles 有明确关联。
-- `L129-L135`: `XPBD` 属于 maximal-coordinate solver，`VBD` 有自己的有限 joint 支持，`Style3D` 不处理 joints。
-
-这一层的教学结论不是“谁支持什么功能更多”，而是:
-
-```text
-这三家之所以能放在一章里, 是因为它们都在处理 cloth / particle 世界里的稳定更新问题。
-```
-
-### 再看 `example_cloth_hanging.py`: shared problem 在哪里
-
-这份例子最值得按三段读:
-
-- `L40-L45`: 不同 solver 的 `sim_substeps` 一上来就不同。
-- `L52-L57`、`L111-L117`、`L124-L144`: builder 和 solver setup 根据 solver family 分叉。
-- `L165-L175`: 但真正的 simulation loop 仍然保持同样的 `collide -> solver.step -> swap states`。
-
-如果你读完这一层还会把 chapter 09 想成“又有三个 solver 名字”，就说明你漏掉了最值钱的画面:
-
-```text
-同一块布
--> 同一个外层 loop
--> 三种不同的内部修正组织方式
-```
-
-顺手记住: `SemiImplicit` 也在这个例子里，但它在 chapter 09 的角色只是 baseline 对照。真正的源码主线从这里开始要转向 `XPBD / VBD / Style3D`。
-
-## Tier 2: 三条 variational path
-
-这一层才进入 chapter 09 的三条主路线。推荐顺序不要反过来，因为 `XPBD -> VBD -> Style3D` 正好对应局部更新层级从最直观到最全局的梯子。
-
-| 路径 | 角色 | 先读原因 |
-|------|------|----------|
-| `newton/_src/solvers/xpbd/solver_xpbd.py` | XPBD 主流程 | 看预测、迭代、apply delta 怎样围着“逐约束修正”组织。 |
-| `newton/_src/solvers/xpbd/kernels.py` | XPBD constraint kernels | 看 compliance / lambda / projection 的具体味道。 |
-| `newton/_src/solvers/vbd/solver_vbd.py` | VBD 主流程 | 看 initialize / iterate / finalize 的三阶段骨架，以及 particle iteration 怎样围着 color group 展开。 |
-| `newton/_src/solvers/vbd/particle_vbd_kernels.py` | VBD 粒子局部 block solve | 看 force + Hessian 怎样在局部累计，再变成 `h_inv * f`。 |
-| `newton/_src/solvers/style3d/solver_style3d.py` | Style3D 主流程 | 看 fixed PD matrix、nonlinear iterations 和 PCG handoff 怎样串起来。 |
-| `newton/_src/solvers/style3d/linear_solver.py` | 全局 PCG 子求解器 | 看 global linear solve 真正发生在哪里。 |
-
-### 路径 A: `XPBD` 先把每轮修正压回“单条约束”
-
-推荐先盯 `newton/_src/solvers/xpbd/solver_xpbd.py:L245-L309` 和 `L350-L609`。
-
-这份 `step()` 最适合 beginner 的读法是四段:
-
-1. `L281-L299`: 先对 particles 做前向积分，并准备可能需要的粒子邻域结构。
-2. `L300-L341`: 再对 bodies 做前向积分，把 joint forces 先并进临时 body force。
-3. `L343-L348`: 为 spring / bending 约束分配 `lambda` 缓冲。
-4. `L350-L609`: 进入主迭代循环，按 contact、spring、bending、tet、joint 的顺序求修正。
-
-最值钱的理解不是“它支持很多约束”，而是这条数据流:
-
-```text
-预测状态
--> 逐类约束 kernel 产生 delta
--> apply delta
--> 下一轮再继续投影
-```
-
-再去看 `xpbd/kernels.py`，你会发现它的隐式味道不是口号，而是直接写在 kernel 里。更准确地说，它依赖的是 compliance 和当前这轮约束乘子更新，而不是跨 outer iteration 保存一整段 lambda 历史:
-
-- `L293-L355`: `solve_springs(...)` 持续维护 `lambdas[tid]`，并通过 `alpha`、`gamma` 算 `dlambda`。
-- `L359-L456`: `bending_constraint(...)` 也是同样的结构，只是约束变成了二面角。
-- `L460-L562`: `solve_tetrahedra(...)` 把体积和拉伸误差转成局部修正。
-- `L1442` 的 `solve_body_joints(...)` 和 `L2055` 的 `solve_body_contact_positions(...)`: 刚体 joint / contact 也被组织成这种“约束先行”的修正方式。
-
-如果你只想带走一句话，那就是:
-
-```text
-XPBD 的第一语言是 constraint projection, 不是 block Hessian 或 global matrix。
-```
-
-### 路径 B: `VBD` 的第一语言已经变成 vertex / block
-
-`newton/_src/solvers/vbd/solver_vbd.py` 第一遍建议只抓三段:
-
-- `L1338-L1381`: `step()` 总骨架，三阶段结构一眼就能看懂。
-- `L1445-L1482`: `_initialize_particles(...)` 先做 forward step，得到惯性目标和初始位移。
-- `L1704-L1890`: `_solve_particle_iteration(...)` 才是 chapter 09 的 cloth 主线。
-
-注意这里有一个初学者非常值得先建立的区别:
-
-```text
-XPBD 是“遍历约束”。
-VBD 是“遍历 color group 里的 vertex / block”。
-```
-
-在 `_solve_particle_iteration(...)` 里，这件事非常具体:
-
-- `L1735-L1737`: 先清空当前轮的 `particle_forces` 和 `particle_hessians`。
-- `L1739-L1740`: 进入 color loop。
-- `L1742-L1822`: 当前颜色的 body contact、spring、自碰撞等项都先累计成局部 force + Hessian。
-- `L1823-L1888`: 再调用 `solve_elasticity_tile(...)` 或 `solve_elasticity(...)` 计算位移更新。
-
-真正让你看懂 “block solve” 的地方在 `particle_vbd_kernels.py`:
-
-- `L2970-L3132`: `solve_elasticity_tile(...)` 围着单个粒子收集相邻三角形、边和四面体的贡献，最后解一个局部系统。
-- `L3135-L3272`: `solve_elasticity(...)` 的普通版本更直白，最后就是把惯性项、弹性项、接触项汇总，再做 `h_inv * f`。
-- `L860-L1022`: 三角形 StVK force / Hessian。
-- `L1055-L1187`: bending force / Hessian。
-- `L335-L462`: tet Neo-Hookean force / Hessian。
-
-读 VBD 时最该保护的直觉是:
-
-```text
-它不是一条约束一条约束地投影，
-而是把“和这个 vertex / block 相关的所有力学项”先凑成一个局部子问题再解。
-```
-
-顺手提醒一个 chapter 09 边界: `solver_vbd.py` 里还有大量刚体 AVBD 路径。它们说明 VBD 家族的外延很广，但本章第一遍不需要深挖这些 rigid details。对 cloth 主线来说，优先把 particle path 读顺就够了。
-
-如果你是第一次读这章，可以把 AVBD 刚体路径直接当成“已知存在，但先跳过”的分支，不要让它把你从 `constraint -> block -> global` 这条主梯子上拽走。
-
-### 路径 C: `Style3D` 把 cloth 修正推进成全局 PD / PCG solve
-
-`newton/_src/solvers/style3d/solver_style3d.py` 的好处是，它把自己的算法意图写得很公开。
-
-推荐先按四段读:
-
-1. `L42-L57`: 文档字符串先说明 implicit Euler 非线性方程，以及 `P` 作为固定 PD 近似 Hessian。
-2. `L119-L147`: 构造器预分配 PD matrix、PCG solver、`rhs`、`dx`、预条件器等缓存。
-3. `L155-L333`: `step()` 把每次 timestep 写成非常清楚的 nonlinear solve workflow。
-4. `L388-L417`: `_precompute(builder)` 负责把固定 PD matrix 真正搭出来。
-
-如果你已经走过 `XPBD` 和 `VBD`，这里最该读出来的是主角又换了:
-
-```text
-XPBD 主角是单条约束。
-VBD 主角是单个 vertex / block。
-Style3D 主角是整张 cloth 的线性系统。
-```
-
-`step()` 里可以很容易看见这件事:
-
-- `L173-L194`: `init_step_kernel(...)` 先建立 `x_prev`、`x_inertia` 和静态对角项。
-- `L211-L279`: 每轮非线性迭代里，stretch、bend、drag、contact 都会把贡献累到 `rhs` 上。
-- `L280-L299`: 准备 Jacobi 预条件器。
-- `L300-L309`: `PcgSolver.solve(...)` 真正做这轮线性求解。
-- `L314-L323`: `nonlinear_step_kernel(...)` 把 `dx` 写回位置。
-
-`style3d/linear_solver.py:L236-L379` 又把这件事进一步剖开了。`PcgSolver` 并不是“附带小工具”，而是 `Style3D` 真正完成 global solve 的核心机械装置。
-
-所以这一条路线更适合压成下面这句:
-
-```text
-Style3D 读起来最不像“再换一组局部约束 kernel”，
-而更像“先准备固定矩阵, 再反复解全局线性子问题”。
-```
-
-## Tier 3: VBD beyond cloth
-
-这一层不再做三家并排比较，只补 chapter 09 必须讲清的一件事: `VBD` 不只是一条 cloth 路线。这里仍然站在同一张梯子上，只是把 “per-block local solve” 这一级从布片延伸到了 tet softbody。
-
-| 路径 | 角色 | 先读原因 |
-|------|------|----------|
-| `newton/examples/softbody/example_softbody_hanging.py` | VBD 的 softbody 延伸例子 | 让你看到同一套局部 block / Hessian 思路怎样继续走到 tet softbody。 |
-
-### 先看 `example_softbody_hanging.py`: 为什么它只是 Tier 3
-
-第一遍只要盯四处:
-
-- `L32-L33`: 例子明确禁止非 `vbd` solver。
-- `L48-L65`: 场景由四组 `add_soft_grid(...)` 体网格组成，而且有不同 damping。
-- `L68-L80`: `builder.color()` 和 `SolverVBD(...)` 仍然保留。
-- `L100-L111`: 外层 loop 仍然是 `collide -> solver.step -> swap states`。
-
-它被放在 Tier 3，而不是一上来就和 `cloth_hanging` 并排，是因为它承担的教学任务更单一:
-
-```text
-不是比较三家, 而是补一句: VBD 的局部 block solve 视角还能走到 volumetric softbody。
-```
-
-## 最后压成一张总图
-
-```text
-shared cloth example
+same hanging-cloth problem
 -> XPBD: per-constraint projection
--> VBD: per-vertex / per-block force + Hessian solve
+-> VBD: per-vertex / per-block local solve
 -> Style3D: global PD / PCG solve
--> softbody_hanging: VBD beyond cloth
 ```
 
-推荐的一遍读法是:
+这一页刻意不展开三类东西：
 
-1. `newton/solvers.py`
-2. `newton/examples/cloth/example_cloth_hanging.py`
-3. `newton/_src/solvers/xpbd/solver_xpbd.py`
-4. `newton/_src/solvers/xpbd/kernels.py`
-5. `newton/_src/solvers/vbd/solver_vbd.py`
-6. `newton/_src/solvers/vbd/particle_vbd_kernels.py`
-7. `newton/_src/solvers/style3d/solver_style3d.py`
-8. `newton/_src/solvers/style3d/linear_solver.py`
-9. `newton/examples/softbody/example_softbody_hanging.py`
+- chapter 08 的 rigid solver family 对照；这里只把 `solver.step(...)` 当共同外壳。
+- XPBD / VBD / projective dynamics 的完整理论推导。
+- VBD 的 AVBD 刚体分支、softbody 体网格延伸、Style3D 更细的碰撞与预条件分支；这些放到 `source-walkthrough-deep.md`。
 
-读完这一遍，你就不该再把 chapter 09 读成“三个 solver 说明页”，而会开始用 shared problem 和局部更新层级去比较它们。
+第一遍先守住一句话：chapter 09 真正讲的是 **同一个稳定更新问题，可以按 constraint、vertex/block、global system 三个层级去组织修正**。
+
+## One-Screen Chapter Map
+
+```text
+same cloth_hanging scene + same collide -> step loop
+                       |
+                       v
+             predicted state / inertia target
+                       |
+         +-------------+--------------+
+         |             |              |
+         v             v              v
+      XPBD           VBD          Style3D
+  per-constraint   per-vertex     global PD matrix
+   projection      / per-block    + PCG linear solve
+    + lambdas      force+hessian
+```
+
+## Beginner Path
+
+1. 先看 Stage 1。
+   - 想验证什么：三家为什么能被放在同一章里比较。
+   - 看完后应该能说：它们面对的是同一个 hanging-cloth 稳定更新问题，只是内部修正层级不同。
+2. 再看 Stage 2。
+   - 想验证什么：XPBD 为什么最像“逐约束投影”。
+   - 看完后应该能说：XPBD 的第一语言是 constraint projection 和 `lambda` 更新。
+3. 再看 Stage 3。
+   - 想验证什么：VBD 为什么开始围着 vertex / block 的局部子问题组织。
+   - 看完后应该能说：VBD 会先累计 force + Hessian，再做局部 `h_inv * f` 更新。
+4. 最后看 Stage 4。
+   - 想验证什么：Style3D 为什么更像 global PD / PCG 路线。
+   - 看完后应该能说：它先准备固定 PD 矩阵，再反复解全局线性子问题。
+
+## Main Walkthrough
+
+### Stage 1: 三家先共享同一个 hanging-cloth 问题和外层 loop
+
+**Claim**
+
+chapter 09 把 `XPBD / VBD / Style3D` 放在同一章里，不是因为它们内部长得像，而是因为它们都在回答同一个问题：同一块 cloth 在同一个 `collide -> solver.step -> swap` 外层 loop 里，怎样被更稳定地往下一步推进。
+
+**Why it matters**
+
+这一步最能纠正新手的第一层误会：chapter 09 不是“又多了三个 solver 名字”，而是“同一问题的三种修正组织方式”。
+
+**Source excerpt**
+
+`newton/examples/cloth/example_cloth_hanging.py` 先把 shared problem 立得很清楚：
+
+```python
+if self.solver_type == "semi_implicit":
+    self.sim_substeps = 32
+elif self.solver_type == "style3d":
+    self.sim_substeps = 2
+else:
+    self.sim_substeps = 10
+
+...
+
+if self.solver_type == "style3d":
+    self.solver = newton.solvers.SolverStyle3D(model=self.model, iterations=self.iterations)
+elif self.solver_type == "xpbd":
+    self.solver = newton.solvers.SolverXPBD(model=self.model, iterations=self.iterations)
+else:
+    self.solver = newton.solvers.SolverVBD(model=self.model, iterations=self.iterations, ...)
+
+...
+
+self.model.collide(self.state_0, self.contacts)
+self.solver.step(self.state_0, self.state_1, self.control, self.contacts, self.sim_dt)
+```
+
+**Verification cues**
+
+- 三家共享同一个 cloth 场景和同一个外层时间推进骨架，这就是 chapter 09 的比较基线。
+- `sim_substeps` 一开始就不同，说明它们虽然处理同一问题，但稳定性和内部更新方式已经有明显差别。
+- `SemiImplicit` 也会出现在这个例子里，但这里只是 baseline 对照；真正的主角是 `XPBD / VBD / Style3D`。
+
+**Output passed to next stage**
+
+同一个 hanging-cloth 稳定更新问题。接下来要看的不是“谁也会 step”，而是“谁把每轮修正首先落在哪一层对象上”。
+
+### Stage 2: `XPBD` 把每轮修正先压回单条约束
+
+**Claim**
+
+`SolverXPBD` 的第一语言是 per-constraint projection：先预测状态，再让每类约束 kernel 逐条产生 delta，最后把这些 delta 应回状态。
+
+**Why it matters**
+
+XPBD 是 chapter 09 最容易上手的一层，因为它最接近“我有一条约束，就先修这条约束”的直觉。用它开场，最容易建立后面 `constraint -> block -> global` 的梯子。
+
+**Source excerpt**
+
+`newton/_src/solvers/xpbd/solver_xpbd.py` 的主骨架就是“预测 -> 约束投影 -> apply delta”：
+
+```python
+self.integrate_particles(model, state_in, state_out, dt)
+
+spring_constraint_lambdas = wp.empty_like(model.spring_rest_length)
+
+for i in range(self.iterations):
+    particle_deltas.zero_()
+
+    if model.spring_count:
+        spring_constraint_lambdas.zero_()
+        wp.launch(
+            kernel=solve_springs,
+            dim=model.spring_count,
+            inputs=[..., dt, spring_constraint_lambdas],
+            outputs=[particle_deltas],
+        )
+
+    particle_q, particle_qd = self._apply_particle_deltas(model, state_in, state_out, particle_deltas, dt)
+```
+
+而 `solve_springs(...)` 直接把 XPBD 的味道写在了 `lambda` 更新里：
+
+```python
+c = l - rest
+alpha = 1.0 / (ke * dt * dt)
+gamma = kd / (ke * dt)
+
+dlambda = -1.0 * (c + alpha * lambdas[tid] + gamma * grad_c_dot_v) / ((1.0 + gamma) * denom + alpha)
+
+lambdas[tid] = lambdas[tid] + dlambda
+wp.atomic_add(delta, i, dxi)
+wp.atomic_add(delta, j, dxj)
+```
+
+**Verification cues**
+
+- `particle_deltas` 是每轮迭代真正被反复覆盖和应用的对象，所以 solver 的主语言是 position correction。
+- `solve_springs(...)` 里先算 `dlambda` 再写 `delta`，说明约束乘子不是旁枝，而是 projection 核心。
+- rigid contact 和 joint 在这条路线上也会被组织成类似“约束先行”的修正方式，所以 XPBD 的统一感很强。
+
+**Output passed to next stage**
+
+XPBD 给出了 chapter 09 的第一层答案：稳定更新可以先落在“单条约束怎么修”上。
+
+### Stage 3: `VBD` 把修正升级成 per-vertex / per-block 局部子问题
+
+**Claim**
+
+`SolverVBD` 不再主要问“这一条约束怎么投影”，而是问“围着这个 vertex / block 的所有力学项先累成什么局部系统，再怎么解”。
+
+**Why it matters**
+
+这是 chapter 09 最关键的中间台阶。只有把 VBD 读成局部 block solve，你后面看到 softbody 延伸或 AVBD 刚体分支时才不会迷路。
+
+**Source excerpt**
+
+`newton/_src/solvers/vbd/solver_vbd.py` 先把整个 timestep 写成三阶段骨架：
+
+```python
+self._initialize_rigid_bodies(state_in, control, contacts, dt, update_rigid_history)
+self._initialize_particles(state_in, state_out, dt)
+
+for iter_num in range(self.iterations):
+    self._solve_rigid_body_iteration(state_in, state_out, control, contacts, dt)
+    self._solve_particle_iteration(state_in, state_out, contacts, dt, iter_num)
+
+self._finalize_rigid_bodies(state_out, dt)
+self._finalize_particles(state_out, dt)
+```
+
+而 `_solve_particle_iteration(...)` 的粒子主线又是“先累计，再局部求解”：
+
+```python
+self.particle_forces.zero_()
+self.particle_hessians.zero_()
+
+for color in range(len(self.model.particle_color_groups)):
+    wp.launch(kernel=accumulate_spring_force_and_hessian, ..., outputs=[self.particle_forces, self.particle_hessians])
+    ...
+    wp.launch(kernel=solve_elasticity, ..., outputs=[self.particle_displacements])
+```
+
+`solve_elasticity(...)` 最后则非常直白地把局部子问题解成 `h_inv * f`：
+
+```python
+f = mass[particle_index] * (inertia[particle_index] - pos[particle_index]) * dt_sqr_reciprocal
+h = mass[particle_index] * dt_sqr_reciprocal * wp.identity(n=3, dtype=float)
+
+h = h + particle_hessians[particle_index]
+f = f + particle_forces[particle_index]
+
+if abs(wp.determinant(h)) > 1e-8:
+    h_inv = wp.inverse(h)
+    particle_displacements[particle_index] = particle_displacements[particle_index] + h_inv * f
+```
+
+**Verification cues**
+
+- `particle_forces` 和 `particle_hessians` 是 VBD 这条路线上最该盯的两个容器，因为它们把约束、接触、弹性项都拉到了同一个局部 solve 视角下。
+- color groups 说明 solver 的迭代单位已经变成“按可并行的 vertex/block 子集更新”，而不是按单条约束顺序扫。
+- `h_inv * f` 是 chapter 09 最值得记住的一句代码：它直接说明这里不是投影单条约束，而是在解局部线性化子问题。
+
+**Output passed to next stage**
+
+VBD 给出了 chapter 09 的第二层答案：稳定更新可以先落在“某个 vertex / block 的局部系统怎么解”上。
+
+### Stage 4: `Style3D` 把修正推进成全局 PD / PCG solve
+
+**Claim**
+
+`SolverStyle3D` 继续往上走了一层：它先准备固定的 projective-dynamics 矩阵结构，再在每轮非线性迭代里解一个全局线性子问题。
+
+**Why it matters**
+
+这一步把 chapter 09 的梯子封口。你现在可以很清楚地比较三家：XPBD 修单条约束，VBD 修局部 block，Style3D 修整张 cloth 的全局系统。
+
+**Source excerpt**
+
+`newton/_src/solvers/style3d/solver_style3d.py` 的文档字符串先把它的问题写明了：
+
+```python
+Implicit-Euler method solves the following non-linear equation:
+
+(M / dt^2 + H(x)) * dx = (M / dt^2) * (x_inertia - x) + f_int(x)
+```
+
+构造器和 `step()` 又把这件事落实成固定 PD 矩阵加 PCG：
+
+```python
+self.pd_matrix_builder = PDMatrixBuilder(model.particle_count)
+self.linear_solver = PcgSolver(model.particle_count, self.device)
+
+for _iter in range(self.nonlinear_iterations):
+    wp.launch(init_rhs_kernel, ..., outputs=[self.rhs])
+    wp.launch(eval_stretch_kernel, ..., outputs=[self.rhs])
+    wp.launch(eval_bend_kernel, ..., outputs=[self.rhs])
+    ...
+    self.linear_solver.solve(
+        self.pd_non_diags,
+        self.static_A_diags,
+        self.dx if _iter == 0 else None,
+        self.rhs,
+        self.inv_A_diags,
+        self.dx,
+        self.linear_iterations,
+        ...,
+    )
+    wp.launch(nonlinear_step_kernel, ..., outputs=[state_out.particle_q, self.dx])
+```
+
+`PcgSolver` 本身也把这条路线写得很公开：
+
+```python
+class PcgSolver:
+    """A Customized PCG implementation for efficient cloth simulation"""
+
+    def solve(self, A_non_diag, A_diag, x0, b, inv_M, x1, iterations, additional_multiplier=None):
+        ...
+```
+
+**Verification cues**
+
+- `PDMatrixBuilder` 和 `PcgSolver` 在构造器里就是一级公民，这已经和 XPBD/VBD 的代码气质完全不同。
+- 每轮非线性迭代里，stretch/bend/contact 都先被累计到全局 `rhs`，然后再一起交给 PCG。
+- `_precompute(...)` 会提前把固定 PD 矩阵搭出来，所以这条路线非常强调“先搭全局结构，再反复线性求解”。
+
+**Output passed to next stage**
+
+Style3D 给出了 chapter 09 的第三层答案：稳定更新可以先落在“整张 cloth 的全局线性系统怎么解”上。到这里，本章主梯子就封口了。
+
+## Object Ledger
+
+| 对象 | 谁生产 | 谁消费 | 盯哪些字段 |
+|------|--------|--------|------------|
+| shared cloth scene / loop | `example_cloth_hanging.py` | `SolverXPBD`、`SolverVBD`、`SolverStyle3D` | `sim_substeps`、solver 选择、`collide -> step -> swap` |
+| `particle_deltas` / `spring_constraint_lambdas` | `SolverXPBD.step()`、`solve_springs(...)` | XPBD 的 apply-delta 主线 | 每轮 delta、`dlambda`、projection 顺序 |
+| `particle_forces` / `particle_hessians` / `particle_displacements` | `SolverVBD._solve_particle_iteration()` | `solve_elasticity*` | force+hessian 累积、color groups、局部 `h_inv * f` |
+| `rhs` / `dx` / `pd_non_diags` / `static_A_diags` | `SolverStyle3D.step()`、`_precompute()` | `PcgSolver.solve()` | 全局系统右端项、线性增量、固定 PD 矩阵 |
+| `contacts` | `model.collide(...)` | 三条 solver path | cloth-ground / body-particle 交互怎样进入各自的修正层级 |
+
+## Stop Here
+
+读到这里就已经够 chapter 09 的 80-90% 了。
+
+如果你现在能用自己的话讲顺下面这句话，这一章的 beginner 目标就完成了：
+
+```text
+三家共享同一个 hanging-cloth 稳定更新问题；
+XPBD 先逐约束投影，VBD 先围着 vertex / block 累局部 force+hessian，Style3D 则先搭全局 PD 矩阵再用 PCG 解线性子问题。
+```
+
+这时你已经不会再把 chapter 09 读成“三个 solver 说明页”。
+
+## Go Deeper
+
+如果你还想继续精确追源码，再去 `source-walkthrough-deep.md`：
+
+- 想保留 cross-repo 精确锚点：看 `Fast Deep Index`
+- 想逐跳追 `shared problem -> XPBD -> VBD -> Style3D`：看 `Exact Handoff Trace`
+- 想补 `SemiImplicit` baseline、VBD softbody 延伸和 tile solve 分支：看 `Optional Branches`
+- 想逐条核对这里的 claim：看 `Verification Anchors`

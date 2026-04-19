@@ -17,7 +17,8 @@ newton_commit: 1a230702
 
 - `README.md`: 本章边界、完成门槛、阅读入口。
 - `principle.md`: 从 chapter 06 那张球贴地的图开始，把一条 contact 怎样长成 `1` 条法向 row 和 `2` 条切向 row 讲顺，再解释 Jacobian 和 Delassus 的第一层直觉。
-- `source-walkthrough.md`: 把 chapter 06 的 runtime `Contacts` handoff，对到 Kamino 这条 Newton 刚体 solver 路线里的 solver-facing contact、constraint rows、Jacobians 和 Delassus 的真实源码路径。
+- `source-walkthrough.md`: 新手 / 主 walkthrough。第一次追 chapter 07 源码先看这一份；它内嵌关键源码片段，把 `Contacts -> solver-facing contact -> rows -> Jacobians -> Delassus` 主线直接讲顺。
+- `source-walkthrough-deep.md`: 深读锚点版。已经跟上主线后，如果你想精确追 symbol、上游路径和可选分支，再看这一份。
 - `examples.md`: 用 `sphere-ground` 和 `box-ground` 做观察任务，帮你把“接触几何”和“接触数学”连起来。
 
 ## 完成门槛
@@ -68,13 +69,15 @@ newton_commit: 1a230702
 
 ## 阅读顺序
 
-1. 先读 `principle.md`，把同一张球贴地图顺着讲到 `1 contact -> 3 rows -> Jacobian -> effective mass / Delassus`。
-2. 再读 `source-walkthrough.md`，确认这条桥在 Newton / Kamino 源码里是怎么落地的，尤其是 `Contacts` 和 `ContactsKamino` 之间的 handoff。
+1. 第一次追源码，先看 `source-walkthrough.md`；这一份就是给 first pass 准备的主 walkthrough。
+2. 如果你想先补概念边界，或者读完主 walkthrough 还想把术语再翻成人话，再回看 `principle.md`。
 3. 然后读 `examples.md`，用 `sphere-ground` 和 `box-ground` 把“法向 / 切向方向”“多个 contact”“偏心接触带来角向耦合”变成可观察现象。
-4. 最后进入 `08_rigid_solvers`，再看不同 solver 怎样消费这些 rows、Jacobians 和 constraint-space quantities。
+4. 想精确追到上游文件、symbol 和行号，再看 `source-walkthrough-deep.md`。
+5. 最后进入 `08_rigid_solvers`，再看不同 solver 怎样消费这些 rows、Jacobians 和 constraint-space quantities。
 
 ## 预期产出
 
 - `principle.md`: 一条 beginner-safe 主线，能把 chapter 06 的接触几何继续讲成 constraint rows、Jacobian 和 Delassus 直觉。
-- `source-walkthrough.md`: 一份 tiered first-read 路径，告诉你先在哪看 geometry handoff，再在哪看 solver-facing contacts、rows / Jacobians，最后在哪看 Delassus。
+- `source-walkthrough.md`: 给 first pass 的主 walkthrough，用内嵌源码片段把 `Contacts -> solver-facing contact -> rows -> Jacobians -> Delassus` 主线直接讲顺。
+- `source-walkthrough-deep.md`: 保留精确 symbol、路径、行号和可选分支，给已经跟上主线后还想继续追锚点的读者。
 - `examples.md`: 两个能复用的观察任务，分别守住“单接触为什么不是一个标量”和“多接触 / 偏心接触为什么会带来更强耦合”这两层理解。

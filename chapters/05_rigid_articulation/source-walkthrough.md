@@ -18,39 +18,395 @@ newton_commit: 1a230702
 
 # 05 刚体与关节动力学 源码走读
 
-这份 walkthrough 只追 `articulation layout -> runtime state -> FK/world-space spatial quantities -> Featherstone consumption` 这条线。它不推完整 ABA / CRBA，也不把 `solver_featherstone.py` 读成一整本刚体动力学教材。第一遍最重要的是看清：Newton 里的 articulation 不是嵌套对象树，而是几组扁平数组切片；`joint_q / joint_qd` 先怎样被解释成 `body_q / body_qd`；这些 buffers 又怎样继续喂给 Featherstone kernels。公开语义可以先回看 `docs/concepts/articulations.rst:L18-L46`, `docs/concepts/articulations.rst:L315-L425`, `docs/concepts/articulations.rst:L663-L670`，这页只把那套语义对到真实源码。
+如果你是第一次读这一章，最好先配合 `principle.md` 一起读；如果你是直接跳进源码走读也没关系，但一旦发现术语开始变快，就先回到 `principle.md` 把对象关系补齐，再回来追源码。
 
-## 涉及路径
+这份主 walkthrough 只追 chapter 05 的关键桥：articulation 结构怎样被组织成 flat slices，`joint_q / joint_qd` 怎样经由 FK 和速度传播变成 `body_q / body_qd`，以及这些状态又怎样继续被 Featherstone 路线消费。目标不是现在就推完整 ABA / CRBA，而是先把“结构和状态怎样接力”讲顺。
 
-| 路径 | 角色 | 先读原因 |
-|------|------|----------|
-| `newton/_src/sim/builder.py` | articulation 布局的起点。`add_articulation()` 验证 joint 连续、单调、树结构，然后登记 `articulation_start` 和 `joint_articulation`，见 `newton/_src/sim/builder.py:L1965-L2062`；`add_joint()` 继续把 `joint_parent / joint_child / joint_X_p / joint_X_c / joint_dof_dim / joint_q_start / joint_qd_start` 写进 builder，见 `newton/_src/sim/builder.py:L3590-L3668`；`finalize()` 再补齐 sentinel start arrays 并冻结成 `Model`，见 `newton/_src/sim/builder.py:L10234-L10258`。 | 先把 articulation 看成“joint 范围和切片约定”，后面的 FK 和 solver 输入才不会像凭空读数组。 |
-| `newton/_src/sim/model.py` | articulation 的静态字段目录。`body_mass / body_com / body_inertia`、`joint_articulation / joint_axis / joint_dof_dim / joint_q_start / joint_qd_start`、`articulation_start` 都在这里定名，见 `newton/_src/sim/model.py:L390-L492`, `newton/_src/sim/model.py:L566-L572`；`Model.state()` 则把这些默认值克隆成 runtime `State` 快照，见 `newton/_src/sim/model.py:L808-L859`。 | 先认清静态布局和 runtime 初始化的分界线。 |
-| `newton/_src/sim/state.py` | articulation 在 runtime 的两层快照：`joint_q / joint_qd` 是 generalized state，`body_q / body_qd` 是 body/world state，见 `newton/_src/sim/state.py:L72-L116`。 | 这一页的主线正是这两层状态之间怎样互相桥接。 |
-| `newton/_src/sim/articulation.py` | public articulation helper 主干。`eval_single_articulation_fk()` 按 `joint_q_start / joint_qd_start` 切 joint 坐标、生成 `X_j / v_j`，再沿 parent-child 树写出 `body_q / body_qd`，见 `newton/_src/sim/articulation.py:L191-L374`；`eval_fk()` 再按 articulation 启动 kernel，见 `newton/_src/sim/articulation.py:L377-L516`。 | 这里是 `joint_q / joint_qd -> body_q / body_qd` 第一次真正跑起来的地方。 |
-| `newton/_src/solvers/featherstone/kernels.py` | Featherstone 对 articulation buffers 的第一层消费。`compute_spatial_inertia()` 和 `compute_com_transforms()` 把 body 质量属性改写成 `body_I_m / body_X_com`，见 `newton/_src/solvers/featherstone/kernels.py:L20-L49`；`jcalc_transform()`、`jcalc_motion()`、`eval_rigid_fk()`、`compute_link_velocity()` 则把 joint layout 继续变成 solver 内部的 `body_q_com / joint_S_s / body_I_s / body_v_s / body_f_s`，见 `newton/_src/solvers/featherstone/kernels.py:L139-L333`, `newton/_src/solvers/featherstone/kernels.py:L641-L801`。 | 这是 articulation 结构开始变成 Featherstone 递推输入的地方。 |
-| `newton/_src/solvers/featherstone/solver_featherstone.py` | orchestration 收口。`_compute_articulation_indices()` 把每条 articulation 转成 batched matrix offsets，见 `newton/_src/solvers/featherstone/solver_featherstone.py:L229-L298`；`_allocate_model_aux_vars()` 预分配 `body_I_m / body_X_com`，见 `newton/_src/solvers/featherstone/solver_featherstone.py:L299-L331`；`step()` 再把 `eval_rigid_fk -> eval_rigid_id -> eval_rigid_tau -> eval_rigid_mass -> integrate_generalized_joints -> eval_fk_with_velocity_conversion` 串起来，见 `newton/_src/solvers/featherstone/solver_featherstone.py:L379-L931`。 | 先看这里，才能知道 solver 不是重新发明一套状态，而是在继续消费 chapter 05 这批 articulation buffers。 |
+## What This Walkthrough Follows
 
-## 调用链总览
+这一页只追下面这条 handoff：
 
-1. articulation 的第一层定义仍然发生在 builder。`add_joint()` 给每个 joint 记下 parent-child 拓扑、两侧局部锚点、DOF 维度、轴以及 `joint_q_start / joint_qd_start`；`add_articulation()` 再要求 joint 连续、单调、同 world、无多 parent，最后只留下 `articulation_start` 和 `joint_articulation` 这组切片约定，见 `newton/_src/sim/builder.py:L1965-L2062`, `newton/_src/sim/builder.py:L3590-L3668`。到 `finalize()`，这些 Python lists 会被补成带 sentinel 的 start arrays，冻结到 `Model`，见 `newton/_src/sim/builder.py:L10234-L10258`, `newton/_src/sim/model.py:L445-L492`, `newton/_src/sim/model.py:L566-L572`。
-2. `Model` 持有静态布局，`State` 持有运行时快照。`Model.state()` 会把默认 `joint_q / joint_qd / body_q / body_qd` 克隆到新的 `State`，所以 solver 始终同时握着 `generalized coordinates` 和 `maximal coordinates` 两层状态，见 `newton/_src/sim/model.py:L808-L859`, `newton/_src/sim/state.py:L72-L116`。这也正对应了概念文档里的公开语义，见 `docs/concepts/articulations.rst:L18-L46`。
-3. public articulation helper 的桥接重点不是求力，而是先把 joint-space 坐标解释出来。`eval_single_articulation_fk()` 用 `joint_q_start / joint_qd_start` 和 `joint_dof_dim` 找到每个 joint 的那一段 `joint_q / joint_qd`，按 joint 类型生成 `X_j / v_j`，再把 `joint_X_p`、parent 的 `body_q / body_qd`、`joint_X_c` 串起来，得到 child 的 `body_q / body_qd`，见 `newton/_src/sim/articulation.py:L227-L374`。`eval_fk()` 再按 `articulation_start[a] : articulation_start[a + 1]` 并行发起整条 FK，见 `newton/_src/sim/articulation.py:L377-L516`。
-4. Featherstone 路线并不绕开这些结构，而是把它们换成 solver 更方便消费的 buffers。初始化时，`compute_spatial_inertia()` 和 `compute_com_transforms()` 先把 `body_mass / body_inertia / body_com` 变成 `body_I_m / body_X_com`，见 `newton/_src/solvers/featherstone/kernels.py:L20-L49`, `newton/_src/solvers/featherstone/solver_featherstone.py:L299-L331`。step 开头，solver 先用 `eval_rigid_fk()` 刷新 `body_q / body_q_com`，再把 `joint_qd` 和 joint wrench 转成内部约定，接着由 `eval_rigid_id()`、`eval_rigid_tau()`、`eval_rigid_mass()` 继续消费 `articulation_start`、`joint_q_start / joint_qd_start`、`joint_axis`、`joint_dof_dim`、`body_I_m`、`body_X_com` 这些缓存，见 `newton/_src/solvers/featherstone/solver_featherstone.py:L405-L553`, `newton/_src/solvers/featherstone/solver_featherstone.py:L596-L931`。
-5. 所以这页最值得记住的不是某条递推公式，而是 articulation 的四段接力：`builder/model` 先定义布局，`state` 携带两层快照，`articulation.py` 负责把 generalized state 译成 body/world spatial quantities，Featherstone 再继续消费这些 quantities。完整 solver 数学留给后续章节，这里只保住“结构怎样接上去”。
+```text
+builder articulation layout
+-> Model / State joint and body buffers
+-> eval_fk(...)
+-> body_q / body_qd
+-> Featherstone spatial buffers
+-> solver.step(...) continues the chain
+```
 
-## 数据流切片
+这一页刻意不展开三类东西：
 
-| 切片 | 读入 | 中间接力 | 写出 | 证据 |
-|------|------|----------|------|------|
-| joint layout / starts / dims -> coordinate interpretation | joint 类型、`linear_axes / angular_axes`、两侧 joint frame，以及 articulation 由哪些 joint 组成。 | `add_joint()` 先按 joint 类型累计 `joint_axis`、`joint_dof_dim`、`joint_q_start`、`joint_qd_start` 并为 `joint_q / joint_qd` 预留槽位；`add_articulation()` 再把一段连续 joint 记成 `articulation_start`；`finalize()` 补上 `joint_coord_count / joint_dof_count / joint_count` sentinel，方便内核用 `[start:end]` 切片。概念文档随后用同一套 `joint_q_start / joint_qd_start / joint_dof_dim` 说明怎样解释每个 joint 的 coordinate layout。 | `Model.joint_articulation`、`Model.joint_axis`、`Model.joint_dof_dim`、`Model.joint_q_start`、`Model.joint_qd_start`、`Model.articulation_start`，以及“某个 joint 在 `joint_q` 和 `joint_qd` 里各占哪一段”的统一读法。 | `newton/_src/sim/builder.py:L1965-L2062`, `newton/_src/sim/builder.py:L3590-L3668`, `newton/_src/sim/builder.py:L10234-L10258`, `newton/_src/sim/model.py:L445-L492`, `docs/concepts/articulations.rst:L318-L425` |
-| `joint_q / joint_qd` -> FK -> `body_q / body_qd` | `State.joint_q`、`State.joint_qd`，加上 `Model.joint_X_p / joint_X_c / joint_axis / joint_dof_dim / body_com`。 | `eval_single_articulation_fk()` 先按 `q_start / qd_start` 取出该 joint 的坐标，构造 `X_j / v_j`；再沿 `X_wpj -> X_wcj -> X_wc` 做 pose 传播，并在 child body origin 与 COM 之间做速度换读，最后写回 `body_q[child]` 和 `body_qd[child]`。`eval_fk()` 用 `articulation_start` 逐条 articulation 启动这段传播。 | `State.body_q` 的 world transform，和按 Newton 公共语义写出的 `State.body_qd` COM/world twist。 | `newton/_src/sim/state.py:L72-L116`, `newton/_src/sim/articulation.py:L191-L374`, `newton/_src/sim/articulation.py:L377-L516`, `docs/concepts/articulations.rst:L663-L670` |
-| body mass/inertia -> spatial inertia | `Model.body_mass`、`Model.body_inertia`、`Model.body_com`。 | Featherstone 先用 `compute_spatial_inertia()` 把 body 质量属性改写成质量框架下的 `body_I_m`，再用 `compute_com_transforms()` 把 `body_com` 写成 `body_X_com`。进入 `compute_link_velocity()` 后，这些量还会结合当前 `body_q_com` 被变换成 solver 递推里的 `body_I_s`，并与 `body_v_s / body_f_s` 同步更新。这里先把它读成“body 级质量属性变成 spatial form”，不展开更深的动力学推导。 | `body_I_m`、`body_X_com`、`body_I_s`，以及后续递推会继续消费的 body-space spatial buffers。 | `newton/_src/sim/model.py:L395-L402`, `newton/_src/solvers/featherstone/kernels.py:L20-L49`, `newton/_src/solvers/featherstone/kernels.py:L717-L801`, `newton/_src/solvers/featherstone/solver_featherstone.py:L299-L331` |
-| articulation buffers -> Featherstone step inputs | `Model.articulation_start`、`Model.joint_q_start / joint_qd_start`、`Model.joint_ancestor`、`State.joint_q / joint_qd / body_q`，以及上一步已经准备好的 `body_I_m / body_X_com`。 | `_compute_articulation_indices()` 先把每条 articulation 变成 batched `J / M / H` offsets；`step()` 再依次执行 `eval_rigid_fk()`、public/internal `FREE`/`DISTANCE` 速度转换、`eval_rigid_id()`、`eval_rigid_tau()`、`eval_rigid_jacobian()`、`eval_rigid_mass()`、线性求解与 `integrate_generalized_joints()`，最后用 `eval_fk_with_velocity_conversion()` 把更新后的 generalized state 重建回 public `body_q / body_qd`。 | solver 工作区里的 `joint_S_s`、`body_q_com`、`body_I_s`、`body_v_s`、`body_f_s`、`J / M / H / L`，以及最终更新后的 `state_out.joint_q / joint_qd / body_q / body_qd`。 | `newton/_src/solvers/featherstone/solver_featherstone.py:L229-L331`, `newton/_src/solvers/featherstone/solver_featherstone.py:L405-L553`, `newton/_src/solvers/featherstone/solver_featherstone.py:L596-L931` |
+- 完整 Featherstone 数学推导
+- Jacobian / Delassus / contact math
+- rigid solver family 的横向比较
 
-## GPU 并行切片
+第一遍先守住一句话：chapter 05 真正讲的是 **articulation 的结构布局，以及 joint-space 状态怎样被译成 body-space 状态**。
 
-- public `eval_fk()` 是按 articulation 并行启动的：每个 thread 读一段 `articulation_start[a] : articulation_start[a + 1]`，所以 articulation 在代码里的真正并行单元就是“joint 范围”，不是对象树，见 `newton/_src/sim/articulation.py:L377-L516`。
-- Featherstone 也沿用这套切片。`compute_spatial_inertia()` 和 `compute_com_transforms()` 按 body 批量预处理；`eval_rigid_fk()`、`eval_rigid_id()`、`eval_rigid_mass()`、`eval_rigid_jacobian()` 则按 articulation 批量消费 joint layout，见 `newton/_src/solvers/featherstone/kernels.py:L20-L49`, `newton/_src/solvers/featherstone/kernels.py:L641-L801`, `newton/_src/solvers/featherstone/solver_featherstone.py:L405-L931`。
+## One-Screen Chapter Map
 
-这页到这里就停。第一遍只需要把 `layout -> FK -> spatial buffers -> Featherstone inputs` 这条桥读顺；为什么这些 buffers 能支撑完整 Featherstone 递推、`J / M / H` 各自的数学意义是什么，留给后面的 solver 章节再展开。
+```text
+builder.add_joint / add_articulation
+                |
+                v
+   joint_q_start / joint_qd_start / articulation_start
+                |
+                v
+      Model.state() gives joint_q / joint_qd / body_q / body_qd
+                |
+                v
+        eval_single_articulation_fk(...)
+                |
+                v
+          body_q / body_qd in world / COM convention
+                |
+                v
+  Featherstone: body_I_m / body_X_com / joint_S_s / body_v_s
+                |
+                v
+         solver.step(...) integrates generalized joints
+```
+
+## Beginner Path
+
+1. 先看 Stage 1。
+   - 想验证什么：Newton 里的 articulation 为什么不是嵌套对象树，而是一组切片约定。
+   - 看完后应该能说：`joint_q_start / joint_qd_start / articulation_start` 才是关节布局真正的骨架。
+2. 再看 Stage 2。
+   - 想验证什么：`Model` 和 `State` 为什么同时保留 joint-space 和 body-space 两层状态。
+   - 看完后应该能说：`joint_q / joint_qd` 不是 `body_q / body_qd` 的别名，它们是不同层级的数据。
+3. 再看 Stage 3。
+   - 想验证什么：FK 和速度传播到底怎样把 joint-space 变成 body-space。
+   - 看完后应该能说：`joint_q / joint_qd` 要先过 `X_j / v_j` 和 transform chain，才会变成 `body_q / body_qd`。
+4. 再看 Stage 4。
+   - 想验证什么：为什么 mass / inertia 会再次出现。
+   - 看完后应该能说：Featherstone 先把它们变成 spatial form，继续喂给 solver 内部 buffers。
+5. 最后看 Stage 5。
+   - 想验证什么：Featherstone solver 到底有没有重新发明一套状态表示。
+   - 看完后应该能说：没有，它仍然围绕同一套 articulation 布局和 state handoff 在工作。
+
+## Main Walkthrough
+
+### Stage 1: articulation 先被记成 flat slice layout，而不是对象树
+
+**Claim**
+
+Newton 的 articulation 结构首先表现为一组扁平数组和切片起点：joint 的 parent / child、两侧 frame、每个 joint 在 `joint_q / joint_qd` 里占哪一段，以及每条 articulation 从哪一个 joint 开始。
+
+**Why it matters**
+
+如果第一遍还把 articulation 想成“Python 里一层层套起来的 joint 对象树”，后面看到 `joint_q_start`、`articulation_start` 就会很不自然。
+
+**Source excerpt**
+
+builder 在加 joint 时就已经把这些切片信息记下来了：
+
+```python
+self.joint_parent.append(parent)
+self.joint_child.append(child)
+self.joint_X_p.append(parent_xform)
+self.joint_X_c.append(child_xform)
+...
+self.joint_q_start.append(self.joint_coord_count)
+self.joint_qd_start.append(self.joint_dof_count)
+```
+
+真正声明“这一串 joint 组成一条 articulation”的地方也很直接：
+
+```python
+self.articulation_start.append(sorted_joints[0])
+self.articulation_label.append(label or f"articulation_{articulation_idx}")
+...
+for joint_idx in joints:
+    self.joint_articulation[joint_idx] = articulation_idx
+```
+
+`finalize()` 再把这些起点补上 sentinel：
+
+```python
+joint_q_start = copy.copy(self.joint_q_start)
+joint_q_start.append(self.joint_coord_count)
+joint_qd_start = copy.copy(self.joint_qd_start)
+joint_qd_start.append(self.joint_dof_count)
+articulation_start = copy.copy(self.articulation_start)
+articulation_start.append(self.joint_count)
+```
+
+**Verification cues**
+
+- `joint_q_start / joint_qd_start` 明确告诉你每个 joint 在 generalized coordinates 里占哪一段。
+- `articulation_start` 则告诉你每条 articulation 的 joint 范围。
+- 这套布局天然适合 kernel 按 articulation 或按 joint 范围并行，而不是按对象树递归。
+
+**Output passed to next stage**
+
+一套 solver-friendly 的结构布局：joint ranges、articulation ranges，以及 parent-child 拓扑和局部 frame。
+
+### Stage 2: `Model` 和 `State` 同时保留 joint-space 与 body-space 两层状态
+
+**Claim**
+
+在 chapter 05 里，Newton 明确同时持有两层状态：`joint_q / joint_qd` 是 generalized coordinates，`body_q / body_qd` 是 body-space world state。它们会在同一个 `State` 里并存，但并不属于同一层语义。
+
+**Why it matters**
+
+这是理解 articulation handoff 的前提。后面你之所以需要 FK，就是因为这两层状态不能直接互相替代。
+
+**Source excerpt**
+
+`Model` 先声明 joint 层和 articulation 层字段：
+
+```python
+self.joint_q: wp.array[wp.float32] | None = None
+self.joint_qd: wp.array[wp.float32] | None = None
+...
+self.joint_q_start: wp.array[wp.int32] | None = None
+self.joint_qd_start: wp.array[wp.int32] | None = None
+self.articulation_start: wp.array[wp.int32] | None = None
+```
+
+`State` 则明确同时放 body 和 joint 两层快照：
+
+```python
+self.body_q: wp.array | None = None
+self.body_qd: wp.array | None = None
+...
+self.joint_q: wp.array | None = None
+self.joint_qd: wp.array | None = None
+```
+
+而 `Model.state()` 会一次性把这两层都 clone 出来：
+
+```python
+s.body_q = wp.clone(self.body_q, requires_grad=requires_grad)
+s.body_qd = wp.clone(self.body_qd, requires_grad=requires_grad)
+...
+s.joint_q = wp.clone(self.joint_q, requires_grad=requires_grad)
+s.joint_qd = wp.clone(self.joint_qd, requires_grad=requires_grad)
+```
+
+**Verification cues**
+
+- joint-space 和 body-space 字段在 `State` 里同时存在，不是互斥的两种模式。
+- `Model.state()` 不会帮你自动“算完 FK”，它只是把两层默认值都分配出来。
+- 所以后面必须有一条显式 bridge 把 joint-space 状态解释成 body-space 状态。
+
+**Output passed to next stage**
+
+一份同时含有 `joint_q / joint_qd` 和 `body_q / body_qd` 的 `State`，等待 FK 和速度传播来把两层状态真正对齐。
+
+### Stage 3: FK 和速度传播把 `joint_q / joint_qd` 译成 `body_q / body_qd`
+
+**Claim**
+
+`eval_single_articulation_fk()` 的核心任务不是求力，而是先把每个 joint 在 `joint_q / joint_qd` 中的那一段拿出来，构造 `X_j / v_j`，再沿 parent-child 链传播成 child body 的 `body_q / body_qd`。
+
+**Why it matters**
+
+这一步正是 chapter 05 的主 handoff。读懂这里，你就知道为什么 `joint_qd` 不能直接拿来当 `body_qd`。
+
+**Source excerpt**
+
+FK 先按 `q_start / qd_start` 取出某个 joint 的 generalized coordinates：
+
+```python
+q_start = joint_q_start[i]
+qd_start = joint_qd_start[i]
+...
+if type == JointType.REVOLUTE:
+    axis = joint_axis[qd_start]
+
+    q = joint_q[q_start]
+    qd = joint_qd[qd_start]
+
+    X_j = wp.transform(wp.vec3(), wp.quat_from_axis_angle(axis, q))
+    v_j = wp.spatial_vector(wp.vec3(), axis * qd)
+```
+
+然后再把 joint motion 沿拓扑链组合到 child body：
+
+```python
+X_wpj = X_pj
+if parent >= 0:
+    X_wp = body_q[parent]
+    X_wpj = X_wp * X_wpj
+
+X_wcj = X_wpj * X_j
+X_wc = X_wcj * wp.transform_inverse(X_cj)
+...
+body_q[child] = X_wc
+body_qd[child] = origin_twist_to_com_twist(v_wc_origin, X_wc, body_com[child])
+```
+
+**Verification cues**
+
+- 同一个 joint 的 position 和 velocity，要靠 `joint_q_start / joint_qd_start` 才能切对位置。
+- `X_j` 和 `v_j` 分别表达 joint 的位姿增量和速度增量，不会直接等于 body world pose。
+- `body_qd[child]` 最后还经过了 `origin_twist_to_com_twist(...)`，说明 body velocity 还有参考点转换这一步。
+
+**Output passed to next stage**
+
+`body_q / body_qd` 这组 body-space world-state。后面的 collision、Jacobian、solver kernels 都更愿意消费这一层结果。
+
+### Stage 4: Featherstone 先把质量属性和 FK 结果变成 spatial buffers
+
+**Claim**
+
+Featherstone 路线不会直接拿着原始 `body_mass / body_com / body_inertia` 就开算；它先把这些量变成 spatial inertia 和 COM transforms，再把 articulation layout 继续展开成 solver 内部的 `joint_S_s / body_v_s / body_f_s` 等 buffers。
+
+**Why it matters**
+
+这一步解释了为什么 chapter 03 的 inertia 词汇会在这里重新出现，也解释了 chapter 05 为什么要把 FK 和 mass property 放在同一章。
+
+**Source excerpt**
+
+Featherstone 先做两步很干净的预处理：
+
+```python
+@wp.kernel
+def compute_spatial_inertia(body_inertia, body_mass, body_I_m):
+    ...
+
+@wp.kernel
+def compute_com_transforms(body_com, body_X_com):
+    tid = wp.tid()
+    com = body_com[tid]
+    body_X_com[tid] = wp.transform(com, wp.quat_identity())
+```
+
+之后再把 articulation 的 joint motion 继续变成 solver 内部的 spatial buffers：
+
+```python
+v_j_s = jcalc_motion(
+    type,
+    joint_axis,
+    lin_axis_count,
+    ang_axis_count,
+    X_wpj,
+    joint_qd,
+    qd_start,
+    joint_S_s,
+)
+...
+I_s = transform_spatial_inertia(X_sm, I_m)
+f_b_s = I_s * a_s + spatial_cross_dual(v_s, I_s * v_s)
+
+body_v_s[child] = v_s
+body_f_s[child] = f_b_s - f_g_s
+body_I_s[child] = I_s
+```
+
+**Verification cues**
+
+- `body_I_m` 和 `body_X_com` 说明 solver 先把 body-level mass properties改写成更方便递推的格式。
+- `joint_S_s` 是 motion subspace，不再只是原始 joint axis 的简单抄写。
+- `body_v_s / body_f_s / body_I_s` 说明 Featherstone 在用一套更内部的 spatial buffer 继续工作。
+
+**Output passed to next stage**
+
+一批 solver-side spatial buffers：`body_I_m`、`body_X_com`、`joint_S_s`、`body_v_s`、`body_f_s`、`body_I_s`。
+
+### Stage 5: `SolverFeatherstone.step()` 没有重造状态，只是继续沿同一条链推进
+
+**Claim**
+
+`SolverFeatherstone.step()` 并没有重新发明一套外部状态表示；它还是围绕同一套 articulation layout 和 `State` handoff 工作，只是中间会额外构建 Jacobian、mass matrix、Cholesky 等 solver 内部工作区。
+
+**Why it matters**
+
+这一步能帮你把 chapter 05 和 chapter 08 接起来：solver family 会不同，但它们消费的 articulation 结构和公共 state handoff 是连续的。
+
+**Source excerpt**
+
+step 开头先用当前 `joint_q` 刷新 body poses：
+
+```python
+wp.launch(
+    eval_rigid_fk,
+    dim=model.articulation_count,
+    inputs=[
+        model.articulation_start,
+        model.joint_type,
+        model.joint_parent,
+        model.joint_child,
+        model.joint_q_start,
+        model.joint_qd_start,
+        state_in.joint_q,
+        ...
+    ],
+    outputs=[state_in.body_q, state_aug.body_q_com],
+)
+```
+
+真正积分完 generalized joints 之后，又会把结果重新写回公共状态：
+
+```python
+wp.launch(
+    kernel=integrate_generalized_joints,
+    dim=model.joint_count,
+    inputs=[
+        model.joint_type,
+        model.joint_q_start,
+        model.joint_qd_start,
+        ...
+        state_in.joint_q,
+        state_aug.joint_qd_internal_in,
+        state_aug.joint_qdd,
+        dt,
+    ],
+    outputs=[state_out.joint_q, state_aug.joint_qd_internal_out],
+)
+
+eval_fk_with_velocity_conversion(
+    model,
+    state_out.joint_q,
+    state_aug.joint_qd_internal_out,
+    state_out,
+)
+```
+
+**Verification cues**
+
+- step 一开始还是从 `state_in.joint_q` 出发，而不是从某个 solver 私有树对象出发。
+- 积分完成后仍然会把结果写回 `state_out.joint_q / joint_qd / body_q / body_qd`。
+- 所以 solver 内部虽然很复杂，但 external contract 仍然沿着同一条 chapter-05 handoff 在走。
+
+**Output passed to next stage**
+
+更新后的 generalized state 和 body state。接下来它们就能继续流向 collision、contact math 和更具体的 solver 比较章节。
+
+## Object Ledger
+
+| 对象 | 谁生产 | 谁消费 | 盯哪些字段 |
+|------|--------|--------|------------|
+| `articulation_start` | `add_articulation()` / `finalize()` | FK、Featherstone kernels | 每条 articulation 的 joint 范围 |
+| `joint_q_start / joint_qd_start` | `add_joint()` / `finalize()` | FK、solver integration | 每个 joint 在 generalized arrays 里占哪一段 |
+| `State.joint_q / joint_qd` | `Model.state()` | FK、solver integration | joint-space coordinates |
+| `State.body_q / body_qd` | `Model.state()`，随后由 FK 重写 | collision、solver、viewer | body-space world pose / twist |
+| `body_I_m / body_X_com` | Featherstone 预处理 kernels | Featherstone step | spatial inertia 和 COM transform |
+| `joint_S_s / body_v_s / body_f_s` | Featherstone kernels | Featherstone dynamics path | motion subspace、body velocity、body force |
+
+## Stop Here
+
+读到这里就已经够 chapter 05 的 80-90% 了。
+
+如果你现在能用自己的话讲顺下面这句话，这一章的 beginner 目标就完成了：
+
+```text
+builder 先把 articulation 记成 joint 切片和局部 frame；
+State 同时保留 joint-space 和 body-space 两层状态；
+FK 再把 joint_q / joint_qd 译成 body_q / body_qd；
+Featherstone 把质量属性和 FK 结果变成 spatial buffers；
+solver.step() 继续沿同一条 handoff 推进一步。
+```
+
+这时你已经可以稳定进入 `06_collision`、`07_constraints_contacts_math` 和 `08_rigid_solvers`。
+
+## Go Deeper
+
+如果你还想继续精确追源码，再去 `source-walkthrough-deep.md`：
+
+- 想保留所有 file/symbol/line anchors：看 `Fast Deep Index`
+- 想逐跳追 articulation layout 到 Featherstone step 的 exact handoff：看 `Exact Handoff Trace`
+- 想知道哪些 internal conversion / matrix branches 第一遍可以跳过：看 `Optional Branches`
+- 想逐条核对这里的 claim：看 `Verification Anchors`

@@ -1,7 +1,7 @@
 ---
 chapter: 02
 title: Newton 总体架构
-last_updated: 2026-04-18
+last_updated: 2026-04-19
 source_paths:
   - newton/__init__.py
   - newton/_src/core/
@@ -14,6 +14,14 @@ newton_commit: 1a230702
 # 02 Newton 总体架构
 
 `00_prerequisites` 先回答了“这些前置词到底是什么意思”，`01_warp_basics` 再回答了“Warp 的批量执行模型到底怎样工作”。到了这一章，才正式开始进入 Newton 本体：先从 `basic_pendulum` 和 `newton.examples` 接住读者，再把公共 API、`Model / State / Control / Solver` 四层和 8 个 solver 的地形图串起来。
+
+## 文件分工
+
+- `README.md`：只负责本章边界、完成门槛和阅读入口。
+- `principle.md`：先把 `basic_pendulum -> examples 入口 -> 公共 API -> Model / State / Control / Solver` 这条概念链讲顺。
+- `examples.md`：把 `basic_pendulum`、`robot_cartpole`、`cloth_hanging` 先变成观察任务。
+- `source-walkthrough.md`：新手 / 主 walkthrough。第一次追 chapter 02 源码先看这一份；它把 `example entry -> runtime objects -> simulate loop -> solver` 主线直接讲顺。
+- `source-walkthrough-deep.md`：深读锚点版。已经跟上主线后，如果你想精确追上游文件、symbol 和行号，再看这一份。
 
 ## 完成门槛
 
@@ -48,9 +56,10 @@ newton_commit: 1a230702
 1. 先带着 `00` 和 `01` 的答案进入本章：这里不再重讲前置词和 Warp 执行模型，而是开始问“Newton 自己怎样把这些东西组织起来”。
 2. 先读 `principle.md`，顺着“`basic_pendulum` -> examples 入口 -> 公共 API -> `Model / State / Control / Solver` -> 一次 step -> solver family 地图”这条概念链往下走。
 3. 再读 `examples.md`，把 `basic_pendulum`、`robot_cartpole --world-count 100`、`cloth_hanging --solver xpbd` 先变成观察任务，明确每次运行要改什么、看什么。
-4. 再读 `source-walkthrough.md`，把这条概念链对到真实源码路径，尤其先纠正“真正的 orchestrator 在 `examples/__main__.py`”这个常见误解。
-5. 再实际运行 `basic_pendulum`，先做 `examples.md` 里的最小改动观察，再把 walkthrough 里的源码锚点和图里的四层对象、一轮 step 过程对上号。
-6. 如果中途发现某个动力学词或 Warp 机制又松了，就分别回 `00_prerequisites` 或 `01_warp_basics` 补洞，再回到本章。
+4. 第一次追源码时，先看 `source-walkthrough.md`，把这条概念链对到真实源码路径，尤其先纠正“真正的 orchestrator 在 `examples/__main__.py`”这个常见误解。
+5. 想精确追到上游文件、symbol 和行号，再看 `source-walkthrough-deep.md`。
+6. 再实际运行 `basic_pendulum`，先做 `examples.md` 里的最小改动观察，再把 walkthrough 里的源码锚点和图里的四层对象、一轮 step 过程对上号。
+7. 如果中途发现某个动力学词或 Warp 机制又松了，就分别回 `00_prerequisites` 或 `01_warp_basics` 补洞，再回到本章。
 
 ## 预期产出
 

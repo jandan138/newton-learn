@@ -19,7 +19,8 @@ newton_commit: 1a230702
 
 - `README.md`：只负责本章边界、完成门槛和阅读入口。
 - `principle.md`：负责把 articulation 容器、`joint_q / joint_qd`、FK、motion subspace 和 mass / inertia 消费主线讲顺。
-- `source-walkthrough.md`：负责把 builder / `Model` / articulation helper / Featherstone 路径的源码锚点串起来。
+- `source-walkthrough.md`：新手 / 主 walkthrough。第一次追 chapter 05 源码先看这一份；它把 `layout -> FK -> body state -> Featherstone consumption` 主线直接讲顺。
+- `source-walkthrough-deep.md`：深读锚点版。已经跟上主线后，如果你想精确追上游文件、symbol 和行号，再看这一份。
 - `examples.md`：负责用最小 articulation 例子把 `joint_q`、`body_q`、frame 和 inertia bridge 变成可观察现象。
 
 ## 完成门槛
@@ -70,15 +71,17 @@ newton_commit: 1a230702
 ## 阅读顺序
 
 1. 先读 `principle.md`，把 articulation 容器、joint-space vs body-space、FK、motion subspace 和 inertia bridge 这条主线读顺。
-2. 再读 `source-walkthrough.md`，把 `Model` / runtime state / articulation helper / Featherstone 消费链对到真实源码锚点。
-3. 然后读 `examples.md`，用最小 articulation 例子观察 `joint_q`、`body_q`、joint frame 和质量属性是怎样联动的。
-4. 先进入 `06_collision`，看有了 body/world 状态之后，碰撞几何、pair 和候选接触怎样开始长出来。
-5. 再进入 `07_constraints_contacts_math`，看 Jacobian、约束和接触数学怎样建立在 articulation 结构和碰撞候选之上。
-6. 最后进入 `08_rigid_solvers`，看不同 rigid solver 尤其是 Featherstone 路线怎样消费本章已经读顺的 articulation 结构。
+2. 第一次追源码时，先看 `source-walkthrough.md`，把 `Model` / runtime state / articulation helper / Featherstone 消费链对到真实源码锚点。
+3. 想精确追到上游文件、symbol 和行号，再看 `source-walkthrough-deep.md`。
+4. 然后读 `examples.md`，用最小 articulation 例子观察 `joint_q`、`body_q`、joint frame 和质量属性是怎样联动的。
+5. 先进入 `06_collision`，看有了 body/world 状态之后，碰撞几何、pair 和候选接触怎样开始长出来。
+6. 再进入 `07_constraints_contacts_math`，看 Jacobian、约束和接触数学怎样建立在 articulation 结构和碰撞候选之上。
+7. 最后进入 `08_rigid_solvers`，看不同 rigid solver 尤其是 Featherstone 路线怎样消费本章已经读顺的 articulation 结构。
 
 ## 预期产出
 
 - `principle.md`：用一条 beginner-safe 主线解释 articulation 容器、`joint_q / joint_qd`、`body_q / body_qd`、FK、motion subspace 和 mass / inertia bridge。
-- `source-walkthrough.md`：把 builder、`Model`、runtime state、`newton/_src/sim/articulation.py` 和 Featherstone 入口串成稳定源码链。
+- `source-walkthrough.md`：给 first pass 的主 walkthrough，用内嵌源码片段把 `layout -> FK -> body state -> Featherstone consumption` 主线直接讲顺。
+- `source-walkthrough-deep.md`：保留精确 symbol、路径、行号和可选分支，给已经跟上主线后还想继续追锚点的读者。
 - `examples.md`：给出最小 articulation 观察任务，帮助你在例子里对照 `joint_q -> body_q`、`joint_qd -> body_qd` 和 body mass / inertia 的变化。
 - 一套可复用的后续入口：去 `06` 时先追碰撞候选怎样接在 body/world 状态之后，去 `07` 时继续追 Jacobian / contact math，去 `08` 时再追 solver 怎样消费这些结构而不是重新发明一套状态表示。

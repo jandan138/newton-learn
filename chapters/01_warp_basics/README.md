@@ -1,7 +1,7 @@
 ---
 chapter: 01
 title: 01 Warp 编程模型
-last_updated: 2026-04-18
+last_updated: 2026-04-19
 source_paths: []
 paper_keys:
   - warp-paper
@@ -12,6 +12,13 @@ newton_commit: 1a230702
 # 01 Warp 编程模型
 
 这章不是 Warp 官方文档摘要，也不是 CUDA 速成。它只解决一个更小、但对 Newton 很关键的问题：看到 `kernel`、`wp.array`、`wp.launch`、`wp.atomic_add` 这些词时，你能先把它们放进一个稳定的执行模型里。
+
+## 文件分工
+
+- `README.md`：只负责本章边界、完成门槛和阅读入口。
+- `principle.md`：先把 `kernel`、`wp.array`、`wp.launch`、`wp.tid()` 这些词翻译成人话。
+- `source-walkthrough.md`：新手 / 主 walkthrough。第一次追 chapter 01 源码先看这一份；它把 `buffer -> launch -> tid -> atomic -> graph/tile` 主线直接讲顺。
+- `source-walkthrough-deep.md`：深读锚点版。已经跟上主线后，如果你想精确追上游文件、symbol 和行号，再看这一份。
 
 ## 完成门槛
 
@@ -45,9 +52,10 @@ newton_commit: 1a230702
 
 1. 先通读 `principle.md` 的 `0-3` 节，把 `kernel`、`wp.array`、`wp.launch`、`wp.tid()` 的关系读顺。
 2. 再读 `4-6` 节，先建立对 `atomic_add`、`tile`、`Graph` 的直觉，不必第一遍就深挖优化细节。
-3. 然后读 `source-walkthrough.md`，把这些 Warp 词直接对到 Newton 里的 `Model / State / Control / Solver / Example` 代码角色。
-4. 读完后再进入 `02_newton_arch`，把这套读法扩展到 Newton 的对象分层和例子入口。
-5. 以后读 `11_mpm`、`13_diffsim` 时，如果又遇到更重的 Warp 细节，再回本章复看。
+3. 第一次追源码时，先看 `source-walkthrough.md`，把这些 Warp 词直接对到 Newton 里的 `Model / State / Control / Solver / Example` 代码角色。
+4. 想精确追到上游文件、symbol 和行号，再看 `source-walkthrough-deep.md`。
+5. 读完后再进入 `02_newton_arch`，把这套读法扩展到 Newton 的对象分层和例子入口。
+6. 以后读 `11_mpm`、`13_diffsim` 时，如果又遇到更重的 Warp 细节，再回本章复看。
 
 ## 预期产出
 

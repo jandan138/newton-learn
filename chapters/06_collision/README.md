@@ -17,7 +17,8 @@ newton_commit: 1a230702
 
 - `README.md`：只负责本章边界、完成门槛和阅读入口。
 - `principle.md`：负责把 `body_q / body_qd`、shape world pose、broad phase、narrow phase 和 `Contacts` 这条主线讲顺。
-- `source-walkthrough.md`：负责把 `Model.contacts()`、`Model.collide()`、broad phase / narrow phase 边界和 `Contacts` 写入路径对到真实源码。
+- `source-walkthrough.md`：新手 / 主 walkthrough。第一次追 chapter 06 源码先看这一份；它内嵌关键源码片段，把 `body/world state -> candidate pairs -> ContactData -> Contacts` 主线直接讲顺。
+- `source-walkthrough-deep.md`：深读锚点版。已经跟上主线后，如果你想精确追 symbol、上游路径和可选分支，再看这一份。
 - `examples.md`：负责用最小 shape 例子把 candidate pair、contact 数量和 contact 几何变成可观察现象。
 
 ## 完成门槛
@@ -27,7 +28,7 @@ newton_commit: 1a230702
 [ ] 我能顺着 `body_q + shape_transform + shape_type` 讲出一条最小碰撞桥：shape world pose -> AABB / filter -> candidate pair -> narrow phase -> `Contacts`
 [ ] 我能说清 broad phase 只负责“便宜地找可能相撞”，narrow phase 才负责“把候选对变成具体 contact geometry”
 [ ] 我能举出至少一种 shape-type branching 的例子，说明不同几何对会走不同 narrow-phase 问题，但最后仍会写成统一 contact data
-[ ] 我能用人话描述 `Contacts` 至少存了 body / shape id、接触点、法线、距离这几类信息，并解释为什么 `07` / `08` 都要从这里继续读
+[ ] 我能用人话描述 `Contacts` 至少存了 shape id、body-frame 接触点、world-frame 法线、offset / margin 这几类信息，并解释为什么 `07` / `08` 都要从这里继续读
 ```
 
 ## 本章目标
@@ -41,7 +42,7 @@ newton_commit: 1a230702
 - `body_q / body_qd`、`shape_transform`、`shape_type`、`shape_gap`、margin / filter 这批数据怎样先确定 shape 在 world 里“现在在哪、是什么、该不该参与候选筛选”。
 - broad phase 的第一遍读法：先用便宜、保守的方式找“可能相撞”的 shape 对，而不是直接给最终 contact。
 - narrow phase 的第一遍读法：把 candidate pair 变成具体接触几何，并按 shape type 分流到不同几何查询分支。
-- contact data 的第一遍读法：接触点、法线、距离、body / shape 索引怎样被整理进 `Contacts`，作为后续数学章和 solver 章的 handoff object。
+- contact data 的第一遍读法：接触点、法线、shape 索引，以及 body-frame point / offset / margin 这些 handoff 字段怎样被整理进 `Contacts`，作为后续数学章和 solver 章的共同起点。
 
 ## 本章明确不做什么
 
@@ -67,15 +68,17 @@ newton_commit: 1a230702
 
 ## 阅读顺序
 
-1. 先读 `principle.md`，把“body/world state + shape 数据 -> candidate pair -> contact data -> `Contacts`”这条主线读顺。
-2. 再读 `source-walkthrough.md`，把 `Model.contacts()`、`Model.collide()`、broad phase / narrow phase 和 `Contacts` 写入路径对到真实源码锚点。
+1. 第一次追源码，先看 `source-walkthrough.md`；这一份就是给 first pass 准备的主 walkthrough。
+2. 如果你想先补概念边界，或者读完主 walkthrough 还想把术语再翻成人话，再回看 `principle.md`。
 3. 然后读 `examples.md`，用最小 shape 例子观察 local pose、shape type、gap / margin 改动后，候选对和 contact 几何会怎样变化。
-4. 再进入 `07_constraints_contacts_math`，看 `Contacts` 怎样继续长成 Jacobian、约束和接触数学。
-5. 最后进入 `08_rigid_solvers`，看不同 rigid solver 怎样消费同一份 `Contacts`，而不是各自重新发明一套碰撞输入。
+4. 想精确追到上游文件、symbol 和行号，再看 `source-walkthrough-deep.md`。
+5. 再进入 `07_constraints_contacts_math`，看 `Contacts` 怎样继续长成 Jacobian、约束和接触数学。
+6. 最后进入 `08_rigid_solvers`，看不同 rigid solver 怎样消费同一份 `Contacts`，而不是各自重新发明一套碰撞输入。
 
 ## 预期产出
 
 - `principle.md`：用一条 beginner-safe 主线解释为什么 body 不直接碰撞、shape world pose 怎样进入 broad phase，以及 narrow phase 怎样把候选对变成 contact data。
-- `source-walkthrough.md`：把 `Model.contacts()` / `Model.collide()`、碰撞主流水线和 `Contacts` 缓冲区对到真实源码边界。
+- `source-walkthrough.md`：给 first pass 的主 walkthrough，用内嵌源码片段把 `body/world state -> candidate pairs -> ContactData -> Contacts` 主线直接讲顺。
+- `source-walkthrough-deep.md`：保留精确 symbol、路径、行号和可选分支，给已经跟上主线后还想继续追锚点的读者。
 - `examples.md`：给出最小观察任务，帮助你看到 shape 类型、局部位姿、gap / margin 改动后，candidate pair 和 contact 结果会怎样增减或改变。
 - 一套可复用的后续入口：去 `07` 时先追 contact math 怎样消费 `Contacts`，去 `08` 时再追不同 solver 怎样消费同一份 contact 缓冲区。

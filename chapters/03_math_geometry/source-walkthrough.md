@@ -1,7 +1,7 @@
 ---
 chapter: 03
 title: 数学与几何基础
-last_updated: 2026-04-18
+last_updated: 2026-04-19
 source_paths:
   - newton/_src/sim/builder.py
   - newton/_src/math/spatial.py
@@ -17,57 +17,354 @@ newton_commit: 1a230702
 
 # 03 数学与几何基础 源码走读
 
-这份 walkthrough 不再像 chapter 02 那样按 CLI 或 runtime loop 追 orchestration，而是把 chapter 03 里的四条词链钉到真实代码：`frame / transform`、`spatial quantity`、`shape representation`、`inertia / mass property`。阅读重点不是枚举 `_src/math/` 或 `_src/geometry/` 的全部 helper，而是先看“一个概念在代码里怎样接成下一站”。下面所有 `path:line` 引用都以 front matter 里的 `newton_commit: 1a230702` 为准；如果你对照的是别的 revision，行号可能会漂移。
+如果你是第一次读这一章，最好先配合 `principle.md` 一起读；如果你是直接跳进源码走读也没关系，但一旦发现术语开始变快，就先回到 `principle.md` 把对象关系补齐，再回来追源码。
 
-## 涉及路径
+这份主 walkthrough 只追 chapter 03 最核心的那条桥：`frame / transform / spatial quantity / shape representation / inertia` 这些词，怎样在 Newton 源码里互相接上。目标不是把你变成一轮完整的数学课，而是让你在后面的 scene、articulation、collision 章节里再看到这些词时，不会只剩术语压力。
 
-| 路径 | 角色 | 先读原因 |
-|------|------|----------|
-| `newton/_src/sim/builder.py` | chapter 03 的总桥。`shape_transform`、`body_com`、`joint_X_p`、`joint_X_c` 这些词先在 builder 里长成真实字段，见 `newton/_src/sim/builder.py:L886-L887`, `newton/_src/sim/builder.py:L1016-L1017`, `newton/_src/sim/builder.py:L1046-L1049`；`add_shape()` 又把 shape 配置直接接到质量属性上，见 `newton/_src/sim/builder.py:L5265-L5326`；`finalize()` 再把它们冻结成 `Model` arrays，见 `newton/_src/sim/builder.py:L9539-L9576`, `newton/_src/sim/builder.py:L10178-L10198`。 | 一页里同时拿到“局部关系怎样被记录”和“最后落到模型的哪里”。 |
-| `newton/_src/math/spatial.py` | spatial vocabulary 的最小词典。`velocity_at_point()`、`transform_twist()`、`transform_wrench()` 分别把“偏移点速度”“twist 换 frame”“wrench 换 frame”包成 Newton layout 下的 helper，见 `newton/_src/math/spatial.py:L54-L130`。 | 先认这三个 helper，后面看 articulation 时就不会把 spatial 量读成黑魔法。 |
-| `newton/_src/sim/articulation.py` | `frame / transform / spatial quantity` 真正落地的地方。关节局部锚点怎样拼成 `X_wc`、body twist 怎样在 origin / COM / point 之间换读、motion subspace / Jacobian 怎样复用 spatial helper，都在这里，见 `newton/_src/sim/articulation.py:L15-L33`, `newton/_src/sim/articulation.py:L224-L375`, `newton/_src/sim/articulation.py:L900-L955`, `newton/_src/sim/articulation.py:L1033-L1044`, `newton/_src/sim/articulation.py:L1129-L1192`。 | 这是 chapter 03 词汇第一次变成 articulation 可读代码的地方。 |
-| `newton/_src/geometry/inertia.py` | shape 级质量属性的来源。`compute_inertia_shape()` 按 `GeoType` 选择局部质量 / 质心 / 惯量公式或 mesh fallback，`transform_inertia()` 负责换 frame 与平行轴项，见 `newton/_src/geometry/inertia.py:L436-L605`。 | 这里把“geometry 是什么”压缩成“动起来有多重、绕哪更难转”。 |
-| `newton/_src/geometry/types.py` | `GeoType` 这张目录图。primitive vs explicit 的第一层分法在 `GeoType.is_primitive` / `is_explicit`，见 `newton/_src/geometry/types.py:L38-L98`；`Mesh.build_sdf()` 说明 mesh 还能继续长成 SDF 表示，见 `newton/_src/geometry/types.py:L720-L785`。 | 先分清“这是哪一类几何”，后面的 support / SDF / primitive collision 才不会混成一团。 |
-| `newton/_src/geometry/support_function.py` | convex-style 几何读法。`extract_shape_data()` 把 narrow-phase arrays 还原成 `GenericShapeData`，`support_map()` 再按 `shape_type` 返回局部 support point，见 `newton/_src/geometry/support_function.py:L107-L304`, `newton/_src/geometry/support_function.py:L351-L393`。 | 它把“shape type 只是个枚举”推进到“枚举如何决定可查询几何”。 |
-| `newton/_src/geometry/kernels.py` | 一个很值钱的 shape-local 查询切片。这里先做 `X_ws = X_wb * X_bs`、`X_sw = inverse(X_ws)`，再按 `GeoType` 分流到 primitive SDF、mesh query、plane / hfield 采样，见 `newton/_src/geometry/kernels.py:L1053-L1140`。 | 它把 transform chain 和 shape representation chain 在同一处接上。 |
-| `newton/_src/geometry/collision_primitive.py` | primitive pair 的小型叶子函数库，例如 `collide_sphere_sphere()`、`collide_sphere_capsule()`、`collide_plane_box()`，见 `newton/_src/geometry/collision_primitive.py:L111-L177`, `newton/_src/geometry/collision_primitive.py:L366-L429`。 | 第一遍只把它当成“primitive 最后会落到这种解析几何叶子”，不要把整章拖进完整碰撞算法。 |
+## What This Walkthrough Follows
 
-## 调用链总览
+这一页只追下面这条词汇主线：
 
-这章更适合按“概念怎样在代码里移动”来读，而不是按 runtime 时间线来读。
+```text
+local frames in builder
+-> transform composition in articulation / geometry queries
+-> twist & wrench helpers
+-> GeoType-driven representation dispatch
+-> geometry compressed into mass / inertia
+```
 
-1. `frame / transform` 词汇先在 builder 里登记成局部关系：`shape_transform` 说明 shape 相对 body 怎么挂，`joint_X_p / joint_X_c` 说明 joint anchor 分别从 parent / child 哪一侧看，`body_com` 说明质心相对 body frame 在哪，见 `newton/_src/sim/builder.py:L886-L887`, `newton/_src/sim/builder.py:L1016-L1017`, `newton/_src/sim/builder.py:L1046-L1049`。`add_joint()` 和 `add_shape()` 只是把这些局部关系写进 builder，见 `newton/_src/sim/builder.py:L3563-L3602`, `newton/_src/sim/builder.py:L5265-L5273`。
-2. 这些局部关系在两个方向继续外推。articulation FK 里，关节状态先生成 `X_j`，再一路接成 `X_wpj -> X_wcj -> X_wc`，把 child body pose 放到 world，见 `newton/_src/sim/articulation.py:L235-L337`；geometry kernel 里，同一个思路变成 `X_ws = X_wb * X_bs` 与 `X_sw = inverse(X_ws)`，把 world query 拉回 shape local frame，见 `newton/_src/geometry/kernels.py:L1053-L1060`。所以 transform chain 既服务运动学，也服务碰撞几何查询。
-3. spatial quantity 这条链先在 `newton/_src/math/spatial.py` 被包成 Newton-friendly helper：`velocity_at_point()` 负责把 body twist 读到某个偏移点上，`transform_twist()` / `transform_wrench()` 负责换 frame 但保持 Newton 的 `(linear, angular)` 与 `(force, torque)` 语义顺序，见 `newton/_src/math/spatial.py:L54-L130`。articulation 紧接着复用这些 helper，把 `body_qd` 在 origin / COM / point velocity 之间互转，并把 joint axis 变成 world-space motion subspace 与 Jacobian 列，见 `newton/_src/sim/articulation.py:L15-L33`, `newton/_src/sim/articulation.py:L347-L374`, `newton/_src/sim/articulation.py:L900-L955`, `newton/_src/sim/articulation.py:L1039-L1044`。
-4. shape representation 这条链先从 `GeoType` 起步：primitive 和 explicit geometry 的第一层分法在 `newton/_src/geometry/types.py:L38-L98`。builder 把 `shape_type / shape_scale / shape_source` 写下来，并在 `finalize()` 里变成 `shape_type / shape_source_ptr / shape_scale` 这些可查询 arrays，见 `newton/_src/sim/builder.py:L5287-L5307`, `newton/_src/sim/builder.py:L9539-L9576`。之后 collision 代码再根据类型走向不同 representation：`support_map()` 给 convex-style 支持点，`geometry/kernels.py` 给 primitive SDF / mesh / hfield 查询，primitive pair 则可直接落到 `collision_primitive.py` 的解析几何叶子，见 `newton/_src/geometry/support_function.py:L107-L304`, `newton/_src/geometry/kernels.py:L1061-L1140`, `newton/_src/geometry/collision_primitive.py:L111-L177`。
-5. inertia / mass-property 这条链并不是 geometry 的边角料，而是 geometry 通向 articulation 的压缩接口。`compute_inertia_shape()` 先把 shape 的 `type + scale + src + density + is_solid` 变成 shape-local 的 `mass / com / inertia`，见 `newton/_src/geometry/inertia.py:L474-L605`；builder 再用 `wp.transform_point(xform, c)` 和 `_update_body_mass()` 把它搬到 body frame 并累加成 `body_mass / body_com / body_inertia`，见 `newton/_src/sim/builder.py:L5323-L5326`, `newton/_src/sim/builder.py:L8213-L8245`；articulation 最后把 body inertia 提升成 world-frame spatial inertia，见 `newton/_src/sim/articulation.py:L1161-L1192`。
+这一页刻意不展开三类东西：
 
-把整章压成一句话就是：builder 先保存局部几何与质量语义，`spatial.py` 负责 frame-aware 读法，articulation 把这些局部量接到 world / COM 运动学上，geometry collision 代码则把同一批 shape 信息变成可碰撞、可查询的 representation。
+- 完整的 Lie group / quaternion 课程
+- GJK、EPA、hydroelastic 这类碰撞算法推导
+- ABA / CRBA / Featherstone 的完整动力学递推
 
-## 数据流切片
+第一遍先守住一句话：chapter 03 讲的是 **后面各章都会复用的几何语言和空间量语言**。
 
-| 切片 | 读入 | 中间接力 | 写出 | 证据 |
-|------|------|----------|------|------|
-| shape config -> inertia properties | `add_shape()` 看到的 `type / scale / src / density / is_solid / margin` 与 `xform`。 | `compute_inertia_shape()` 先给 shape-local `mass / com / inertia`；`com_body = wp.transform_point(xform, c)` 把局部质心搬到 body frame；`_update_body_mass()` 再用 `transform_inertia()` 处理旋转和平行轴项，把多个 shape 的贡献并到同一个 body。 | `body_mass / body_com / body_inertia / body_inv_mass / body_inv_inertia`，并在 `finalize()` 后落成 `Model` arrays。 | `newton/_src/sim/builder.py:L5323-L5326`, `newton/_src/geometry/inertia.py:L436-L605`, `newton/_src/sim/builder.py:L8213-L8245`, `newton/_src/sim/builder.py:L10173-L10180` |
-| local transforms -> body/world transforms | builder 里的 `shape_transform`、`joint_X_p`、`joint_X_c`，再加关节坐标 `joint_q / joint_qd`。 | articulation 先从关节类型生成 `X_j`，再组合 `X_wpj = X_wp * X_pj`、`X_wcj = X_wpj * X_j`、`X_wc = X_wcj * inverse(X_cj)`；geometry kernel 继续用 `X_ws = X_wb * X_bs` 和 `X_sw = inverse(X_ws)` 把 world query 拉回 shape local frame。 | `body_q` 的 world transforms、`body_qd` 的 COM/world twist，以及 shape-local 查询所需的 `x_local`。 | `newton/_src/sim/builder.py:L1046-L1049`, `newton/_src/sim/builder.py:L3563-L3602`, `newton/_src/sim/articulation.py:L235-L375`, `newton/_src/geometry/kernels.py:L1053-L1060`, `newton/_src/sim/builder.py:L10197-L10198` |
-| spatial twist/wrench helpers -> frame-aware motion reading | Newton layout 的 twist / wrench，加上某个 `transform` 或点偏移 `r`。 | `velocity_at_point()` 把整体 twist 读到某个具体点；`transform_twist()` / `transform_wrench()` 在不丢掉 Newton 语义顺序的前提下接 Warp helper；articulation 再把这些 helper 组合成 `com_twist_to_point_velocity()`、origin/COM twist 互转，以及 `transform_twist()` 驱动的 motion subspace / Jacobian。 | 点速度、world-space joint motion subspace、Jacobian 列，以及一套稳定的“这个 6D 量现在在哪个 frame 里表达”的读法。 | `newton/_src/math/spatial.py:L54-L130`, `newton/_src/sim/articulation.py:L15-L33`, `newton/_src/sim/articulation.py:L347-L374`, `newton/_src/sim/articulation.py:L900-L955`, `newton/_src/sim/articulation.py:L1039-L1044` |
-| geometry type -> collision-ready representation | `GeoType`、`shape_scale`、`shape_source`、`shape_transform`。 | `GeoType` 先把 shape 分成 primitive / explicit；builder `finalize()` 把类型、缩放和 source 指针冻结成 arrays；`extract_shape_data()` / `support_map()` 把它们变成可做 support query 的 `GenericShapeData`；`geometry/kernels.py` 按类型切到 primitive SDF、mesh query、plane / hfield 采样；如果还是 primitive-pair，最后落到 `collision_primitive.py` 的解析叶子。 | support point、SDF 距离 / 法向 / 接触样本，或 primitive-specific contact geometry。 | `newton/_src/geometry/types.py:L38-L98`, `newton/_src/sim/builder.py:L5287-L5307`, `newton/_src/sim/builder.py:L9539-L9576`, `newton/_src/geometry/support_function.py:L107-L304`, `newton/_src/geometry/support_function.py:L351-L393`, `newton/_src/geometry/kernels.py:L1061-L1140`, `newton/_src/geometry/collision_primitive.py:L111-L177` |
+## One-Screen Chapter Map
 
-## GPU 并行切片
+```text
+builder 里的 local frame / shape / mass bookkeeping
+                    |
+                    v
+ articulation FK 和 geometry query 都在组合 transform
+                    |
+                    v
+    spatial helpers 让 twist / wrench 换 frame 还保留语义
+                    |
+                    v
+        GeoType 决定 shape 走哪种 query / representation
+                    |
+                    v
+   compute_inertia_shape + _update_body_mass 把几何压成质量属性
+```
 
-这页的重点不是 launch 维度，而是语义桥接，所以 GPU 只保留三个最小结论：
+## Beginner Path
 
-- `builder.py` 和 `spatial.py` 的高价值锚点大多是 host-side 组织或 `@wp.func` helper，它们决定的是数据和 frame 语义，不是并行策略。
-- 真正进入批量执行的地方，主要是 articulation kernels 与 shape 查询 kernels：`eval_articulation_fk` / `eval_articulation_jacobian` 说明同一套 frame 与 spatial 规则会被成批应用到整条 articulation，见 `newton/_src/sim/articulation.py:L377-L389`, `newton/_src/sim/articulation.py:L958-L977`；`geometry/kernels.py` 则说明同一套 `GeoType` dispatch 会被成批应用到 shape-local 查询，见 `newton/_src/geometry/kernels.py:L1053-L1140`。
-- 第一遍先把这些 kernel 读成“相同规则的批量化”，不要在 chapter 03 提前展开 launch policy、cache 或更细的 GPU 优化细节。
+1. 先看 Stage 1。
+   - 想验证什么：`shape_transform`、`joint_X_p / joint_X_c`、`body_com` 这些词到底先落在哪。
+   - 看完后应该能说：Newton 先把局部关系记下来，而不是一开始全写成 world 坐标。
+2. 再看 Stage 2。
+   - 想验证什么：同样的 transform chain 为什么会同时出现在 articulation 和 geometry query 里。
+   - 看完后应该能说：这不是两套数学，而是同一套局部到 world 的组合规则。
+3. 再看 Stage 3。
+   - 想验证什么：`twist / wrench / velocity_at_point` 为什么会看起来像一组 helper。
+   - 看完后应该能说：它们本质上是在做 frame-aware 的 6D 量转换。
+4. 再看 Stage 4。
+   - 想验证什么：为什么 `GeoType` 不只是个标签。
+   - 看完后应该能说：shape type 会直接决定查询路径和几何表示。
+5. 最后看 Stage 5。
+   - 想验证什么：质量、质心、惯量为什么会被这一章拿出来讲。
+   - 看完后应该能说：它们是 geometry 进入 articulation / dynamics 的压缩接口。
 
-## 回指原理
+## Main Walkthrough
 
-| 源码点 | 对应原理 | 第一遍应该怎么翻译 |
-|--------|----------|--------------------|
-| `newton/_src/sim/builder.py:L886-L887`, `newton/_src/sim/builder.py:L1016-L1017`, `newton/_src/sim/builder.py:L1046-L1049`, `newton/_src/sim/articulation.py:L328-L337` | frame / transform 不是抽象数学装饰，而是局部关系怎样一层层接到 world 的结构描述。 | 先翻译成“shape 挂在 body 上，joint anchor 分别站在 parent / child 两边，FK 只是把这条局部链接起来”。 |
-| `newton/_src/math/spatial.py:L54-L130`, `newton/_src/sim/articulation.py:L15-L33`, `newton/_src/sim/articulation.py:L900-L955` | twist / wrench helper 的核心问题始终是“在哪个 frame、在哪个点上读这个 6D 量”。 | 先把它们翻译成“frame adapter”，不是新的物理章节；`transform_wrench()` 则是和 `transform_twist()` 对称的受力侧版本。 |
-| `newton/_src/geometry/types.py:L38-L98`, `newton/_src/geometry/support_function.py:L107-L304`, `newton/_src/geometry/kernels.py:L1061-L1140`, `newton/_src/geometry/collision_primitive.py:L111-L177` | `shape type` 不只是标签，而是后续 collision representation 与 query path 的分流键。 | 第一遍先问“这是什么类几何，要走 support map、SDF/mesh query，还是 primitive analytic leaf”，不要先问完整 narrow phase 算法。 |
-| `newton/_src/geometry/inertia.py:L474-L605`, `newton/_src/sim/builder.py:L5323-L5326`, `newton/_src/sim/builder.py:L8213-L8245`, `newton/_src/sim/articulation.py:L1161-L1192` | 惯量是 geometry 通向 articulation 的桥，不是碰撞之外的附属物。 | 先翻译成“shape 先给局部质量属性，builder 把它们搬到 body 上，articulation 再把 body inertia 变成 spatial inertia”。 |
+### Stage 1: Newton 先把局部几何关系记成显式字段
 
-带着这四条回指去读后续章节时，路线会自然分叉：去 `04_scene_usd` 继续追“这些局部关系最初从哪里来”，去 `05_rigid_articulation` 继续追“frame / spatial / inertia 怎样进入刚体动力学”，去 `06_collision` 继续追“这些 representation 怎样变成真实接触生成”。chapter 03 的源码走读做到这里就够了。
+**Claim**
+
+chapter 03 里的 frame 词汇不是抽象装饰，而是 builder 一开始就明确存下来的对象关系：shape 相对 body 怎么挂、joint 两侧的锚点在哪、body 的质心在哪。
+
+**Why it matters**
+
+如果不先把这些字段认成“局部关系账本”，后面看到 transform 组合时就会误以为 Newton 在凭空玩数学体操。
+
+**Source excerpt**
+
+builder 先把这些关键字段记成 lists：
+
+```python
+self.shape_transform: list[Transform] = []
+self.shape_body: list[int] = []
+...
+self.body_com: list[Vec3] = []
+...
+self.joint_X_p: list[Transform] = []
+self.joint_X_c: list[Transform] = []
+```
+
+真正写入时也很直白：
+
+```python
+self.joint_child.append(child)
+self.joint_X_p.append(parent_xform)
+self.joint_X_c.append(child_xform)
+...
+self.shape_body.append(body)
+self.shape_transform.append(xform)
+```
+
+**Verification cues**
+
+- `shape_transform` 明确是 shape-to-body transform，不是 world pose。
+- `joint_X_p / joint_X_c` 明确把 joint 两侧都保留下来，所以 parent / child frame 不会混成一层。
+- `body_com` 作为单独字段存在，说明 body origin 和 COM 也不是默认重合。
+
+**Output passed to next stage**
+
+一份局部关系账本。后面所有 FK、shape query、mass update 都要从这里接着读。
+
+### Stage 2: 同一套 transform 组合规则同时服务 articulation 和 geometry
+
+**Claim**
+
+articulation FK 和 geometry query 并不是两套不同数学，它们都在做同一件事：把局部关系一层层组合到 world，再在需要时反过来拉回 local frame。
+
+**Why it matters**
+
+这一步能把 chapter 03 真正变成后续章节的共同底座。你一旦看懂这条 transform chain，`05` 和 `06` 的阅读阻力都会小很多。
+
+**Source excerpt**
+
+在 articulation FK 里，joint 两侧 frame 会一路拼到 child body：
+
+```python
+X_wpj = X_pj
+if parent >= 0:
+    X_wp = body_q[parent]
+    X_wpj = X_wp * X_wpj
+
+X_wcj = X_wpj * X_j
+X_wc = X_wcj * wp.transform_inverse(X_cj)
+```
+
+在 geometry query 里，同一个想法只是换成 shape：
+
+```python
+X_wb = body_q[rigid_index]
+X_bs = shape_transform[shape_index]
+
+X_ws = wp.transform_multiply(X_wb, X_bs)
+X_sw = wp.transform_inverse(X_ws)
+
+x_local = wp.transform_point(X_sw, px)
+```
+
+**Verification cues**
+
+- articulation 那边是在算 child body 的 world pose。
+- geometry 那边是在把 world-space query point 拉回 shape local frame。
+- 两边共同依赖的其实都是“局部关系先记好，再按需要组合 / 取逆”。
+
+**Output passed to next stage**
+
+一个统一读法：frame 组合先得到正确的 pose，再决定后面要读速度、受力，还是几何查询。
+
+### Stage 3: `twist / wrench` helper 本质上是 frame adapter
+
+**Claim**
+
+`velocity_at_point()`、`transform_twist()`、`transform_wrench()` 这些 helper 的核心任务，不是引入新概念，而是让 Newton 的 6D 量在换 frame 时仍然保持一致语义。
+
+**Why it matters**
+
+如果你把 spatial quantity 读成“另一本教材”，chapter 03 就会突然变得很重。第一遍其实只要看懂：这些 helper 在帮你维护“这个 6D 量现在在哪个 frame、按什么顺序表达”。
+
+**Source excerpt**
+
+`spatial.py` 里的三个关键 helper 都在做 layout / frame 的适配：
+
+```python
+def velocity_at_point(qd: wp.spatial_vector, r: wp.vec3) -> wp.vec3:
+    qd_wp = wp.spatial_vector(wp.spatial_bottom(qd), wp.spatial_top(qd))
+    return wp.velocity_at_point(qd_wp, r)
+
+def transform_twist(t: wp.transform, x: wp.spatial_vector) -> wp.spatial_vector:
+    x_wp = wp.spatial_vector(wp.spatial_bottom(x), wp.spatial_top(x))
+    y_wp = wp.transform_twist(t, x_wp)
+    return wp.spatial_vector(wp.spatial_bottom(y_wp), wp.spatial_top(y_wp))
+
+def transform_wrench(t: wp.transform, x: wp.spatial_vector) -> wp.spatial_vector:
+    x_wp = wp.spatial_vector(wp.spatial_bottom(x), wp.spatial_top(x))
+    y_wp = wp.transform_wrench(t, x_wp)
+    return wp.spatial_vector(wp.spatial_bottom(y_wp), wp.spatial_top(y_wp))
+```
+
+**Verification cues**
+
+- 这几段代码都在显式处理 Newton 和 Warp 的 spatial layout 差异。
+- `velocity_at_point()` 说明 twist 不只是“一个 6D 向量”，还和参考点有关。
+- `transform_twist()` 和 `transform_wrench()` 是一对对称操作，分别服务运动量和受力量。
+
+**Output passed to next stage**
+
+一套稳定心智模型：当 later chapters 里出现 twist / wrench / Jacobian 列时，你知道它们本质上都离不开 frame-aware 转换。
+
+### Stage 4: `GeoType` 不只是标签，它决定 shape 走哪条表示路径
+
+**Claim**
+
+在 Newton 里，shape type 不是展示信息，而是几何表示和查询路径的分流键：primitive、mesh、convex mesh、heightfield 会走不同的 query contract。
+
+**Why it matters**
+
+这一步是 chapter 03 到 chapter 06 的桥。如果不把 `GeoType` 读成 dispatch key，后面看 collision 分支时会很容易迷路。
+
+**Source excerpt**
+
+`GeoType` 先给出第一层分类：
+
+```python
+class GeoType(enum.IntEnum):
+    PLANE = 1
+    HFIELD = 2
+    SPHERE = 3
+    CAPSULE = 4
+    ELLIPSOID = 5
+    CYLINDER = 6
+    BOX = 7
+    MESH = 8
+    CONE = 9
+    CONVEX_MESH = 10
+
+    @property
+    def is_primitive(self) -> bool:
+        ...
+
+    @property
+    def is_explicit(self) -> bool:
+        ...
+```
+
+真正查询时，它会直接决定要走哪种几何分支：
+
+```python
+if geo_type == GeoType.SPHERE:
+    d = sdf_sphere(x_local, geo_scale[0])
+    n = sdf_sphere_grad(x_local, geo_scale[0])
+
+if geo_type == GeoType.BOX:
+    d = sdf_box(x_local, geo_scale[0], geo_scale[1], geo_scale[2])
+    n = sdf_box_grad(x_local, geo_scale[0], geo_scale[1], geo_scale[2])
+
+if geo_type == GeoType.MESH or geo_type == GeoType.CONVEX_MESH:
+    ...
+
+if geo_type == GeoType.HFIELD:
+    d, n = sample_sdf_grad_heightfield(hfd, heightfield_elevations, x_local)
+```
+
+**Verification cues**
+
+- primitive 类型直接走解析 SDF / gradient。
+- mesh / convex mesh 需要 source pointer 和 mesh query。
+- 你不用第一遍背完所有 query 细节，只要先把“分流权在 `GeoType` 手里”记住。
+
+**Output passed to next stage**
+
+一条更清楚的表示链：shape type 决定 query contract，而 query contract 再决定后面怎样进入 collision 或 inertia 相关代码。
+
+### Stage 5: inertia 是 geometry 进入 dynamics 的压缩接口
+
+**Claim**
+
+质量、质心、惯量不是 geometry 旁边的注释，而是 geometry 最终压缩给 articulation / dynamics 使用的接口。
+
+**Why it matters**
+
+只有把这一步读顺，chapter 03 才真的连上 `05_rigid_articulation`。否则 shape 只是“长得不一样”，还没有变成“动起来的代价不一样”。
+
+**Source excerpt**
+
+`compute_inertia_shape()` 先按 shape type 给出局部质量属性：
+
+```python
+if type == GeoType.SPHERE:
+    solid = compute_inertia_sphere(density, scale[0])
+    return solid
+elif type == GeoType.BOX:
+    solid = compute_inertia_box(density, scale[0], scale[1], scale[2])
+    return solid
+elif type == GeoType.MESH or type == GeoType.CONVEX_MESH:
+    ...
+    return m_new, c_new, I_new
+```
+
+builder 再把 shape 级质量属性合并到 body 上：
+
+```python
+(m, c, inertia) = compute_inertia_shape(type, scale, src, cfg.density, cfg.is_solid, cfg.margin)
+com_body = wp.transform_point(xform, c)
+self._update_body_mass(body, m, inertia, com_body, xform.q)
+```
+
+而 `_update_body_mass()` 真正在做的是重新计算 body COM 和 shifted inertia：
+
+```python
+new_com = (self.body_com[i] * self.body_mass[i] + p * m) / new_mass
+
+new_inertia = transform_inertia(
+    self.body_mass[i], self.body_inertia[i], com_offset, wp.quat_identity()
+) + transform_inertia(m, inertia, shape_offset, q)
+
+self.body_mass[i] = new_mass
+self.body_inertia[i] = new_inertia
+self.body_com[i] = new_com
+```
+
+**Verification cues**
+
+- inertia 不是从 body 凭空出现的，而是从 shape geometry 推上来的。
+- `com_body = wp.transform_point(xform, c)` 说明连质心也要先过局部 frame 变换。
+- `_update_body_mass()` 明确在做多 shape 合并，所以 body mass property 是汇总结果，不是单一 shape 属性。
+
+**Output passed to next stage**
+
+`body_mass / body_com / body_inertia` 这组三件套。它们会在 `05` 的 articulation 与 dynamics 代码里继续被消费。
+
+## Object Ledger
+
+| 对象 | 谁生产 | 谁消费 | 盯哪些字段 |
+|------|--------|--------|------------|
+| `shape_transform` | builder | geometry query、collision pipeline | shape 相对 body 的局部位姿 |
+| `joint_X_p / joint_X_c` | builder | articulation FK、Jacobian 相关 helper | joint 两侧 frame |
+| `body_com` | builder mass accumulation | articulation、solver kernels | COM 相对 body origin 的偏移 |
+| `X_wc / X_ws / X_sw` | transform composition | articulation / geometry kernels | world pose 与 local query frame |
+| `wp.spatial_vector` | state / helper functions | spatial transforms、Jacobian、dynamics | linear 与 angular 部分的语义 |
+| `GeoType` | shape config / finalize | support / SDF / mesh query | primitive vs explicit dispatch |
+| `body_mass / body_inertia` | `compute_inertia_shape()` + `_update_body_mass()` | articulation / dynamics | geometry 被压缩后的质量属性 |
+
+## Stop Here
+
+读到这里就已经够 chapter 03 的 80-90% 了。
+
+如果你现在能用自己的话讲顺下面这句话，这一章的 beginner 目标就完成了：
+
+```text
+builder 先把 shape、joint、COM 这些局部关系记下来；
+articulation 和 geometry query 再用同一套 transform 规则组合到 world；
+spatial helper 负责 frame-aware 的 6D 量转换；
+GeoType 决定查询路径；
+inertia 则把几何压成后面 dynamics 要消费的质量属性。
+```
+
+这时你已经可以更稳地进入 `04_scene_usd`、`05_rigid_articulation` 和 `06_collision`。
+
+## Go Deeper
+
+如果你还想继续精确追源码，再去 `source-walkthrough-deep.md`：
+
+- 想保留所有 file/symbol/line anchors：看 `Fast Deep Index`
+- 想逐跳追 frame、shape、inertia 的 exact handoff：看 `Exact Handoff Trace`
+- 想知道哪些 mesh / Jacobian / primitive 细节第一遍可以跳过：看 `Optional Branches`
+- 想逐条核对这里的 claim：看 `Verification Anchors`

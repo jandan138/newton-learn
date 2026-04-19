@@ -15,53 +15,390 @@ newton_commit: 1a230702
 
 # 04 场景描述与 USD 解析 源码走读
 
-这份 walkthrough 只追 `scene input -> importer -> builder -> Model` 这条线，不展开 runtime stepping，也不把 `_src/utils/import_usd.py` 读成一趟 parser internals 大巡游。第一遍最重要的是看清：scene graph 里的 body / joint / shape / mass attrs，最后怎样压成 `Model` 的静态字段。
+如果你是第一次读这一章，最好先配合 `principle.md` 一起读；如果你是直接跳进源码走读也没关系，但一旦发现术语开始变快，就先回到 `principle.md` 把对象关系补齐，再回来追源码。
 
-概念桥接放在 `principle.md`；这页只负责把那条桥对到真实入口函数、关键调用链和字段落点。
+这份主 walkthrough 只追 chapter 04 的关键桥：scene / asset 输入怎样经由 importer、schema resolver、builder，最后冻结成 `Model`。目标不是把 OpenUSD 生态讲完，而是让你第一次追这条链时，能明确知道“外部场景词”是怎样变成 Newton 内部 body / joint / shape / mass 字段的。
 
-## 涉及路径
+## What This Walkthrough Follows
 
-| 路径 | 角色 | 先读原因 |
-|------|------|----------|
-| `newton/_src/sim/builder.py` | 这条链的公开入口和收口都在这里：`ModelBuilder.add_usd()` 薄转发到 importer，见 `newton/_src/sim/builder.py:L2216-L2440`；`add_link()` / `add_joint()` / `add_shape()` 负责把 importer 产物记成 builder 字段，见 `newton/_src/sim/builder.py:L3394-L3445`, `newton/_src/sim/builder.py:L3521-L3678`, `newton/_src/sim/builder.py:L5177-L5336`；`finalize()` 再冻结成 `Model`，见 `newton/_src/sim/builder.py:L9424-L9464`, `newton/_src/sim/builder.py:L9539-L9600`, `newton/_src/sim/builder.py:L10084-L10258`。 | 一页里先拿到“入口在哪”和“最后落到哪”。 |
-| `newton/_src/utils/import_usd.py` | 真正的 importer 主干。`parse_usd()` 负责读 stage、body、joint、shape、material 和 MassAPI，再把结果喂给 builder，见 `newton/_src/utils/import_usd.py:L63-L92`, `newton/_src/utils/import_usd.py:L665-L759`, `newton/_src/utils/import_usd.py:L792-L1510`, `newton/_src/utils/import_usd.py:L2393-L2992`。 | 这是 scene graph 真正开始变成 Newton 结构的地方。 |
-| `newton/_src/usd/schema_resolver.py` | schema 归一化边界。`SchemaResolverManager.get_value()` 按优先级解析逻辑属性，`collect_prim_attrs()` 负责把相关 authored attrs 收集出来，见 `newton/_src/usd/schema_resolver.py:L120-L147`, `newton/_src/usd/schema_resolver.py:L186-L266`。 | 先看这里，才能把 resolver 读成“属性翻译层”而不是另一套 importer。 |
-| `newton/_src/usd/schemas.py` | 具体映射表。Newton / PhysX / MuJoCo 三套命名分别怎样落到同一组逻辑键，在 `SchemaResolverNewton`、`SchemaResolverPhysx`、`SchemaResolverMjc` 里写死，见 `newton/_src/usd/schemas.py:L41-L99`, `newton/_src/usd/schemas.py:L102-L194`, `newton/_src/usd/schemas.py:L279-L380`。 | 这里最能回答“同一个物理意思为什么能从不同命名空间读出来”。 |
-| `newton/_src/sim/model.py` | `Model` 静态字段目录。`shape_transform / shape_type / shape_scale`、`body_mass / body_com / body_inertia`、`joint_parent / joint_child / joint_X_p / joint_X_c` 都在这里有最终落点，见 `newton/_src/sim/model.py:L191-L239`, `newton/_src/sim/model.py:L390-L456`。 | 先认最终目的地，再回头看 importer / builder 在往哪里写。 |
-| `newton/usd.py` | 不是 importer 主干，而是 chapter 04 的公共目录：把 `SchemaResolver*` 和常用 USD helper 暴露在 public surface，见 `newton/usd.py:L13-L72`。 | 只需要知道 resolver 类型是公开 API，不需要在这章继续往 helper 细节下钻。 |
+这一页只追下面这条 handoff：
 
-## 调用链总览
+```text
+add_usd(...)
+-> parse_usd(...)
+-> schema resolver normalizes authored attrs
+-> builder accumulates bodies / joints / shapes / mass
+-> finalize()
+-> Model static arrays
+```
 
-1. 对这条链来说，公开入口其实是 `ModelBuilder.add_usd()`。它本身很薄，只负责把参数原样转交给 `parse_usd()`；`newton/usd.py` 更像 resolver/helper 的公共目录，不是实际导入 orchestration 的落点，见 `newton/_src/sim/builder.py:L2216-L2440`, `newton/usd.py:L13-L72`。
-2. `parse_usd()` 先把 scene input 缩成 Newton 真正关心的几类信息：stage 级单位和 up-axis、PhysicsScene attrs、rigid body、joint、shape/material，以及 path 到整数索引的映射表，见 `newton/_src/utils/import_usd.py:L1512-L1573`, `newton/_src/utils/import_usd.py:L1624-L1734`, `newton/_src/utils/import_usd.py:L3218-L3233`。这里的重点不是“把 USD 树完整保留”，而是把后面会进入 builder 的局部 pose、拓扑关系和属性读出来。
-3. schema resolver 在 importer 中间插了一层很重要的统一语义边界。`SchemaResolverManager.get_value()` 会按 resolver 优先顺序查询某个逻辑键，谁先给出 authored 值就用谁；都没有时，再回退到调用方默认值或 mapping 默认值，见 `newton/_src/usd/schema_resolver.py:L214-L266`。具体有哪些别名关系，则来自 `newton/_src/usd/schemas.py` 里对 `newton:*`、`physx*`、`mjc:*` 的映射，见 `newton/_src/usd/schemas.py:L41-L99`, `newton/_src/usd/schemas.py:L102-L194`, `newton/_src/usd/schemas.py:L279-L380`。
-4. importer 读清 scene graph 后，并不会直接构造 `Model`。它先把 body、joint、shape 逐步记进 builder：body 通过 `add_link()` 占一个刚体槽位，joint 把 parent/child 和两侧局部 frame 写成 `joint_parent / joint_child / joint_X_p / joint_X_c`，shape 则把几何、局部 pose、scale、material-ish cfg 写成 shape 列表，见 `newton/_src/utils/import_usd.py:L665-L759`, `newton/_src/utils/import_usd.py:L792-L1510`, `newton/_src/utils/import_usd.py:L2393-L2646`, `newton/_src/sim/builder.py:L3394-L3445`, `newton/_src/sim/builder.py:L3521-L3678`, `newton/_src/sim/builder.py:L5177-L5336`。
-5. 质量属性也在 builder 阶段收束，而不是留到 runtime 再推。默认路径下，shape 会按 `ShapeConfig.density` 经 `compute_inertia_shape(...)` 和 `_update_body_mass(...)` 累积到 body；如果 body 或 collider author 了 `MassAPI`，importer 会用 authored 或 fallback mass information 覆盖/补齐 `body_mass / body_com / body_inertia`，见 `newton/_src/utils/import_usd.py:L2256-L2391`, `newton/_src/utils/import_usd.py:L2648-L2698`, `newton/_src/utils/import_usd.py:L2850-L2956`, `newton/_src/sim/builder.py:L5323-L5326`, `newton/_src/sim/builder.py:L8213-L8245`。
-6. `finalize()` 才是这条线真正闭环的地方。它先做 validation，再把 builder 里的 Python lists 和几何 source 冻成 `Model` 的静态数组：`shape_*`、`body_*`、`joint_*` 都在这里完成定型，见 `newton/_src/sim/builder.py:L9466-L9499`, `newton/_src/sim/builder.py:L9539-L9600`, `newton/_src/sim/builder.py:L10084-L10258`；最终字段目录则在 `newton/_src/sim/model.py:L191-L239`, `newton/_src/sim/model.py:L390-L456`。
+这一页刻意不展开三类东西：
 
-把这一页压成一句话就是：`add_usd()` 并不是“直接读出一个 Model”，而是先让 importer 解析 scene graph 和 attrs，再让 resolver 统一命名，再让 builder 记成 Newton 的 body/joint/shape/mass 结构，最后由 `finalize()` 把这些结构冻成 `Model`。
+- 完整 USD authoring 工作流
+- 所有 parser edge cases 和 remeshing 分支
+- articulation dynamics 和 collision algorithms 本身
 
-## 数据流切片
+第一遍先守住一句话：chapter 04 真正讲的是 **scene graph 怎样被压成 Newton 可运行的静态模型结构**。
 
-| 切片 | 读入 | 中间接力 | 写出 | 证据 |
-|------|------|----------|------|------|
-| authored transform / local pose -> builder frame fields | rigid body 的 `position / rotation`，joint 的 `localPose0 / localPose1`，shape 的 `localPos / localRot`，再加 stage up-axis 与外部 `xform`。 | `parse_body()` 先把 body pose 组合成导入后的 `origin`；`resolve_joint_parent_child()` 把 joint 两侧局部 frame 解析出来；shape 侧再把 `shape_spec.localPos / localRot` 变成相对 body 或 world 的 `shape_xform`。 | builder 里的 `body_q`、`joint_X_p / joint_X_c`、`shape_transform`，并在 `finalize()` 后落成 `Model.body_q`、`Model.joint_X_p / joint_X_c`、`Model.shape_transform`。 | `newton/_src/utils/import_usd.py:L710-L714`, `newton/_src/utils/import_usd.py:L761-L788`, `newton/_src/utils/import_usd.py:L1810-L1818`, `newton/_src/utils/import_usd.py:L2454-L2458`, `newton/_src/sim/builder.py:L3431-L3436`, `newton/_src/sim/builder.py:L3600-L3602`, `newton/_src/sim/builder.py:L5271-L5273`, `newton/_src/sim/builder.py:L9540-L9541`, `newton/_src/sim/builder.py:L10178-L10180`, `newton/_src/sim/builder.py:L10197-L10198` |
-| scene body / joint graph -> builder topology | articulation 里的 `articulatedBodies / articulatedJoints`，joint 的 `body0 / body1`，以及 orphan joint 关系。 | importer 先建 `body_ids`、`joint_edges`、`merged_joint_groups` 和 `path_body_map / path_joint_map`，再按可选的 topological ordering 决定 body/joint 插入顺序。builder `add_joint()` 随后把 parent-child 关系记成自己的拓扑缓存。 | builder 的 `joint_parent / joint_child`、`joint_parents / joint_children`、articulation 分组，以及最终 `Model.joint_parent / joint_child / joint_ancestor`。 | `newton/_src/utils/import_usd.py:L1717-L1729`, `newton/_src/utils/import_usd.py:L1788-L1887`, `newton/_src/utils/import_usd.py:L1952-L1986`, `newton/_src/utils/import_usd.py:L2148-L2161`, `newton/_src/sim/builder.py:L3590-L3600`, `newton/_src/sim/builder.py:L10194-L10213` |
-| authored or inferred mass properties -> `body_mass / body_com / body_inertia` | physics material density、collider `MassAPI`、body `MassAPI`，以及 shape geometry 本身。 | shape 导入先把 density、friction、restitution 等收进 `ShapeConfig`；默认路径下 `add_shape()` 用 `compute_inertia_shape(...)` 和 `_update_body_mass(...)` 累积 body 质量属性；如果 body/collider author 了 `MassAPI`，importer 再用 authored 值或 `ComputeMassProperties` fallback 覆盖/补齐。 | builder 里的 `body_mass / body_com / body_inertia / body_inv_*`，以及 finalize 后的同名 `Model` arrays。 | `newton/_src/utils/import_usd.py:L1655-L1680`, `newton/_src/utils/import_usd.py:L2516-L2537`, `newton/_src/utils/import_usd.py:L2648-L2698`, `newton/_src/utils/import_usd.py:L2850-L2956`, `newton/_src/sim/builder.py:L5323-L5326`, `newton/_src/sim/builder.py:L8213-L8245`, `newton/_src/sim/builder.py:L10124-L10128`, `newton/_src/sim/builder.py:L10167-L10180` |
-| authored shape / material-ish attrs -> shape arrays / config | shape type、local transform、scale、material friction/restitution/density、resolver 归一后的 `margin / gap / ke / kd`，以及 visibility / collision group 一类 authoring 结果。 | importer 先解析 material，再用 resolver 统一 `margin / gap / ke / kd` 等逻辑键，最后组装成 `ModelBuilder.ShapeConfig(...)` 并分发到各个 `add_shape_*()`。builder `add_shape()` 把 cfg 和几何参数拆到 shape 列表。 | `shape_type / shape_transform / shape_scale / shape_flags / shape_material_* / shape_gap / shape_collision_group`，并在 `finalize()` 后变成 `Model` 的 shape arrays。 | `newton/_src/utils/import_usd.py:L1655-L1680`, `newton/_src/utils/import_usd.py:L2466-L2539`, `newton/_src/utils/import_usd.py:L2542-L2645`, `newton/_src/sim/builder.py:L5287-L5307`, `newton/_src/sim/builder.py:L9539-L9600`, `newton/_src/sim/model.py:L191-L239` |
+## One-Screen Chapter Map
 
-## GPU 并行切片
+```text
+USD stage / prim attrs
+        |
+        v
+  ModelBuilder.add_usd(...)
+        |
+        v
+      parse_usd(...)
+        |
+        +--> resolve bodies / joints / local poses
+        +--> resolve shape attrs / materials / mass info
+        +--> schema resolver unifies authored names
+        |
+        v
+ builder.add_link / add_joint / add_shape
+        |
+        v
+        finalize()
+        |
+        v
+  Model.shape_* / body_* / joint_*
+```
 
-- `-` 这章刻意不展开 runtime kernel。`parse_usd()`、resolver、`add_link()`、`add_joint()`、`add_shape()` 的高价值信息主要是 host-side 导入与字段组织，不是并行策略。
-- 唯一需要记住的冻结点是 `finalize()`：它把 builder 列表搬成 `wp.array`，并在需要时 finalize geometry source；GPU 细节到这里为止，见 `newton/_src/sim/builder.py:L9499-L9600`, `newton/_src/sim/builder.py:L10084-L10258`。
+## Beginner Path
 
-## 回指原理
+1. 先看 Stage 1。
+   - 想验证什么：`add_usd()` 本身到底做了多少事。
+   - 看完后应该能说：公开入口很薄，真正的导入主干在 `parse_usd()`。
+2. 再看 Stage 2。
+   - 想验证什么：scene graph 里最重要的 body / joint / local pose 是怎样被 importer 认出来的。
+   - 看完后应该能说：importer 真正在提取的是拓扑关系和局部 frame，不是把整棵 USD 树原封不动搬进来。
+3. 再看 Stage 3。
+   - 想验证什么：schema resolver 为什么存在。
+   - 看完后应该能说：importer 读的是逻辑键，比如 margin / gap，不是只认一种命名空间。
+4. 再看 Stage 4。
+   - 想验证什么：shape、material、mass property 怎样写进 builder。
+   - 看完后应该能说：scene attrs 最终会被压成 `ShapeConfig`、body mass property 和 builder lists。
+5. 最后看 Stage 5。
+   - 想验证什么：`finalize()` 在这条链上的真正作用。
+   - 看完后应该能说：到 `Model` 为止，只剩 solver 真正要消费的静态 arrays。
 
-| 源码点 | 对应 chapter-04 原理 | 第一遍应该怎么翻译 |
-|--------|---------------------|--------------------|
-| `newton/_src/sim/builder.py:L2216-L2440`, `newton/_src/utils/import_usd.py:L63-L92` | `scene input -> importer -> builder -> finalize() -> Model` 不是口号，而是一条明确的接力链。 | 先翻译成“`add_usd()` 只是入口，真正的导入工作在 `parse_usd()`，真正的定型工作在 `finalize()`”。 |
-| `newton/_src/usd/schema_resolver.py:L214-L266`, `newton/_src/usd/schemas.py:L41-L99`, `newton/_src/usd/schemas.py:L102-L194`, `newton/_src/usd/schemas.py:L279-L380` | resolver 是“属性翻译边界”，不是另一套几何 parser。 | 第一遍只需要记住：不同命名空间先被翻译成统一逻辑键，importer 后面消费的是这些逻辑键，不是原始名字本身。 |
-| `newton/_src/utils/import_usd.py:L2850-L2956`, `newton/_src/sim/builder.py:L5323-L5326`, `newton/_src/sim/builder.py:L8213-L8245` | `body_mass / body_com / body_inertia` 是 resolve 后的静态结果，不是“原始 scene attr 原封不动抄进来”。 | 先翻译成“shape 几何会先给 baseline mass properties，body/collider authored MassAPI 再按优先关系覆盖或补齐”。 |
-| `newton/_src/sim/builder.py:L9539-L9600`, `newton/_src/sim/builder.py:L10084-L10258`, `newton/_src/sim/model.py:L191-L239`, `newton/_src/sim/model.py:L390-L456` | `Model` 是冻结后的仿真静态结构，不再保留 scene graph 的 authoring 树和命名空间噪音。 | 第一遍先把它翻译成“到 `Model` 为止，只剩 solver 真正要消费的 body/joint/shape 数组”，下一跳自然就是 `05_rigid_articulation` 和 `06_collision`。 |
+## Main Walkthrough
 
-带着这四个回指再看 `principle.md`，chapter 04 的桥就会比较稳：scene graph 不会直接等于 `Model`，它中间一定要经过一次解析、归一、累积和冻结。源码走读做到这里就够了。
+### Stage 1: `add_usd()` 是公开入口，但真正的导入主干在 `parse_usd()`
+
+**Claim**
+
+`ModelBuilder.add_usd()` 主要负责暴露一个稳定 public entry；真正的场景解析和 builder 累积工作，都在 importer 里继续发生。
+
+**Why it matters**
+
+如果一开始把 `add_usd()` 误读成“这里已经做完全部导入”，后面就会不知道该去哪追 body / joint / shape 的真实 handoff。
+
+**Source excerpt**
+
+公开入口本身非常薄：
+
+```python
+def add_usd(...):
+    from ..utils.import_usd import parse_usd
+
+    return parse_usd(
+        self,
+        source,
+        ...
+        schema_resolvers=schema_resolvers,
+        ...
+    )
+```
+
+而 `newton.usd` 更像是公开目录，把 resolver 类型暴露出来：
+
+```python
+from ._src.usd.schema_resolver import PrimType, SchemaResolver
+from ._src.usd.schemas import (
+    SchemaResolverMjc,
+    SchemaResolverNewton,
+    SchemaResolverPhysx,
+)
+```
+
+**Verification cues**
+
+- `add_usd()` 没有自己实现一大段 importer 逻辑，它只是把参数转给 `parse_usd()`。
+- `newton.usd` 暴露的是 resolver 类型和常用 helper，不是完整 importer 主干。
+- 所以 chapter 04 的真正源码重心在 `_src/utils/import_usd.py`。
+
+**Output passed to next stage**
+
+一个已经拿到 stage、resolver 配置和导入选项的 importer 调用：`parse_usd(builder, source, ...)`。
+
+### Stage 2: importer 真正在提取 body、joint 和 local pose 关系
+
+**Claim**
+
+scene graph 进入 Newton 时，最先被 importer 抓住的不是“完整树结构本身”，而是后面运行一定会用到的 body、joint、parent-child 关系和两侧局部 frame。
+
+**Why it matters**
+
+这是 chapter 04 的第一层去噪：scene 里能写很多东西，但真正进入 Newton runtime 主线的，是拓扑和局部姿态关系。
+
+**Source excerpt**
+
+body 会先被 importer 包成一次 `builder.add_link(...)`：
+
+```python
+def add_body(...):
+    b = builder.add_link(
+        xform=xform,
+        label=label,
+        inertia=body_inertia,
+        armature=0.0 if armature is not None else None,
+        is_kinematic=is_kinematic,
+        custom_attributes=body_custom_attrs,
+    )
+    path_body_map[label] = b
+```
+
+joint 则先把两侧局部 frame 和 parent / child body id 解出来：
+
+```python
+def resolve_joint_parent_child(joint_desc, body_index_map, get_transforms=True):
+    parent_tf = wp.transform(joint_desc.localPose0Position, usd.value_to_warp(joint_desc.localPose0Orientation))
+    child_tf = wp.transform(joint_desc.localPose1Position, usd.value_to_warp(joint_desc.localPose1Orientation))
+
+    parent_path = str(joint_desc.body0)
+    child_path = str(joint_desc.body1)
+    parent_id = body_index_map.get(parent_path, -1)
+    child_id = body_index_map.get(child_path, -1)
+```
+
+**Verification cues**
+
+- `path_body_map` 明确说明 importer 在维护“scene path -> builder index”的映射。
+- joint 这层最值钱的输入是 `localPose0 / localPose1`，因为它们就是后面 `joint_X_p / joint_X_c` 的来源。
+- importer 这里已经在把 scene language 压缩成 body / joint / frame language。
+
+**Output passed to next stage**
+
+一批 builder-ready 的 body、joint 和 local pose 信息，以及路径到整数槽位的映射表。
+
+### Stage 3: schema resolver 把 authored 名字先翻译成统一逻辑键
+
+**Claim**
+
+schema resolver 的职责不是再造一套 importer，而是在 importer 中间提供一个统一语义层：不同命名空间 author 的 margin、gap、joint limit、drive 参数，先被翻译成同一组逻辑键，再交给 builder 消费。
+
+**Why it matters**
+
+如果没有这一层，importer 就得处处写死 `newton:*`、`physx*`、`mjc:*` 的分支，chapter 04 也会变成“背属性别名”。
+
+**Source excerpt**
+
+resolver manager 的查值顺序很直接：
+
+```python
+for r in self.resolvers:
+    val = r.get_value(prim, prim_type, key)
+    if val is None:
+        continue
+    self._collect_on_first_use(r, prim)
+    return val
+```
+
+而具体 mapping 则把不同命名空间压到同一逻辑键上：
+
+```python
+# Newton-authored
+"margin": SchemaAttribute("newton:contactMargin", 0.0)
+
+# PhysX-authored
+"gap": SchemaAttribute(
+    "physxCollision:contactOffset",
+    float("-inf"),
+    usd_value_getter=_physx_gap_from_prim,
+    attribute_names=("physxCollision:contactOffset", "physxCollision:restOffset"),
+)
+
+# MuJoCo-authored
+"margin": SchemaAttribute(
+    "mjc:margin",
+    0.0,
+    usd_value_getter=_mjc_margin_from_prim,
+    attribute_names=("mjc:margin", "mjc:gap"),
+)
+```
+
+**Verification cues**
+
+- importer 调用的是 `get_value(..., key="margin")` 这类逻辑键，而不是死盯某一个 authored attribute 名字。
+- 不同 resolver 只是提供不同的 authored 来源，消费侧看到的是同一套语义。
+- 这也是为什么 chapter 04 里要把 resolver 读成“属性翻译边界”。
+
+**Output passed to next stage**
+
+一组已经规范化的 scene 属性，比如 margin、gap、joint limit、drive gains、self-collision 开关。
+
+### Stage 4: shape、material 和 mass property 被压进 builder
+
+**Claim**
+
+scene 里的 shape 和 material 不会直接变成 `Model`；它们会先被 importer 压成 `ShapeConfig`、body/joint/shape 参数和必要的 mass-property 覆盖信息，再写进 builder。
+
+**Why it matters**
+
+这一步决定了后面 `05`、`06` 看到的字段是怎么来的。你要先知道 builder 在累积什么，才能看懂 runtime 在消费什么。
+
+**Source excerpt**
+
+shape attrs 会先被 importer 组装成一份统一的 `shape_params`：
+
+```python
+local_xform = wp.transform(shape_spec.localPos, usd.value_to_warp(shape_spec.localRot))
+...
+shape_params = {
+    "body": body_id,
+    "xform": shape_xform,
+    "cfg": ModelBuilder.ShapeConfig(
+        ke=shape_ke,
+        kd=shape_kd,
+        margin=margin_val,
+        gap=gap_val,
+        mu=material.dynamicFriction,
+        restitution=material.restitution,
+        density=shape_density,
+        collision_group=collision_group,
+        is_visible=collider_is_visible,
+    ),
+    "label": path,
+}
+```
+
+之后再分发到具体 `add_shape_*()`：
+
+```python
+if key == UsdPhysics.ObjectType.CubeShape:
+    shape_id = builder.add_shape_box(**shape_params, hx=hx, hy=hy, hz=hz)
+elif key == UsdPhysics.ObjectType.SphereShape:
+    shape_id = builder.add_shape_sphere(**shape_params, radius=radius)
+elif key == UsdPhysics.ObjectType.MeshShape:
+    shape_id = builder.add_shape_mesh(scale=wp.vec3(*shape_spec.meshScale), mesh=mesh, **shape_params)
+```
+
+body 质量属性也可能被 authored `MassAPI` 覆盖：
+
+```python
+if has_authored_mass:
+    mass = float(mass_api.GetMassAttr().Get())
+else:
+    mass = cmp_mass
+builder.body_mass[body_id] = mass
+
+if has_authored_com:
+    builder.body_com[body_id] = wp.vec3(*mass_api.GetCenterOfMassAttr().Get())
+else:
+    builder.body_com[body_id] = wp.vec3(*cmp_com)
+```
+
+**Verification cues**
+
+- shape 层先统一落成 `ShapeConfig`，而不是直接写 `Model.shape_*`。
+- geometry、自定义 material、resolver 结果，都会在这里汇总到 builder shape rows。
+- MassAPI 的存在说明 body mass property 可能来自 authored 数据，也可能来自 geometry fallback，不是只有单一路径。
+
+**Output passed to next stage**
+
+builder 里已经累积好的 `body_* / joint_* / shape_*` lists，以及必要的 path maps 和 schema attrs。
+
+### Stage 5: `finalize()` 把 builder 累积结果冻结成 `Model`
+
+**Claim**
+
+到 `finalize()` 为止，这条导入链才真正封口：builder 里的 Python-side 累积结构会被冻结成 `Model` 的静态 arrays，供后面的 runtime、articulation 和 collision 直接消费。
+
+**Why it matters**
+
+这一步是 scene world 和 runtime world 的正式分界线。过了它，scene graph 的 authoring 噪音就应该退场了。
+
+**Source excerpt**
+
+`finalize()` 会把 shape、body、joint 列表统一搬到 `Model`：
+
+```python
+m.shape_transform = wp.array(self.shape_transform, dtype=wp.transform, requires_grad=requires_grad)
+m.shape_body = wp.array(self.shape_body, dtype=wp.int32)
+m.shape_type = wp.array(self.shape_type, dtype=wp.int32)
+m.shape_scale = wp.array(self.shape_scale, dtype=wp.vec3, requires_grad=requires_grad)
+
+m.body_q = wp.array(self.body_q, dtype=wp.transform, requires_grad=requires_grad)
+m.body_qd = wp.array(self.body_qd, dtype=wp.spatial_vector, requires_grad=requires_grad)
+m.body_com = wp.array(self.body_com, dtype=wp.vec3, requires_grad=requires_grad)
+
+m.joint_parent = wp.array(self.joint_parent, dtype=wp.int32)
+m.joint_child = wp.array(self.joint_child, dtype=wp.int32)
+m.joint_X_p = wp.array(self.joint_X_p, dtype=wp.transform, requires_grad=requires_grad)
+m.joint_X_c = wp.array(self.joint_X_c, dtype=wp.transform, requires_grad=requires_grad)
+```
+
+而 `Model` 自己最终保留的，也就是这些 solver-facing 静态字段：
+
+```python
+self.shape_transform: wp.array[wp.transform] | None = None
+self.shape_body: wp.array[wp.int32] | None = None
+self.shape_gap: wp.array[wp.float32] | None = None
+self.shape_type: wp.array[wp.int32] | None = None
+...
+self.body_mass: wp.array[wp.float32] | None = None
+self.body_com: wp.array[wp.vec3] | None = None
+...
+self.joint_parent: wp.array[wp.int32] | None = None
+self.joint_child: wp.array[wp.int32] | None = None
+self.joint_X_p: wp.array[wp.transform] | None = None
+self.joint_X_c: wp.array[wp.transform] | None = None
+```
+
+**Verification cues**
+
+- `Model` 保存的是静态 arrays，不再是 scene graph 的 authoring 树。
+- `shape_transform`、`body_com`、`joint_X_p / joint_X_c` 到这里都已经拥有固定的 runtime 槽位。
+- chapter 04 的终点不是“解析完一个文件”，而是“得到一份可被 runtime 直接消费的 `Model`”。
+
+**Output passed to next stage**
+
+`Model.shape_* / body_* / joint_*` 这组三类静态 arrays。它们会在 `05` 和 `06` 里继续进入 articulation 与 collision 路径。
+
+## Object Ledger
+
+| 对象 | 谁生产 | 谁消费 | 盯哪些字段 |
+|------|--------|--------|------------|
+| `source` USD stage / path | user / caller | `add_usd()`、`parse_usd()` | root path、units、scene attrs |
+| `SchemaResolverManager` | importer setup | shape/joint/material/body attr resolution | `get_value(...)` 的逻辑键 |
+| `path_body_map / path_joint_map / path_shape_map` | importer | 后续 body/joint/shape 关联 | prim path 到 builder index 的映射 |
+| `ShapeConfig` | importer | `builder.add_shape_*()` | `margin`、`gap`、`mu`、`density`、visibility |
+| builder lists | `add_link()`、`add_joint()`、`add_shape_*()` | `finalize()` | `body_* / joint_* / shape_*` 累积项 |
+| `Model` 静态 arrays | `finalize()` | runtime、articulation、collision | `shape_transform`、`body_com`、`joint_X_p / joint_X_c` 等 |
+
+## Stop Here
+
+读到这里就已经够 chapter 04 的 80-90% 了。
+
+如果你现在能用自己的话讲顺下面这句话，这一章的 beginner 目标就完成了：
+
+```text
+add_usd() 只是公开入口；
+parse_usd() 先提取 body、joint、shape 和 authored attrs；
+schema resolver 把不同命名空间的属性翻成统一逻辑键；
+builder 累积这些 body / joint / shape / mass 信息；
+finalize() 最后把它们冻结成 Model 静态数组。
+```
+
+这时你已经可以更稳地进入 `05_rigid_articulation` 和 `06_collision`，知道它们读到的字段最初是从哪里来的。
+
+## Go Deeper
+
+如果你还想继续精确追源码，再去 `source-walkthrough-deep.md`：
+
+- 想保留所有 file/symbol/line anchors：看 `Fast Deep Index`
+- 想逐跳追 importer 到 `Model` 的 exact handoff：看 `Exact Handoff Trace`
+- 想知道哪些 mesh / resolver / MassAPI 细节第一遍可以跳过：看 `Optional Branches`
+- 想逐条核对这里的 claim：看 `Verification Anchors`

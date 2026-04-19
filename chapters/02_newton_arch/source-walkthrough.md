@@ -1,7 +1,7 @@
 ---
 chapter: 02
 title: Newton 总体架构
-last_updated: 2026-04-18
+last_updated: 2026-04-19
 source_paths:
   - newton/examples/__main__.py
   - newton/examples/__init__.py
@@ -21,65 +21,388 @@ newton_commit: 1a230702
 
 # 02 Newton 总体架构 源码走读
 
-`principle.md` 负责概念层，这份 walkthrough 只做源码锚定：把 `basic_pendulum` 从 examples launcher 一路落到 `Model / State / Control / Solver` 和一次 `step`。阅读重点是“谁在接力”，不是提前钻进 XPBD 的约束数学。
+如果你是第一次读这一章，最好先配合 `principle.md` 一起读；如果你是直接跳进源码走读也没关系，但一旦发现术语开始变快，就先回到 `principle.md` 把对象关系补齐，再回来追源码。
 
-## 涉及路径
+这份主 walkthrough 只追 chapter 02 的最小架构主线：`python -m newton.examples basic_pendulum` 这个入口，怎样一步步接到 public API、`Model / State / Control / Contacts / Solver`，再接到一次真正的 `step()`。目标不是把所有 solver family 全部展开，而是先把“谁在 orchestrate、谁在持有状态、谁在推进系统”讲顺。
 
-| 路径 | 角色 | 先读原因 |
-|------|------|----------|
-| `newton/examples/__main__.py` | CLI 薄入口；文件本身只有导入并调用 `main()` 两步，见 `newton/examples/__main__.py:L4-L9`。 | 先确认 examples 命令面板不承担真正 orchestration。 |
-| `newton/examples/__init__.py` | 真正的 examples launcher；`run()` 在 viewer loop 里驱动 `example.step()` / `render()`，见 `newton/examples/__init__.py:L265-L337`，`get_examples()` 建立短名到模块名映射，见 `newton/examples/__init__.py:L395-L407`，`init()` 建 viewer，见 `newton/examples/__init__.py:L617-L680`，`main()` 解析例子名并 `runpy.run_module()`，见 `newton/examples/__init__.py:L702-L733`。 | 这是从“例子名字”走到“实际例子模块 + 运行循环”的中枢。 |
-| `newton/examples/basic/example_basic_pendulum.py` | 最小 end-to-end 例子；`Example.__init__` 组装 builder、model、solver、state/control/contacts，见 `newton/examples/basic/example_basic_pendulum.py:L20-L85`，`simulate()` / `step()` 定义每帧推进，见 `newton/examples/basic/example_basic_pendulum.py:L87-L113`。 | 最容易把 launcher、公共 API、四层对象和一次 step 串成一条线。 |
-| `newton/__init__.py` | 公共 API 目录；把 `Model`、`ModelBuilder`、`State`、`Control`、`CollisionPipeline` 和 `solvers` 暴露在 `import newton` 表面，见 `newton/__init__.py:L49-L98`。 | 先认用户真正碰到的名字，再决定何时下钻 `_src`。 |
-| `newton/_src/sim/__init__.py` | sim 层 re-export 接缝；把 `ModelBuilder / Model / State / Control / CollisionPipeline / eval_fk` 聚到同一组 sim API，见 `newton/_src/sim/__init__.py:L4-L33`。 | 解释为什么 example 只写 `newton.ModelBuilder()` 就能接到 sim 核心。 |
-| `newton/_src/sim/builder.py` | 场景建模到静态模型的落点；`ModelBuilder.finalize()` 把 builder 累积的 host-side 数据整理并转成 `Model` 的长寿命 buffers，见 `newton/_src/sim/builder.py:L9424-L9464`, `newton/_src/sim/builder.py:L9500-L9599`, `newton/_src/sim/builder.py:L10167-L10338`。 | `basic_pendulum` 里的 links / joints / ground 最后都落在这里。 |
-| `newton/_src/sim/model.py` | `Model` 到运行时对象的切口；`state()` / `control()` / `contacts()` / `collide()` 把静态描述接到每步对象和碰撞入口，见 `newton/_src/sim/model.py:L808-L1003`。 | 这里最能看清 `Model` 与 `State / Control / Contacts` 的分工边界。 |
-| `newton/_src/sim/state.py` | 时间变化量容器；定义 `State` 持有哪些动态数组，以及 `clear_forces()` 如何在每个 substep 开头清空力缓存，见 `newton/_src/sim/state.py:L9-L129`。 | 它把“当前快照”从概念词变成了真实对象。 |
-| `newton/_src/sim/collide.py` | 真正的碰撞流水线；`contacts()` 分配接触缓冲，`collide()` 负责 AABB、broad phase、narrow phase 和 soft contact 生成，见 `newton/_src/sim/collide.py:L730-L1010`。 | 架构上要看清“碰撞”并不直接写进 solver，而是先产出 `Contacts`。 |
-| `newton/_src/solvers/solver.py` | solver 通用骨架；给出 `step()` contract，并提供 body / particle integration kernels 与 launch site，见 `newton/_src/solvers/solver.py:L10-L157`, `newton/_src/solvers/solver.py:L177-L316`。 | 先看共通接口，再看具体 solver。 |
-| `newton/_src/solvers/xpbd/solver_xpbd.py` | 第一个具体 solver step；`SolverXPBD.step()` 负责把 integration、contact/joint iteration、状态写回接成一次推进，见 `newton/_src/solvers/xpbd/solver_xpbd.py:L245-L723`。 | 用一个真实 solver 把“一次 step 真在做什么”落地，但不提前展开全部 solver 家族。 |
+## What This Walkthrough Follows
 
-## 调用链总览
+这一页只追下面这条 handoff：
 
-先纠正一个最容易走偏的点：`newton/examples/__main__.py` 不是真正的 orchestrator。它只有 `from . import main` 和 `main()` 两步，见 `newton/examples/__main__.py:L4-L9`。例子发现、名字解析、viewer 初始化和运行循环都在 `newton/examples/__init__.py`。
+```text
+example short name
+-> examples launcher
+-> concrete Example module
+-> Model / State / Control / Contacts / Solver
+-> simulate loop
+-> solver.step(...)
+```
 
-1. CLI 入口先落到薄封装：`python -m newton.examples basic_pendulum` 命中的只是 `newton/examples/__main__.py:L4-L9`，它马上把控制权转交给 `main()`。
-2. 真正的 example launcher 在 `newton/examples/__init__.py`。`get_examples()` 扫描 `example_*.py` 生成短名到模块名映射，见 `newton/examples/__init__.py:L395-L407`；`main()` 校验例子名、重写 `sys.argv`，再用 `runpy.run_module()` 执行目标模块，见 `newton/examples/__init__.py:L702-L733`。
-3. 具体例子的 `__main__` 分支并不自己再造一套 CLI，而是复用 `newton.examples.init()` 和 `newton.examples.run()`：`example_basic_pendulum.py` 在 `newton/examples/basic/example_basic_pendulum.py:L148-L155` 里先建 viewer/args，再实例化 `Example` 并交给统一 run loop；`init()` 的共享 viewer/device 初始化逻辑在 `newton/examples/__init__.py:L617-L680`。
-4. `Example.__init__` 才是场景组装的真正起点。它通过公共 API `newton.ModelBuilder()` 开始建模，随后 `builder.finalize()` 生成 `Model`，再构造 `newton.solvers.SolverXPBD(self.model)`、两份 `state()`、一份 `control()` 和一份 `contacts()`，最后用 `eval_fk()` 把初始 joint 状态展开到 body state，见 `newton/examples/basic/example_basic_pendulum.py:L20-L85`, `newton/__init__.py:L49-L98`, `newton/_src/sim/__init__.py:L4-L33`, `newton/_src/sim/builder.py:L9424-L9464`, `newton/_src/sim/model.py:L808-L1003`。
-5. `newton.examples.run()` 只负责外层 viewer loop，它每帧调用 `example.step()` 和 `example.render()`，见 `newton/examples/__init__.py:L265-L337`。对 pendulum 来说，真正的一次 substep 在 `simulate()` 里展开成 `state_0.clear_forces()` -> `viewer.apply_forces()` -> `model.collide()` -> `solver.step()` -> 交换 `state_0/state_1`，见 `newton/examples/basic/example_basic_pendulum.py:L95-L113`, `newton/_src/sim/state.py:L118-L129`, `newton/_src/sim/model.py:L977-L1003`, `newton/_src/solvers/xpbd/solver_xpbd.py:L245-L723`。
-6. 如果设备是 CUDA，`capture()` 会把整段 `simulate()` capture 成 graph，后续 `step()` 只做 `wp.capture_launch(self.graph)` 重放，见 `newton/examples/basic/example_basic_pendulum.py:L87-L113`。所以 examples 层不只是在“选例子”，还承担了把统一 run loop 和 GPU graph 重放接起来的角色。
+这一页刻意不展开三类东西：
 
-把这条链压成一句话就是：`examples/__main__.py` 只是 CLI 转发器，`examples/__init__.py` 才是 launcher，而真正的仿真推进发生在具体 example 对 `Model / State / Control / Contacts / Solver` 的接力上。
+- `builder.finalize()` 的全部内部细节
+- XPBD 或其它 solver 的完整数学推导
+- 8 个 solver family 的横向比较
 
-## 数据流切片
+第一遍先守住一句话：chapter 02 真正讲的是 **Newton 用什么对象和入口把一轮仿真接起来**。
 
-| 切片 | 读入 | 中间缓存 / tile | 写出 | 证据 |
-|------|------|------------------|------|------|
-| builder -> model | `ModelBuilder` 中累计的 links / bodies / shapes / joints / gravity 等 host-side 数据。 | `finalize()` 先做 validation、world starts 构建、逆质量计算、几何 finalize，再把数据转成 `wp.array`。这里看到的是 builder 缓存，不是 per-step tile。 | 长寿命 `Model` 静态 buffers，包括 `body_q/body_qd`、`joint_q/joint_qd`、`shape_*`、`gravity` 等。 | `ModelBuilder.finalize()` at `newton/_src/sim/builder.py:L9424-L9464`, `newton/_src/sim/builder.py:L9500-L9599`, `newton/_src/sim/builder.py:L10167-L10338` |
-| model -> runtime objects | `Model` 里的初始状态、控制量和 requested attribute 配置。 | `Model.state()` 克隆初始 `q/qd` 并分配 force buffers，`Model.control()` 克隆或复用 control arrays，`Model.contacts()` 懒创建 collision pipeline 并分配固定容量的 contact buffers。 | `State` / `Control` / `Contacts` 三类运行时对象。 | `Model.state()` at `newton/_src/sim/model.py:L808-L859`, `Model.control()` at `newton/_src/sim/model.py:L861-L902`, `Model.contacts()` at `newton/_src/sim/model.py:L951-L975`, `State` at `newton/_src/sim/state.py:L9-L129` |
-| collide path | `Model` 的静态碰撞几何、当前 `State` 的 `body_q` / `particle_q`，以及一个待填充的 `Contacts`。 | `CollisionPipeline.collide()` 清 counters，先算 shape AABB，再跑 broad phase / narrow phase，并在需要时补 differentiable rigid contacts 与 soft contacts。没有 tile 证据，主要是固定容量 contact buffers 和 broad-phase pair buffers。 | 被填满的 `Contacts`，供 solver 下一步消费。 | `Model.collide()` at `newton/_src/sim/model.py:L977-L1003`, `CollisionPipeline.collide()` at `newton/_src/sim/collide.py:L772-L1010` |
-| solver substep | `Model`、`state_in`、`state_out`、`control`、`contacts`。 | 通用 integration 之后，XPBD 在 iteration loop 里反复读写 `particle_deltas`、`body_deltas`、`contact_impulse` 等中间缓存；如果有粒子还会先建 `HashGrid`。 | 下一拍写进 `state_out`，并把上一次 step 的 contact impulse 缓存在 solver 内部。 | `SolverBase.integrate_bodies()` / `integrate_particles()` at `newton/_src/solvers/solver.py:L224-L299`, `SolverXPBD.step()` at `newton/_src/solvers/xpbd/solver_xpbd.py:L245-L723` |
+## One-Screen Chapter Map
 
-## GPU 并行切片
+```text
+python -m newton.examples basic_pendulum
+                    |
+                    v
+      examples/__main__.py -> examples.__init__.main()
+                    |
+                    v
+          example name -> target example module
+                    |
+                    v
+                Example.__init__
+                    |
+                    v
+   ModelBuilder -> Model -> State / Control / Contacts / Solver
+                    |
+                    v
+         run() outer loop -> Example.simulate()
+                    |
+                    v
+   clear_forces -> collide -> solver.step -> swap state
+```
 
-| kernel / 函数 | 并行维度 | atomic | 内存访问 | tile | graph |
-|---------------|----------|--------|----------|------|-------|
-| `Example.capture()` / `Example.step()` at `newton/examples/basic/example_basic_pendulum.py:L87-L113` | `-` | `-` | capture 的是整段 `simulate()` 对既有 model/state/control/contacts buffers 的访问，不是单个 kernel 的局部缓存。 | `-` | CUDA 上用 `wp.ScopedCapture()` 建图，后续 `wp.capture_launch()` 重放。 |
-| `integrate_particles()` at `newton/_src/solvers/solver.py:L10-L47`，launch at `newton/_src/solvers/solver.py:L282-L299` | `dim = model.particle_count`；kernel 内每个 `wp.tid()` 对应一个 particle。 | 本 kernel 未见 atomic。 | 读旧 `x/v/f` 和 `Model` 常量，写 `x_new/v_new`。 | `-` | 可被上层 graph capture，但图证据在 pendulum example，不在 kernel 本身。 |
-| `integrate_bodies()` at `newton/_src/solvers/solver.py:L98-L157`，launch at `newton/_src/solvers/solver.py:L243-L264` | `dim = model.body_count`；每个 `wp.tid()` 处理一个 body。 | 本 kernel 未见 atomic。 | 读 body state、质量/惯量、gravity，写 `body_q_new/body_qd_new`。 | `-` | 同上，可被上层 graph capture。 |
-| `compute_shape_aabbs` launch at `newton/_src/sim/collide.py:L820-L845` | `dim = model.shape_count`。 | 调用点未展示，不在这里下判断。 | 读 `state.body_q` 与 shape 数据，写 narrow-phase 所需的 AABB / geom buffers。 | `-` | 本文件未展示 graph capture。 |
-| `create_soft_contacts` launch at `newton/_src/sim/collide.py:L974-L1010` | `dim = particle_count * model.shape_count`。 | 调用点未展示，不在这里下判断。 | 读 particle/body/shape arrays，写 soft-contact 计数与 contact buffers。 | `-` | 本文件未展示 graph capture。 |
-| `SolverXPBD.step()` at `newton/_src/solvers/xpbd/solver_xpbd.py:L245-L723` | 调度层在一个 iteration loop 中发起多次 launch，维度在 `particle_count`、`body_count`、`contacts.*_max`、`joint_count` 之间切换。 | 这一层只看调度，不直接对下游 kernel 是否 atomic 做额外结论。 | 围绕 `particle_deltas`、`body_deltas`、`contact_impulse` 和 `state_out` 反复读写。 | `-` | 可被 example 层整体 capture。 |
+## Beginner Path
 
-这一组 chapter-02 anchors 里没有 `wp.tile` 或 `launch_tiled` 证据，所以 `tile` 一列统一留空不是遗漏，而是刻意避免过度解读。
+1. 先看 Stage 1。
+   - 想验证什么：`newton` 的 public surface 和 `newton.examples` 入口到底薄到什么程度。
+   - 看完后应该能说：CLI 和顶层 API 主要负责把你送到真正的模块，不负责做全部仿真工作。
+2. 再看 Stage 2。
+   - 想验证什么：`basic_pendulum` 这个具体例子到底组装了哪些 runtime 对象。
+   - 看完后应该能说：`Example.__init__` 里已经把 `Model / State / Control / Contacts / Solver` 全部接好了。
+3. 再看 Stage 3。
+   - 想验证什么：`Model` 怎样分出静态描述、runtime state、control 和 contacts。
+   - 看完后应该能说：`Model` 不等于当前时刻的状态，它更像一份静态描述和工厂。
+4. 再看 Stage 4。
+   - 想验证什么：到底是谁在驱动每帧循环。
+   - 看完后应该能说：`examples.run()` 管外层 viewer loop，`Example.simulate()` 管一次真正的 substep 链。
+5. 最后看 Stage 5。
+   - 想验证什么：solver 在这条链上扮演什么边界角色。
+   - 看完后应该能说：solver 统一消费 `state_in / state_out / control / contacts` 这组对象，然后用自己的 kernels 推进一步。
 
-## 回指原理
+## Main Walkthrough
 
-| 源码点 | 对应原理 | 为什么不是别的原理 | 待补证据 |
-|--------|----------|--------------------|----------|
-| `newton/examples/__main__.py:L4-L9`, `main()` at `newton/examples/__init__.py:L702-L733` | examples 入口很薄，真正的 launcher 在 `examples/__init__.py`。 | 不是“每个 example 各自维护一套 CLI”，因为短名发现、名字校验与模块跳转都集中在 `examples/__init__.py`。 | 无；这一点的证据已经足够直接。 |
-| `newton/__init__.py:L49-L98`, `newton/_src/sim/__init__.py:L4-L33` | 公共 API 是第一张目录图。 | 不是“先钻 `_src` 深处才能知道架构”，因为 `Model / ModelBuilder / State / Control / CollisionPipeline / solvers` 已先被集中暴露在 public surface。 | 若想继续追 API 背后的文件分工，再回本页“涉及路径”表往下读。 |
-| `ModelBuilder.finalize()` at `newton/_src/sim/builder.py:L9424-L9464`, `newton/_src/sim/builder.py:L9500-L9599`, `newton/_src/sim/builder.py:L10167-L10338`, `Model.state()` / `control()` at `newton/_src/sim/model.py:L808-L902` | `Model / State / Control` 是运行时角色分层，不只是 glossary 词。 | 不是“builder 直接长期持有仿真状态”，因为 builder 先收束成静态 `Model`，之后每步需要的 `State / Control` 是再从 `Model` 分配出来的。 | 如果要继续问“builder 数据最初从哪来”，下一跳是 `04_scene_usd`。 |
-| `run()` at `newton/examples/__init__.py:L265-L337`, `simulate()` at `newton/examples/basic/example_basic_pendulum.py:L95-L113`, `SolverXPBD.step()` at `newton/_src/solvers/xpbd/solver_xpbd.py:L245-L723` | `basic_pendulum` 可以被口述成一条完整执行链。 | 不是“viewer 或 launcher 完成了仿真”，因为外层 loop 只负责调 `example.step()`，真正推进系统的是 `clear_forces -> collide -> solver.step -> swap state`。 | 若要比较别的 solver 家族，再回 `principle.md` 的 solver 全景图。 |
-| `newton/_src/sim/model.py:L951-L1003`, `newton/_src/sim/collide.py:L730-L1010` | `Contacts` 是 `Model` 与 `Solver` 之间的显式中间物，而不是 solver 私有黑箱。 | 不是“碰撞已经埋在 XPBD 里”，因为 `model.contacts()` / `model.collide()` 先生成通用 `Contacts`，solver 只是消费它。 | 后续若要展开接触数学，去 `06_collision` 和 `07_constraints_contacts_math`。 |
+### Stage 1: public surface 和 example CLI 都是故意做薄的入口
+
+**Claim**
+
+`import newton` 和 `python -m newton.examples ...` 都是目录和分发入口，不是把所有 orchestration 都塞在顶层。
+
+**Why it matters**
+
+如果一开始把 `__main__.py` 或顶层包当成“主控制器”，后面就会一直在错误位置找真正的仿真逻辑。
+
+**Source excerpt**
+
+`newton` 顶层包先把最常用的 sim API 暴露出来：
+
+```python
+from ._src.sim import (
+    BodyFlags,
+    CollisionPipeline,
+    Contacts,
+    Control,
+    JointType,
+    Model,
+    ModelBuilder,
+    State,
+    eval_fk,
+)
+
+from . import geometry, ik, math, selection, sensors, solvers, usd, utils, viewer
+```
+
+而 `python -m newton.examples basic_pendulum` 的 CLI 入口本身只有一个简单转发：
+
+```python
+from . import main
+
+if __name__ == "__main__":
+    main()
+```
+
+真正的路由发生在 `examples.__init__`：
+
+```python
+def get_examples() -> dict[str, str]:
+    example_map = {}
+    ...
+    if filename.startswith("example_") and filename.endswith(".py"):
+        example_name = filename[8:-3]
+        example_map[example_name] = f"newton.examples.{module}.{filename[:-3]}"
+
+def main():
+    examples = get_examples()
+    example_name = sys.argv[1]
+    target_module = examples[example_name]
+    sys.argv = [target_module, *sys.argv[2:]]
+    runpy.run_module(target_module, run_name="__main__")
+```
+
+**Verification cues**
+
+- `newton/__init__.py` 做的是 re-export，不是把实现全堆在顶层。
+- `examples/__main__.py` 只是把控制权转给 `main()`。
+- `get_examples()` 和 `main()` 的工作是“短名 -> 真实模块”的分发，不是推进仿真。
+
+**Output passed to next stage**
+
+一个具体 example module，例如 `newton.examples.basic.example_basic_pendulum`。
+
+### Stage 2: 具体 `Example` 对象一次性组装出运行时栈
+
+**Claim**
+
+真正的架构 handoff 在具体 example 的构造函数里完成：scene builder、model、solver、state、control、contacts 都在这里接起来。
+
+**Why it matters**
+
+这一步最能把 chapter 02 的抽象词落地。否则 `Model / State / Control / Solver` 很容易继续停留在名词表层面。
+
+**Source excerpt**
+
+`basic_pendulum` 的 `Example.__init__` 基本就是整章的最小样板：
+
+```python
+builder = newton.ModelBuilder()
+
+link_0 = builder.add_link()
+builder.add_shape_box(link_0, hx=hx, hy=hy, hz=hz)
+
+link_1 = builder.add_link()
+builder.add_shape_box(link_1, hx=hx, hy=hy, hz=hz)
+
+j0 = builder.add_joint_revolute(...)
+j1 = builder.add_joint_revolute(...)
+builder.add_articulation([j0, j1], label="pendulum")
+builder.add_ground_plane()
+
+self.model = builder.finalize()
+self.solver = newton.solvers.SolverXPBD(self.model)
+
+self.state_0 = self.model.state()
+self.state_1 = self.model.state()
+self.control = self.model.control()
+newton.eval_fk(self.model, self.model.joint_q, self.model.joint_qd, self.state_0)
+self.contacts = self.model.contacts()
+```
+
+**Verification cues**
+
+- `builder.finalize()` 之后才有真正可运行的 `Model`。
+- 两份 `state()` 明确告诉你 Newton 常用双缓冲推进，而不是 in-place 乱改一份状态。
+- `control()` 和 `contacts()` 不是 solver 私有物，而是 example 在外层先准备好的对象。
+
+**Output passed to next stage**
+
+一整套 runtime 对象：`Model`、`State`、`Control`、`Contacts`、`Solver`。
+
+### Stage 3: `Model` 自己不等于“当前时刻”，它更像静态描述和对象工厂
+
+**Claim**
+
+`Model` 持有的是静态描述和默认值；真正会在每步变化的状态，要靠 `state()`、`control()`、`contacts()`、`collide()` 这些边界方法分出来。
+
+**Why it matters**
+
+这是 chapter 02 最重要的对象分层。如果把 `Model` 和 `State` 混成一层，后面的 articulation、collision、solver 章节都会乱。
+
+**Source excerpt**
+
+`Model.state()` 和 `Model.control()` 负责分配 runtime 对象：
+
+```python
+s = State()
+...
+s.body_q = wp.clone(self.body_q, requires_grad=requires_grad)
+s.body_qd = wp.clone(self.body_qd, requires_grad=requires_grad)
+s.body_f = wp.zeros_like(self.body_qd, requires_grad=requires_grad)
+...
+s.joint_q = wp.clone(self.joint_q, requires_grad=requires_grad)
+s.joint_qd = wp.clone(self.joint_qd, requires_grad=requires_grad)
+
+c = Control()
+...
+c.joint_target_pos = wp.clone(self.joint_target_pos, requires_grad=requires_grad)
+c.joint_target_vel = wp.clone(self.joint_target_vel, requires_grad=requires_grad)
+c.joint_act = wp.clone(self.joint_act, requires_grad=requires_grad)
+c.joint_f = wp.clone(self.joint_f, requires_grad=requires_grad)
+```
+
+`Contacts` 和碰撞入口也明确挂在 `Model` 这层：
+
+```python
+def contacts(self, collision_pipeline: CollisionPipeline | None = None) -> Contacts:
+    if self._collision_pipeline is None:
+        self._init_collision_pipeline()
+    return self._collision_pipeline.contacts()
+
+def collide(self, state: State, contacts: Contacts | None = None, *, collision_pipeline=None) -> Contacts:
+    if self._collision_pipeline is None:
+        self._init_collision_pipeline()
+    if contacts is None:
+        contacts = self._collision_pipeline.contacts()
+    self._collision_pipeline.collide(state, contacts)
+    return contacts
+```
+
+**Verification cues**
+
+- `State` 持有的是 `body_q / body_qd / joint_q / joint_qd / body_f` 这类每步会变的量。
+- `Control` 持有的是本步控制输入，不跟 `Model` 永久绑死。
+- `Contacts` 是碰撞 pipeline 的结果缓冲区，所以也必须被显式分出来。
+
+**Output passed to next stage**
+
+一条清晰边界：`Model` 负责描述和分配，`State / Control / Contacts` 负责被一轮仿真真正消费。
+
+### Stage 4: 外层 loop 和内层 substep 是分开的两层 orchestration
+
+**Claim**
+
+`examples.run()` 只管 viewer/测试这一层的外循环；一次真正的仿真推进，定义在具体 example 的 `simulate()` 里。
+
+**Why it matters**
+
+这一步最能纠正“是不是 `examples/__init__.py` 在直接做全部仿真”的误解。它管框架，但不管每个例子的具体推进链。
+
+**Source excerpt**
+
+外层统一 run loop：
+
+```python
+def run(example, args):
+    viewer = example.viewer
+    ...
+    while viewer.is_running():
+        if not viewer.is_paused():
+            example.step()
+        example.render()
+```
+
+但 pendulum 里真正的一次 substep 是这样展开的：
+
+```python
+def simulate(self):
+    for _ in range(self.sim_substeps):
+        self.state_0.clear_forces()
+
+        self.viewer.apply_forces(self.state_0)
+
+        self.model.collide(self.state_0, self.contacts)
+        self.solver.step(self.state_0, self.state_1, self.control, self.contacts, self.sim_dt)
+
+        self.state_0, self.state_1 = self.state_1, self.state_0
+
+def step(self):
+    if self.graph:
+        wp.capture_launch(self.graph)
+    else:
+        self.simulate()
+```
+
+**Verification cues**
+
+- `run()` 只做“什么时候 step、什么时候 render”。
+- `simulate()` 才决定 `clear_forces -> collide -> solver.step -> swap` 这条主线。
+- `step()` 还能插入 graph replay，说明外层 orchestration 和内层推进链是分开的。
+
+**Output passed to next stage**
+
+一次已经准备好输入的 solver 调用：`solver.step(state_0, state_1, control, contacts, dt)`。
+
+### Stage 5: solver 统一消费同一组对象，再各自决定内部 kernels
+
+**Claim**
+
+从架构上看，solver 的公共边界非常稳定：它接收 `state_in / state_out / control / contacts / dt`，然后用自己的 kernels 推进一步。
+
+**Why it matters**
+
+这一步决定了为什么 chapter 02 可以先讲架构，不必立刻讲完所有 solver 家族。因为它们先共享同一条外部 contract。
+
+**Source excerpt**
+
+`SolverBase` 先定义统一的 `step()` 入口：
+
+```python
+def step(
+    self, state_in: State, state_out: State, control: Control | None, contacts: Contacts | None, dt: float
+) -> None:
+    raise NotImplementedError()
+```
+
+它也提供一些通用 integration helpers：
+
+```python
+if model.body_count:
+    wp.launch(
+        kernel=integrate_bodies,
+        dim=model.body_count,
+        inputs=[
+            state_in.body_q,
+            state_in.body_qd,
+            state_in.body_f,
+            model.body_com,
+            model.body_mass,
+            model.body_inertia,
+            ...
+        ],
+        outputs=[state_out.body_q, state_out.body_qd],
+    )
+```
+
+**Verification cues**
+
+- solver 外部接口始终围绕 `State / Control / Contacts` 这组对象展开。
+- helper kernel 的输入里同时有 `state_in` 和 `model`，说明 solver 在消费“当前状态 + 静态模型描述”。
+- 具体 solver 可以差很多，但外部 handoff 先是一致的。
+
+**Output passed to next stage**
+
+一条完整的 chapter-02 架构链：example 入口把对象组好，run loop 驱动一次次 `solver.step()`，而 solver 再继续进入自己的内部实现。
+
+## Object Ledger
+
+| 对象 | 谁生产 | 谁消费 | 盯哪些字段 |
+|------|--------|--------|------------|
+| example short name | `get_examples()` | `main()` | `basic_pendulum -> newton.examples.basic.example_basic_pendulum` |
+| `Example` | concrete example module | `examples.run()` | `viewer`、`model`、`state_0/1`、`control`、`contacts`、`solver` |
+| `Model` | `builder.finalize()` | `state()`、`control()`、`contacts()`、`collide()`、solvers | 静态 body/joint/shape buffers |
+| `State` | `Model.state()` | `collide()`、`solver.step()`、viewer | `body_q`、`body_qd`、`joint_q`、`joint_qd`、forces |
+| `Control` | `Model.control()` | `solver.step()` | joint target / actuation buffers |
+| `Contacts` | `Model.contacts()` / collision pipeline | `solver.step()`、viewer | contact counts 与 contact arrays |
+| `Solver` | example 构造函数 | `Example.simulate()` | `step(state_in, state_out, control, contacts, dt)` |
+
+## Stop Here
+
+读到这里就已经够 chapter 02 的 80-90% 了。
+
+如果你现在能用自己的话讲顺下面这句话，这一章的 beginner 目标就完成了：
+
+```text
+examples 短名先路由到具体 Example 模块；
+Example.__init__ 组装 Model / State / Control / Contacts / Solver；
+run() 驱动外层循环；
+simulate() 定义 clear_forces -> collide -> solver.step -> swap 的内层推进；
+solver 再继续消费同一组 runtime 对象。
+```
+
+这时你已经可以稳定进入 `03_math_geometry`、`04_scene_usd` 或 `05_rigid_articulation`，不会再把 Newton 架构读成一团散乱入口。
+
+## Go Deeper
+
+如果你还想继续精确追源码，再去 `source-walkthrough-deep.md`：
+
+- 想保留所有 file/symbol/line anchors：看 `Fast Deep Index`
+- 想逐跳追 `basic_pendulum` 的 exact handoff：看 `Exact Handoff Trace`
+- 想知道哪些支线第一遍可以先跳过：看 `Optional Branches`
+- 想逐条核对这里的 claim：看 `Verification Anchors`

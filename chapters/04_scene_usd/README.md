@@ -17,7 +17,8 @@ newton_commit: 1a230702
 
 - `README.md`：只负责本章范围、完成门槛和阅读入口。
 - `principle.md`：负责把 `scene input -> importer -> schema resolver -> builder -> Model` 这条概念桥讲顺。
-- `source-walkthrough.md`：负责把 importer / builder / `finalize()` / `Model` 的源码锚点串起来。
+- `source-walkthrough.md`：新手 / 主 walkthrough。第一次追 chapter 04 源码先看这一份；它把 `scene input -> importer -> builder -> Model` 主线直接讲顺。
+- `source-walkthrough-deep.md`：深读锚点版。已经跟上主线后，如果你想精确追上游文件、symbol 和行号，再看这一份。
 
 ## 完成门槛
 
@@ -66,13 +67,15 @@ newton_commit: 1a230702
 ## 阅读顺序
 
 1. 先读 `principle.md`，把 scene / asset / schema / builder / `Model` 之间的桥接关系读顺。
-2. 再读 `source-walkthrough.md`，把 `newton/usd.py`、importer、schema resolver、`builder.py` 和 `model.py` 的边界对到真实源码锚点。
-3. 然后进入 `05_rigid_articulation`，看这些 joint、mass 和 inertia 字段怎样被 articulation 动力学消费。
-4. 再进入 `06_collision`，看这些 shape 类型、局部位姿和几何配置怎样被碰撞系统消费。
+2. 第一次追源码时，先看 `source-walkthrough.md`，把 `newton/usd.py`、importer、schema resolver、`builder.py` 和 `model.py` 的边界对到真实源码锚点。
+3. 想精确追到上游文件、symbol 和行号，再看 `source-walkthrough-deep.md`。
+4. 然后进入 `05_rigid_articulation`，看这些 joint、mass 和 inertia 字段怎样被 articulation 动力学消费。
+5. 再进入 `06_collision`，看这些 shape 类型、局部位姿和几何配置怎样被碰撞系统消费。
 
 ## 预期产出
 
 - `principle.md`：用一条 beginner-safe 主线解释 scene graph、authored attrs、schema resolver、builder 和 `Model` 的关系。
-- `source-walkthrough.md`：把 public USD entry、importer、schema resolver、`add_shape()` / `add_joint()` / `finalize()` 和 `Model` 落点串成稳定源码链。
+- `source-walkthrough.md`：给 first pass 的主 walkthrough，用内嵌源码片段把 `scene input -> importer -> builder -> Model` 主线直接讲顺。
+- `source-walkthrough-deep.md`：保留精确 symbol、路径、行号和可选分支，给已经跟上主线后还想继续追锚点的读者。
 - 一套稳定的字段映射心智模型：知道 local pose、parent-child 关系、shape 配置和 authored mass property 最终分别落到哪些 builder / `Model` 字段。
 - 明确的后续入口：去 `05` 继续追 joint / mass / inertia 怎样被动力学消费，去 `06` 继续追 shape / transform 怎样被碰撞系统消费。

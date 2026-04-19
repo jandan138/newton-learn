@@ -1,7 +1,7 @@
 ---
 chapter: 03
 title: 03 数学与几何基础
-last_updated: 2026-04-18
+last_updated: 2026-04-19
 source_paths: []
 paper_keys: []
 newton_commit: 1a230702
@@ -12,6 +12,13 @@ newton_commit: 1a230702
 `02_newton_arch` 已经回答了 Newton 是怎样组织起来的：examples 入口怎样接到 `Model / State / Control / Solver`。这一章接着回答另一个更窄、但马上会卡住你的问题：当你在 `Model` 里看到 body / joint / shape 的局部关系、`wp.transform`、四元数、spatial quantities 和惯量时，这些几何与空间量词到底在说什么。
 
 如果 `02_newton_arch` 让你第一次接受了 `Model / State / Control / Solver` 这条架构链，那么 chapter 03 的工作就是把这条链背后的 geometry / spatial vocabulary 补稳。它不是完整数学课，而是把 `Model` 先变得可读，再把你送去 `04_scene_usd`、`05_rigid_articulation` 和 `06_collision`。
+
+## 文件分工
+
+- `README.md`：只负责本章边界、完成门槛和阅读入口。
+- `principle.md`：先把 frame、transform、quaternion、spatial quantity、shape、inertia 这些词翻译成人话。
+- `source-walkthrough.md`：新手 / 主 walkthrough。第一次追 chapter 03 源码先看这一份；它把 `frame -> transform -> spatial -> shape -> inertia` 主线直接讲顺。
+- `source-walkthrough-deep.md`：深读锚点版。已经跟上主线后，如果你想精确追上游文件、symbol 和行号，再看这一份。
 
 ## 完成门槛
 
@@ -59,10 +66,11 @@ newton_commit: 1a230702
 ## 阅读顺序
 
 1. 先读 `principle.md`，把 frame -> transform -> quaternion -> spatial quantity -> shape -> inertia 这条概念链读顺。
-2. 再读 `source-walkthrough.md`，把这些词对到 `_src/math/`、`_src/geometry/`、builder 和 articulation helper 的源码锚点。
-3. 然后进入 `04_scene_usd`，看场景输入怎样变成这些对象和局部关系。
-4. 再进入 `05_rigid_articulation`，看 frame、spatial quantity 和 inertia 怎样真正参与 articulation 动力学。
-5. 最后进入 `06_collision`，看 shape representation 怎样被碰撞系统消费，而不是在本章提前深挖算法。
+2. 第一次追源码时，先看 `source-walkthrough.md`，把这些词对到 `_src/math/`、`_src/geometry/`、builder 和 articulation helper 的源码锚点。
+3. 想精确追到上游文件、symbol 和行号，再看 `source-walkthrough-deep.md`。
+4. 然后进入 `04_scene_usd`，看场景输入怎样变成这些对象和局部关系。
+5. 再进入 `05_rigid_articulation`，看 frame、spatial quantity 和 inertia 怎样真正参与 articulation 动力学。
+6. 最后进入 `06_collision`，看 shape representation 怎样被碰撞系统消费，而不是在本章提前深挖算法。
 
 ## 预期产出
 

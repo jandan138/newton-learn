@@ -25,7 +25,8 @@ newton_commit: 1a230702
 
 - `README.md`: 本章边界、完成门槛、阅读入口。
 - `principle.md`: 先讲 shared solver contract，再讲 maximal / generalized coordinates 的大分野，以及四条 solver 路线分别怎样处理约束。
-- `source-walkthrough.md`: 按 `public contract -> three contrastive paths -> Kamino continuation` 的顺序走源码，不把读者一上来就扔进细节里。
+- `source-walkthrough.md`: 新手 / 主 walkthrough。第一次追 chapter 08 源码先看这一份；它内嵌关键源码片段，把 `shared contract -> family split -> Kamino continuation` 主线直接讲顺。
+- `source-walkthrough-deep.md`: 深读锚点版。已经跟上主线后，如果你想精确追 symbol、上游路径和可选分支，再看这一份。
 - `examples.md`: 用 `example_robot_cartpole.py` 做跨 solver 对照，再用 Kamino 的 `example_sim_basics_box_on_plane.py` 把 chapter 07 的 contact math 真正落到 solver step。
 
 ## 完成门槛
@@ -73,13 +74,15 @@ newton_commit: 1a230702
 
 ## 阅读顺序
 
-1. 先读 `principle.md`，把 shared contract 和 solver family split 建起来。
-2. 再读 `source-walkthrough.md`，确认同样的 `step(...)` 在源码里怎样分叉成三条对照路径和一条 chapter 07 continuation path。
+1. 第一次追源码，先看 `source-walkthrough.md`；这一份就是给 first pass 准备的主 walkthrough。
+2. 如果你想先补概念边界，或者读完主 walkthrough 还想把比较轴再翻成人话，再回看 `principle.md`。
 3. 然后读 `examples.md`，先用 `cartpole` 把“同一 public scene 可切换 solver”看顺，再用 `box_on_plane` 把 chapter 07 的 contact math 接进 Kamino solver。
-4. 如果你读完还会把四个 solver 想成“只是名字不同”，就回到 `principle.md` 里的两条比较轴重新看一遍。
+4. 想精确追到上游文件、symbol 和行号，再看 `source-walkthrough-deep.md`。
+5. 如果你读完还会把四个 solver 想成“只是名字不同”，就回到 `principle.md` 里的两条比较轴重新看一遍。
 
 ## 预期产出
 
 - `principle.md`: 一条 beginner-safe 主线，先稳住 shared contract，再说明四条 rigid solver 路线为什么不同。
-- `source-walkthrough.md`: 一份 tiered read path，告诉你先看 public contract，再看对照路径，最后看 Kamino 的 chapter 07 continuation。
+- `source-walkthrough.md`: 给 first pass 的主 walkthrough，用内嵌源码片段把 `shared contract -> family split -> Kamino continuation` 主线直接讲顺。
+- `source-walkthrough-deep.md`: 保留精确 symbol、路径、行号和可选分支，给已经跟上主线后还想继续追锚点的读者。
 - `examples.md`: 两个观察任务，分别守住“外层调用一致”与“contact math 真正进入 solver”这两层理解。

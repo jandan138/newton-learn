@@ -28,7 +28,8 @@ XPBD: per-constraint projection
 
 - `README.md`: 本章边界、完成门槛、阅读入口。
 - `principle.md`: 先讲 shared variational / implicit correction problem，再比较三条更新路线各自把修正落在哪一层。
-- `source-walkthrough.md`: 按 `shared surface -> shared cloth example -> XPBD / VBD / Style3D -> VBD softbody extension` 的顺序走源码。
+- `source-walkthrough.md`: 新手 / 主 walkthrough。第一次追 chapter 09 源码先看这一份；它内嵌关键源码片段，把 `shared variational problem -> XPBD -> VBD -> Style3D` 主线直接讲顺。
+- `source-walkthrough-deep.md`: 深读锚点版。已经跟上主线后，如果你想精确追 symbol、上游路径和可选分支，再看这一份。
 - `examples.md`: 用 `example_cloth_hanging.py` 做跨 solver 对照，再用 `example_softbody_hanging.py` 解释 VBD 为什么不只是 cloth solver。
 
 ## 完成门槛
@@ -79,13 +80,15 @@ XPBD: per-constraint projection
 
 ## 阅读顺序
 
-1. 先读 `principle.md`，把 shared problem 和三条更新梯子立住。
-2. 再读 `source-walkthrough.md`，确认同一个 `cloth_hanging` 外壳在源码里怎样分叉成 `XPBD / VBD / Style3D`。
+1. 第一次追源码，先看 `source-walkthrough.md`；这一份就是给 first pass 准备的主 walkthrough。
+2. 如果你想先补概念边界，或者读完主 walkthrough 还想把那条更新梯子再翻成人话，再回看 `principle.md`。
 3. 然后读 `examples.md`，先用 `cloth_hanging` 观察 shared scene 下的 solver 差异，再用 `softbody_hanging` 看 VBD 的延伸。
-4. 如果你读完还会把三家想成“只是 solver 名字不同”，就回到 `principle.md` 里的梯子表重新看一遍。
+4. 想精确追到上游文件、symbol 和行号，再看 `source-walkthrough-deep.md`。
+5. 如果你读完还会把三家想成“只是 solver 名字不同”，就回到 `principle.md` 里的梯子表重新看一遍。
 
 ## 预期产出
 
 - `principle.md`: 一条 beginner-safe 主线，先讲 shared implicit correction，再讲 `XPBD -> VBD -> Style3D`。
-- `source-walkthrough.md`: 一份 tiered read path，告诉你先看 shared example，再看三条 variational path，最后再补 VBD 的 softbody 延伸。
+- `source-walkthrough.md`: 给 first pass 的主 walkthrough，用内嵌源码片段把 `shared variational problem -> XPBD -> VBD -> Style3D` 主线直接讲顺。
+- `source-walkthrough-deep.md`: 保留精确 symbol、路径、行号和可选分支，给已经跟上主线后还想继续追锚点的读者。
 - `examples.md`: 两个观察任务，分别守住“同一块 hanging cloth 的跨 solver 对照”和“VBD 不只处理 cloth”这两层理解。
