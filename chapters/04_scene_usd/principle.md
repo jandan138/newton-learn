@@ -26,9 +26,11 @@ newton_commit: 1a230702
 
 如果你这时想找真实入口函数和源码落点，直接去 `source-walkthrough.md`；这页只保留概念桥，不展开源码锚点目录。
 
-## 1. 先把主线压成五步
+## 1. 先看一个最小 scene，再把主线压成五步
 
-第一遍读 chapter 04，最值钱的不是记住每个 helper 名字，而是先记住下面这条链：
+先想一个最小 scene：一块地面、一个 box、外加一个把 box 挂到父节点上的 revolute joint。第一遍读 chapter 04，最先该问的不是某个 schema resolver 具体叫什么，而是：这些 authored prim 和局部 pose，最后怎样进到 `Model` 的 body / joint / shape 数组里？
+
+把这个 toy scene 带在脑子里，再去看下面这条链，会更容易知道每一步到底在搬什么：
 
 1. scene input 先 author 一棵 scene graph，里面有 rigid body、joint、shape、site、material 和一堆局部 pose / scale / attrs。
 2. importer 读出 Newton 真正关心的那部分信息：body 是谁，joint 连谁，shape 挂在哪，局部 frame 怎样写，质量和接触相关属性有没有 author。

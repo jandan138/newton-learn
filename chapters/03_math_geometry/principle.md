@@ -15,6 +15,8 @@ newton_commit: 1a230702
 
 ## 0. 为什么 `02` 之后还会卡住
 
+先想一个很常见的画面：你刚打开 builder 或 `Model`，看到一串字段名在眼前排开，像是在看一张没有图例的工程图。你能感觉到它们都和“刚体放在哪、朝哪、怎么连、重心在哪”有关，但第一眼还很难把它们连成一幅图。
+
 `02_newton_arch` 已经把 `Model / State / Control / Solver` 这条主链接上了，但你真的去翻 `Model`、builder 或 articulation 源码时，马上会撞上另一层词汇：`wp.transform`、parent / child frame、四元数、`shape_transform`、`body_com`、twist、wrench、惯量。
 
 这章只负责把这层词汇翻译成人话，让 `Model` 先变得可读。它不是完整数学课，不会把四元数、刚体动力学、碰撞算法全部讲完。你现在需要的不是一套推导，而是一套足够稳定的阅读坐标。
@@ -88,6 +90,8 @@ newton_commit: 1a230702
 
 ## 5. shape representation：先分清“这是哪一类几何”
 
+先看一个最直接的对比：球和箱子这种 shape，更像“给我几个参数，我就知道它长什么样”；地形、mesh、SDF 这类 shape，则更像“我手里已经有一份几何数据，后面要按这份数据去问表面在哪里”。
+
 `Model` 里不只有 body 和 joint。shape 也同样重要，因为后面的碰撞、可视化、质量属性，都会从 shape 出发。第一遍真正需要的，不是把所有碰撞算法吃透，而是先分清 Newton 在保存哪一类几何。
 
 第一次看到 `HFIELD`、`SDF` 这类大写词，也不用先脑补另一套新学科。对 chapter 03 来说，它们先只是 `_src/geometry/types.py` 这张目录里的表示名，提醒你：后面的查询路径会因为 shape category 不同而分叉。
@@ -101,7 +105,7 @@ newton_commit: 1a230702
 
 `_src/geometry/types.py` 里把这些类型先分成 primitive 和 explicit 两大类，这个切分对初学者非常有帮助。前者更像“我知道这个形状的参数公式”，后者更像“我手里有一份几何数据”。你先把这个区别记稳，后面看到不同 narrow phase 或 SDF helper 时，就不会误以为它们全是同一种东西。
 
-同时也别忽略 `shape_transform`。shape 类型回答的是“它是什么形状”，而 `shape_transform` 回答的是“它在 body 局部 frame 里放在哪、朝哪”。这两件事一起，才构成真正可用的几何描述。
+同时也别忽略 `shape_transform`。shape 类型回答的是“它是什么形状”，而 `shape_transform` 回答的是“它在 body 局部 frame 里放在哪、朝哪”。这两件事一起，才构成真正可用的几何描述。等你走到 `06_collision`，就会看到碰撞系统正是拿着这两层信息，继续把 shape 摆到 world 里，再分路进入真正的接触查询。
 
 ## 6. 惯量是 geometry 通向 articulation 的桥
 

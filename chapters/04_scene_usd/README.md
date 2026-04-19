@@ -54,13 +54,14 @@ newton_commit: 1a230702
 - `02_newton_arch` 的四层心智模型也最好还在：这里默认你已经知道 `Model` 是静态结构容器，只是还不知道它最初怎样被喂出来。
 - 不要求你先学完整 OpenUSD 课程；本章只使用 scene graph、authored attrs、schema 这些对 Newton importer 真正有用的那一层词汇。
 
-## GAMES103 已有 vs 本章新增
+## 先带着这张表读
 
-| 维度 | GAMES103 已有 | 本章新增 |
-|------|----------------|----------|
-| 场景 / 物理直觉 | 知道刚体、关节、碰撞体和质量属性通常来自某种场景描述或资产文件。 | 把这层直觉具体压成 `scene input -> importer -> schema resolver -> builder -> Model` 这条 Newton 读码链。 |
-| Newton 工程视角 | 一般不会要求你把 authored attrs 对到真实 builder / `Model` 字段。 | 解释 body / joint / shape / site / local pose 怎样落到 `shape_transform`、`joint_X_p/X_c`、shape arrays 和 `body_mass / body_com / body_inertia`。 |
-| 章节衔接视角 | 不会刻意区分“结构怎么建立”和“结构怎么被动力学 / 碰撞消费”。 | 明确 chapter 04 只讲结构来源，再把 articulation 消费交给 `05`，把 collision 消费交给 `06`。 |
+| 词 / 对象 | 先怎么想 | 一个最小 scene 里它像什么 | 第一次去哪里看 |
+|-----------|-----------|----------------------------|------------------|
+| scene input | 还没进 Newton 的原始场景描述 | 地面 prim、box prim、revolute joint prim，以及它们各自 author 的局部 pose / attrs | `principle.md` 第 1 节 |
+| importer | 把 scene 里真正有用的结构先读出来 | 认出“哪个 prim 是 body、哪个是 joint、哪个 shape 挂在哪” | `principle.md` 第 3 节 |
+| schema resolver | 不同 authoring 名字的翻译边界 | 同样在说 joint limit 或 contact margin，但名字可能来自 `newton:*`、`physx*`、`mjc:*` | `principle.md` 第 4 节 |
+| builder -> `Model` | 把读出来的关系压成 Newton 静态结构 | box 变成某个 body 槽位、joint 变成 `joint_parent / joint_child`、shape 变成 `shape_transform` 等数组 | `principle.md` 第 5-7 节 |
 
 ## 阅读顺序
 

@@ -28,6 +28,8 @@ newton_commit: 1a230702
 
 ## 1. 先把 articulation 看成“一段 joint 范围 + 一棵 body tree”
 
+先想一条最小两连杆：world 上挂着一个 base body，base 再通过一个 revolute joint 连到 child body。运行时系统既要知道“这两个 body 属于同一条树”，也要知道“这个 joint 的角度最后怎样把 child 摆到世界里”。
+
 第一遍最容易踩的坑，是把 articulation 想成某个嵌套对象。Newton 里的 articulation 更像一套切片约定：body、joint、joint coordinate 仍然都铺在扁平数组里，但有几组索引把“哪些 joint 属于同一条树”标出来。
 
 builder 里的 `add_articulation()` 先做的也正是这件事。它要求 joint 索引连续、单调、处在同一 world，并且每个 child 只能有一个 parent。换句话说，先把“这是一条可前向传播的 joint tree”守住。
@@ -44,7 +46,9 @@ builder 里的 `add_articulation()` 先做的也正是这件事。它要求 join
 
 ## 2. `joint_q / joint_qd` 和 `body_q / body_qd` 不是同一层状态
 
-这一章最值得先分清的，就是 generalized coordinates 和 maximal coordinates 不是同一种东西。
+最常见的误会，是把 `joint_qd` 直接当成 `body_qd`。但在一条最小 revolute chain 里，这两件事其实很好区分：joint 那边只会记“这个关节绕自己的轴转多快”，body 那边却要记“child body 此刻在 world 里整体怎么动，包括线速度和角速度”。
+
+所以这一章最值得先分清的，就是 generalized coordinates 和 maximal coordinates 不是同一种东西。
 
 - `joint_q`：joint-space 的位置坐标。它回答“每个 joint 现在处在自己的参数化里什么位置”。
 - `joint_qd`：joint-space 的速度坐标。它回答“沿每个 joint 允许的运动方向，现在走多快”。
