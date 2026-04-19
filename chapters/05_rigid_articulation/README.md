@@ -1,7 +1,7 @@
 ---
 chapter: 05
 title: 05 刚体与关节动力学
-last_updated: 2026-04-17
+last_updated: 2026-04-19
 source_paths: []
 paper_keys:
   - featherstone-book
@@ -11,41 +11,74 @@ newton_commit: 1a230702
 
 # 05 刚体与关节动力学
 
+`03_math_geometry` 已经把 frame / transform / spatial quantity / inertia 这些词先翻译成人话，`04_scene_usd` 又把 scene input -> importer -> builder -> `Model` 这条线讲顺了：你现在至少知道 `joint_X_p / joint_X_c`、`joint_q / joint_qd`、`body_mass / body_inertia` 这些字段从哪里来。第 05 章要补上的空档是：这些字段怎样不再只是静态结构，而是长成 articulation 容器，先经过 FK 和 motion subspace 变成 `body_q / body_qd`，再继续被刚体动力学和 Featherstone 路线消费。
+
+所以这一章站在 `03`、`04` 之后，但还没有进入完整接触数学或 solver 家族比较。它只保住第一遍读码真正需要的那层 articulation 心智模型：joint tree 怎样组织、`generalized coordinates` 怎样摆放、body mass / inertia 为什么会继续出现在 `dynamics path` 里。
+
+## 文件分工
+
+- `README.md`：只负责本章边界、完成门槛和阅读入口。
+- `principle.md`：负责把 articulation 容器、`joint_q / joint_qd`、FK、motion subspace 和 mass / inertia 消费主线讲顺。
+- `source-walkthrough.md`：负责把 builder / `Model` / articulation helper / Featherstone 路径的源码锚点串起来。
+- `examples.md`：负责用最小 articulation 例子把 `joint_q`、`body_q`、frame 和 inertia bridge 变成可观察现象。
+
 ## 完成门槛
 
-- 能用自己的话讲清本章核心对象、关键变量与 GAMES103 之外的新内容。
-- 能把至少一条 Newton 源码路径串成稳定的数据流或调用链，并回指到对应原理。
-- 能留下最小闭环证据：例子注释、pitfalls 记录或 exercises 草题至少一项，支撑后续复习。
+```text
+[ ] 我能把 `joint_q / joint_qd` 说成 articulation 的关节坐标，把 `body_q / body_qd` 说成 FK / 速度传播后的 body 世界状态，并解释两者不是同一层数据
+[ ] 我能顺着 `joint_parent / joint_child`、`joint_X_p / joint_X_c`、joint type / axis 讲出一条最小 FK 链：`joint_q -> joint transform -> body_q`
+[ ] 我能解释为什么 `joint_qd` 不能直接拿来当 `body_qd`，而要先经过 motion subspace 才能变成 body-space 速度
+[ ] 我能顺着 `body_mass / body_com / body_inertia` 解释这些量怎样继续进入 articulation / Featherstone 路线，而不是只停留在 importer 或 builder
+```
 
 ## 本章目标
 
-- 本章要回答什么问题？
-- 读完后应该能独立讲清哪些对象、流程和边界？
-- 本章优先保住的最小闭环是什么？
+- 把 `04_scene_usd` 留下的静态字段，接成第 05 章真正关心的 articulation 结构与动力学入口。
+- 解释 joint-space 坐标和 body-space 状态各自服务谁，以及它们之间最重要的 FK / velocity bridge。
+- 只保住第一遍阅读最值钱的链路：结构先怎么组织，量先怎么流动，后续数学章和 solver 章再各自展开。
+
+## 本章范围
+
+- articulation 容器的第一层读法：joint tree、parent-child 结构、`generalized coordinate layout`，以及这些结构为什么适合统一前向传播。
+- `joint_q / joint_qd` 与 `body_q / body_qd` 的区别和联系：前者是 joint-space 坐标，后者是 body-space world pose / twist 结果。
+- FK 与 motion subspace 的第一遍读法：`joint_X_p / joint_X_c`、joint type、joint axis、`joint_q / joint_qd` 怎样一起决定 body pose 和 body velocity。
+- `body_mass / body_com / body_inertia` 怎样从 body 质量属性继续变成 articulation / Featherstone 路线会消费的量。
+
+## 本章明确不做什么
+
+- 不展开 collision pair、几何相交或接触候选怎样生成；这些留给 `06_collision`。
+- 不展开完整 ABA / CRBA 推导；这里只解释这些递推为什么会消费本章这批 articulation buffers。
+- 不展开完整 Jacobian / Delassus / contact math；相关约束与接触数学留给 `07_constraints_contacts_math`。
+- 不展开 solver family 横向比较；不同 rigid solver 的系统比较留给 `08_rigid_solvers`。
+- 不展开大型机器人控制、增益设计、reward shaping 或调参实践。
 
 ## 前置依赖
 
-- 必读前置章节：
-- 需要先会的数学 / 几何 / GPU / Warp 概念：
-- 可选回看例子：
+- 建议先读完 `03_math_geometry`；如果 `joint_X_p / joint_X_c`、spatial quantity、inertia 这些词还没读顺，这一章会只剩 articulation 术语。
+- 建议先读完 `04_scene_usd`；本章默认你已经知道 body / joint / mass property 是怎样进入 builder 和 `Model` 的。
+- `02_newton_arch` 的最低限度心智模型也最好还在：这里默认你知道 `Model`、runtime state 和 solver path 是分层组织的，只是还没把 articulation 这一层接起来。
+- 不要求你先学完整 Featherstone 教材、机器人控制课程或接触力学；这些正是后续章节再展开的内容。
 
 ## GAMES103 已有 vs 本章新增
 
 | 维度 | GAMES103 已有 | 本章新增 |
 |------|----------------|----------|
-| 物理 / 数学视角 |  |  |
-| Newton 工程视角 |  |  |
-| GPU / Warp 视角 |  |  |
+| 物理 / 数学视角 | 知道多刚体系统会被关节连接，关节坐标会决定系统姿态与速度。 | 把这层直觉压成第 05 章的第一条工程主线：`joint_q / joint_qd` 属于 joint space，`body_q / body_qd` 是 FK 和速度传播后的 body-space 结果。 |
+| Newton 工程视角 | 一般不会要求你把 joint frame、质量属性和 `generalized coordinates` 对到真实数组与 helper。 | 解释 `joint_parent / joint_child`、`joint_X_p / joint_X_c`、`joint_q / joint_qd`、`body_mass / body_inertia` 怎样一起组成 articulation 布局，并继续被 dynamics / Featherstone 路径消费。 |
+| 章节衔接视角 | 不会刻意区分 articulation 结构、碰撞入口、接触数学和 solver 家族这几层阅读任务。 | 明确第 05 章只做 articulation bridge：先把结构、FK、motion subspace 和 inertia consumption 读顺，再把 collision 入口送往 `06`，把 Jacobian / contact 送往 `07`，把 solver family 送往 `08`。 |
 
 ## 阅读顺序
 
-1. 先把本文件写到可用，明确本章目标、边界、入口例子和完成门槛。
-2. `principle.md` 和 `source-walkthrough.md` 二选一先开写，但只在当前最清楚的一条主线上推进。
-3. 如果另一份已经存在，就在两者之间交替推进，避免只堆原理或只抄源码。
-4. `examples.md`、`pitfalls.md`、`exercises.md` 按需补充；它们服务理解，但不阻塞主线推进。
+1. 先读 `principle.md`，把 articulation 容器、joint-space vs body-space、FK、motion subspace 和 inertia bridge 这条主线读顺。
+2. 再读 `source-walkthrough.md`，把 `Model` / runtime state / articulation helper / Featherstone 消费链对到真实源码锚点。
+3. 然后读 `examples.md`，用最小 articulation 例子观察 `joint_q`、`body_q`、joint frame 和质量属性是怎样联动的。
+4. 先进入 `06_collision`，看有了 body/world 状态之后，碰撞几何、pair 和候选接触怎样开始长出来。
+5. 再进入 `07_constraints_contacts_math`，看 Jacobian、约束和接触数学怎样建立在 articulation 结构和碰撞候选之上。
+6. 最后进入 `08_rigid_solvers`，看不同 rigid solver 尤其是 Featherstone 路线怎样消费本章已经读顺的 articulation 结构。
 
 ## 预期产出
 
-- 本章最终应有哪些文件：
-- 至少覆盖哪些 source paths / examples / papers：
-- 本章完成后，后续章节会如何复用这里的结论：
+- `principle.md`：用一条 beginner-safe 主线解释 articulation 容器、`joint_q / joint_qd`、`body_q / body_qd`、FK、motion subspace 和 mass / inertia bridge。
+- `source-walkthrough.md`：把 builder、`Model`、runtime state、`newton/_src/sim/articulation.py` 和 Featherstone 入口串成稳定源码链。
+- `examples.md`：给出最小 articulation 观察任务，帮助你在例子里对照 `joint_q -> body_q`、`joint_qd -> body_qd` 和 body mass / inertia 的变化。
+- 一套可复用的后续入口：去 `06` 时先追碰撞候选怎样接在 body/world 状态之后，去 `07` 时继续追 Jacobian / contact math，去 `08` 时再追 solver 怎样消费这些结构而不是重新发明一套状态表示。
