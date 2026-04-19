@@ -1,7 +1,7 @@
 ---
 chapter: 09
 title: 09 变分求解器族
-last_updated: 2026-04-17
+last_updated: 2026-04-19
 source_paths: []
 paper_keys:
   - xpbd-paper
@@ -12,41 +12,80 @@ newton_commit: 1a230702
 
 # 09 变分求解器族
 
+`08_rigid_solvers` 已经把 shared `solver.step(...)` contract 和 solver family split 讲顺了。第 09 章接着回答的不是“又多了哪几个 solver”，而是另一件更关键的事: **当同一块 cloth 或 softbody 需要更稳定的隐式更新时，`XPBD`、`VBD`、`Style3D` 到底在解什么共同问题？它们每一步又把修正落在哪一层？**
+
+所以这章不是 flat solver catalog。它先用同一个 `example_cloth_hanging.py` 把 shared problem 立住，再把三条主路线压成一条 beginner-safe 的梯子:
+
+```text
+XPBD: per-constraint projection
+-> VBD: per-vertex / per-block local solve
+-> Style3D: cloth-specialized global PD / PCG solve
+```
+
+顺手先说清一个边界: `example_cloth_hanging.py` 里也会出现 `SemiImplicit`。它在这章里的角色只是 baseline 对照，帮你看清“为什么要走隐式修正”；本章真正的主角是 `XPBD / VBD / Style3D`。
+
+## 文件分工
+
+- `README.md`: 本章边界、完成门槛、阅读入口。
+- `principle.md`: 先讲 shared variational / implicit correction problem，再比较三条更新路线各自把修正落在哪一层。
+- `source-walkthrough.md`: 按 `shared surface -> shared cloth example -> XPBD / VBD / Style3D -> VBD softbody extension` 的顺序走源码。
+- `examples.md`: 用 `example_cloth_hanging.py` 做跨 solver 对照，再用 `example_softbody_hanging.py` 解释 VBD 为什么不只是 cloth solver。
+
 ## 完成门槛
 
-- 能用自己的话讲清本章核心对象、关键变量与 GAMES103 之外的新内容。
-- 能把至少一条 Newton 源码路径串成稳定的数据流或调用链，并回指到对应原理。
-- 能留下最小闭环证据：例子注释、pitfalls 记录或 exercises 草题至少一项，支撑后续复习。
+```text
+[ ] 我能先说清 `08 -> 09` 的桥: 同样是 `solver.step(...)`，但现在关注的是 cloth / softbody 的隐式修正问题
+[ ] 我能解释为什么 `XPBD`、`VBD`、`Style3D` 可以被放在同一章里比较，而不是三个孤立名字
+[ ] 我能说明三条主路线的局部更新层级差别: `constraint -> vertex/block -> global linear system`
+[ ] 我能解释为什么 `example_cloth_hanging.py` 是本章主例子，而 `example_softbody_hanging.py` 只是 VBD 的补充延伸
+```
+
+建议读完后直接去 `examples.md` 做自检，不要只停在术语表面。
 
 ## 本章目标
 
-- 本章要回答什么问题？
-- 读完后应该能独立讲清哪些对象、流程和边界？
-- 本章优先保住的最小闭环是什么？
+- 先把 shared variational / implicit correction problem 讲清，再谈 solver family split，而不是先背 solver 名字。
+- 让你用同一个 `cloth_hanging` 场景比较三家，看到它们面对的是同一类稳定更新问题，只是每步修正的组织方式不同。
+- 让你建立一条稳定的比较轴: `每次迭代最先修哪层对象`，而不是掉进 feature matrix 或性能排行。
+
+## 本章范围
+
+- 只聚焦 chapter 09 的 main trio: `SolverXPBD`、`SolverVBD`、`SolverStyle3D`。
+- `SemiImplicit` 只在共享例子里作为 contrast baseline 出现，不和 main trio 平分章节重心。
+- 主例子只有 `newton/examples/cloth/example_cloth_hanging.py`，辅例子只有 `newton/examples/softbody/example_softbody_hanging.py`。
+- 重点比较 shared example、solver setup、局部更新层级，以及这些差别怎样映射到 Newton 源码。
+
+## 本章明确不做什么
+
+- 不做完整 XPBD 合规性推导、VBD 证明或 projective dynamics 理论课。
+- 不展开 VBD 的 AVBD 刚体细节；chapter 09 只把它当背景，主线仍是 cloth / softbody 粒子求解。
+- 不做 diffsim、梯度路径或“哪个 solver 最快”的性能排行。
+- 不把 chapter 08 的 rigid solver family 和 chapter 09 的 variational solver family 混成一个更长的 catalog。
 
 ## 前置依赖
 
-- 必读前置章节：
-- 需要先会的数学 / 几何 / GPU / Warp 概念：
-- 可选回看例子：
+- 建议先读完 `08_rigid_solvers`。如果你还不能解释同一个 `solver.step(...)` 为什么会分叉成不同 solver family，先回看 chapter 08。
+- 默认你已经接受一点最小直觉: 显式积分会先把状态往前推，隐式 / 变分 solver 会多做一轮“把这一步修正稳”的工作。
+- 不要求你先会完整 XPBD、VBD 或 PD 推导；这章只要求你愿意先用“修正落在哪一层”来比较 solver。
 
-## GAMES103 已有 vs 本章新增
+## 教学型对照表
 
-| 维度 | GAMES103 已有 | 本章新增 |
-|------|----------------|----------|
-| 物理 / 数学视角 |  |  |
-| Newton 工程视角 |  |  |
-| GPU / Warp 视角 |  |  |
+| Solver / 路线 | 先怎么想 | 每次迭代最先修哪层 | 为什么现在要懂 |
+|---------------|-----------|--------------------|----------------|
+| `SemiImplicit` | 力累加 + 多 substeps baseline | 不先解隐式修正，主要是先算力再积分 | 帮你看清 chapter 09 为什么需要 main trio |
+| `XPBD` | 逐约束投影 | 单条约束 / 单次投影 | 最容易上手，帮你建立“隐式修正不一定先建全局矩阵” |
+| `VBD` | local block Newton solve | 单个 vertex / block | 帮你看懂 force + Hessian 为什么能先在局部累计再解 |
+| `Style3D` | global cloth PD / PCG solve | 整张 cloth 的线性系统 | 帮你看懂 cloth-specialized 的全局求解路线 |
 
 ## 阅读顺序
 
-1. 先把本文件写到可用，明确本章目标、边界、入口例子和完成门槛。
-2. `principle.md` 和 `source-walkthrough.md` 二选一先开写，但只在当前最清楚的一条主线上推进。
-3. 如果另一份已经存在，就在两者之间交替推进，避免只堆原理或只抄源码。
-4. `examples.md`、`pitfalls.md`、`exercises.md` 按需补充；它们服务理解，但不阻塞主线推进。
+1. 先读 `principle.md`，把 shared problem 和三条更新梯子立住。
+2. 再读 `source-walkthrough.md`，确认同一个 `cloth_hanging` 外壳在源码里怎样分叉成 `XPBD / VBD / Style3D`。
+3. 然后读 `examples.md`，先用 `cloth_hanging` 观察 shared scene 下的 solver 差异，再用 `softbody_hanging` 看 VBD 的延伸。
+4. 如果你读完还会把三家想成“只是 solver 名字不同”，就回到 `principle.md` 里的梯子表重新看一遍。
 
 ## 预期产出
 
-- 本章最终应有哪些文件：
-- 至少覆盖哪些 source paths / examples / papers：
-- 本章完成后，后续章节会如何复用这里的结论：
+- `principle.md`: 一条 beginner-safe 主线，先讲 shared implicit correction，再讲 `XPBD -> VBD -> Style3D`。
+- `source-walkthrough.md`: 一份 tiered read path，告诉你先看 shared example，再看三条 variational path，最后再补 VBD 的 softbody 延伸。
+- `examples.md`: 两个观察任务，分别守住“同一块 hanging cloth 的跨 solver 对照”和“VBD 不只处理 cloth”这两层理解。
