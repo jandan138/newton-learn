@@ -1,49 +1,105 @@
 ---
 chapter: 10
-title: 10 软体 + 布料 + Cable
-last_updated: 2026-04-17
-source_paths: []
+title: 10 软体、布料与 Cable
+last_updated: 2026-04-21
+source_paths:
+  - newton/examples/cloth/example_cloth_hanging.py
+  - newton/examples/softbody/example_softbody_hanging.py
+  - newton/examples/cable/example_cable_twist.py
+  - newton/_src/sim/builder.py
 paper_keys: []
 newton_commit: 1a230702
 ---
 
-# 10 软体 + 布料 + Cable
+# 10 软体、布料与 Cable
+
+`09_variational_solvers` 刚把一个更窄、但很重要的问题讲顺: **同一块 hanging cloth 进入 shared `collide -> step -> swap` loop 之后，Newton 可以怎样组织稳定修正？**
+
+第 10 章把镜头再往前挪一步，不再先问 solver，而是先问对象本身:
+
+```text
+cloth、softbody、cable 看起来都“会变形”，
+但它们在 Newton 里其实是同一种对象吗？
+```
+
+这章的 main answer 是否定的。chapter 10 要先建立三种内部对象家族，再谈 solver 只是怎样消费这些对象:
+
+```text
+cloth    = particles + triangles + bending edges / optional springs
+softbody = particles + tetrahedra + generated surface collision mesh
+cable    = capsule rigid bodies + cable joints (+ articulation)
+```
+
+这就是本章为什么必须是 representation-first，而不是 solver-first。
+
+## 文件分工
+
+- `README.md`: 本章范围、阅读顺序、完成门槛。
+- `principle.md`: 解释为什么这三类“看起来都可变形”的东西，在 Newton 里其实属于不同内部对象家族。
+- `source-walkthrough.md`: beginner / main walkthrough。第一次追 chapter 10 源码，先看这一份。
+- `examples.md`: 三个教学锚点各司其职，分别守住 cloth、softbody、cable 三条主入口。
+
+这章暂时只有 main walkthrough，没有 deep walkthrough。
 
 ## 完成门槛
 
-- 能用自己的话讲清本章核心对象、关键变量与 GAMES103 之外的新内容。
-- 能把至少一条 Newton 源码路径串成稳定的数据流或调用链，并回指到对应原理。
-- 能留下最小闭环证据：例子注释、pitfalls 记录或 exercises 草题至少一项，支撑后续复习。
+```text
+[ ] 我能把 `09 -> 10` 的桥讲清: 上一章先问“谁来解”，这一章先问“到底在解什么对象”
+[ ] 我能解释为什么 cloth 和 softbody 虽然都基于 particles，但在 Newton 里仍然不是同一种对象家族
+[ ] 我能解释为什么 cable 在 Newton 里不是 particle softbody，而是 capsule rigid body chain + cable joints
+[ ] 我能各指出一条主源码入口: `add_cloth_grid`、`add_soft_grid`、`add_rod`
+[ ] 我能说明三个例子的分工，而不是把它们混成一个“deformable demo catalog”
+```
 
 ## 本章目标
 
-- 本章要回答什么问题？
-- 读完后应该能独立讲清哪些对象、流程和边界？
-- 本章优先保住的最小闭环是什么？
+- 建立 chapter 10 的第一比较轴: `内部表示是什么`，而不是 `solver 叫什么`。
+- 让你看到 cloth、softbody、cable 虽然都能呈现柔性行为，但在 builder、状态、拓扑、碰撞和固定方式上并不相同。
+- 给后续读源码留下一条稳定心智图: 先认对象家族，再看 solver 怎样更新它。
+
+## 本章范围
+
+- 主教学例子只用三个 upstream anchors:
+  - `newton/examples/cloth/example_cloth_hanging.py`
+  - `newton/examples/softbody/example_softbody_hanging.py`
+  - `newton/examples/cable/example_cable_twist.py`
+- 主源码锚点只守住 `newton/_src/sim/builder.py` 里的三条 helper:
+  - `add_cloth_grid`
+  - `add_soft_grid`
+  - `add_rod`
+- 会顺手提到 `add_joint_cable()` 和 `add_articulation()`，但只作为 `add_rod()` 背后的必要 handoff，不单独展开成 joint 数学课。
+
+## 本章明确不做什么
+
+- 不重讲 chapter 09 的 XPBD / VBD / Style3D 数学和迭代层级。
+- 不做 cloth / softbody / cable 的参数大词典。
+- 不展开 Style3D 服装特化细节，也不展开 cable 的 quaternion / parallel transport 细节。
+- 不写 chapter 10 deep walkthrough；这一章先把 mainline 建稳。
 
 ## 前置依赖
 
-- 必读前置章节：
-- 需要先会的数学 / 几何 / GPU / Warp 概念：
-- 可选回看例子：
-
-## GAMES103 已有 vs 本章新增
-
-| 维度 | GAMES103 已有 | 本章新增 |
-|------|----------------|----------|
-| 物理 / 数学视角 |  |  |
-| Newton 工程视角 |  |  |
-| GPU / Warp 视角 |  |  |
+- 建议先读完 `09_variational_solvers`。如果你还会把 solver 名字和对象家族混成一件事，先回看 chapter 09。
+- 默认你已经接受 chapter 08/09 的最小外层 contract: 场景会走 `collide -> solver.step -> swap states` 这一类 shared loop。
+- 不要求你先会 tetrahedral elasticity、rod theory 或 cable twist 数学；chapter 10 先解决对象识别，不先做推导。
 
 ## 阅读顺序
 
-1. 先把本文件写到可用，明确本章目标、边界、入口例子和完成门槛。
-2. `principle.md` 和 `source-walkthrough.md` 二选一先开写，但只在当前最清楚的一条主线上推进。
-3. 如果另一份已经存在，就在两者之间交替推进，避免只堆原理或只抄源码。
-4. `examples.md`、`pitfalls.md`、`exercises.md` 按需补充；它们服务理解，但不阻塞主线推进。
+1. 先读本文件，把 chapter 10 的问题改写成“内部对象家族识别”。
+2. 第一次追源码时，直接读 `source-walkthrough.md`。
+3. 读完主 walkthrough，再回 `principle.md` 把 cloth / softbody / cable 的差别翻成人话。
+4. 最后用 `examples.md` 做三次分开的观察，不要一次混着看。
+
+如果你读完还会把三者统称成“deformable object”，就回到 `principle.md` 的对照表再看一遍。
 
 ## 预期产出
 
-- 本章最终应有哪些文件：
-- 至少覆盖哪些 source paths / examples / papers：
-- 本章完成后，后续章节会如何复用这里的结论：
+- `principle.md`: 一张 beginner-safe 对照图，讲清三种对象家族及其后果。
+- `source-walkthrough.md`: 一条 main walkthrough，把 `chapter 09 的 solver 问题 -> chapter 10 的 representation 问题` 顺下来。
+- `examples.md`: 三个独立教学锚点，分别回答“cloth 是什么”“softbody 是什么”“cable 是什么”。
+
+读完 chapter 10 后，你最该带走的不是一串参数名，而是这句更短的话:
+
+```text
+在 Newton 里，
+cloth 是表面粒子网格，softbody 是体粒子网格，cable 是由 rigid capsules 和 cable joints 组成的链。
+```
