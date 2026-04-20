@@ -17,7 +17,7 @@ newton_commit: 1a230702
 
 - `README.md`：只负责本章边界、完成门槛和阅读入口。
 - `principle.md`：先把 `kernel`、`wp.array`、`wp.launch`、`wp.tid()` 这些词翻译成人话。
-- `source-walkthrough.md`：新手 / 主 walkthrough。第一次追 chapter 01 源码先看这一份；它把 `buffer -> launch -> tid -> atomic -> graph/tile` 主线直接讲顺。
+- `source-walkthrough.md`：新手 / 主 walkthrough。第一次追 chapter 01 源码先看这一份；它会先把“为什么 Newton 里会出现 Warp”讲清，再顺着 `ordinary loop -> kernel -> launch/tid -> wp.array -> atomic -> graph/tile` 这条主线往下走。
 - `source-walkthrough-deep.md`：深读锚点版。已经跟上主线后，如果你想精确追上游文件、symbol 和行号，再看这一份。
 
 ## 完成门槛
@@ -50,9 +50,9 @@ newton_commit: 1a230702
 
 ## 阅读顺序
 
-1. 先通读 `principle.md` 的 `0-3` 节，把 `kernel`、`wp.array`、`wp.launch`、`wp.tid()` 的关系读顺。
-2. 再读 `4-6` 节，先建立对 `atomic_add`、`tile`、`Graph` 的直觉，不必第一遍就深挖优化细节。
-3. 第一次追源码时，先看 `source-walkthrough.md`，把这些 Warp 词直接对到 Newton 里的 `Model / State / Control / Solver / Example` 代码角色。
+1. 想先走最完整、最慢一点的概念坡道，就先读 `principle.md`。
+2. 想直接从源码视角进入，也可以先读 `source-walkthrough.md`；它现在已经会把“为什么会有 Warp”这条来龙去脉先讲出来。
+3. 觉得主 walkthrough 已经顺了，再回头用 `principle.md` 补更稳的概念翻译也可以。
 4. 想精确追到上游文件、symbol 和行号，再看 `source-walkthrough-deep.md`。
 5. 读完后再进入 `02_newton_arch`，把这套读法扩展到 Newton 的对象分层和例子入口。
 6. 以后读 `11_mpm`、`13_diffsim` 时，如果又遇到更重的 Warp 细节，再回本章复看。

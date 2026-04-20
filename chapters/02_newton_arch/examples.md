@@ -13,13 +13,13 @@ newton_commit: 1a230702
 
 # 02 Newton 总体架构 例子观察单
 
-`principle.md` 负责讲“这条架构链是什么”，这一页只负责把 quick-win 命令改成观察任务。先把默认命令跑一遍，再带着下面的观察点回看现象与源码；这里写的是观察提示，不是已经执行过的日志。每次只改一个量，再回到 `principle.md` 的四层标签判断你刚才动到的是哪一层。
+`principle.md` 负责讲“这条架构链是什么”，这一页只负责把 quick-win 命令改成观察任务。先把默认命令跑一遍，再带着下面的观察点回看现象与源码；这里写的是观察提示，不是已经执行过的日志。每次只改一个量，再回到 `principle.md` 的四层主干 + `Contacts` handoff 标签判断你刚才动到的是哪一层。
 
 ## 主例子：`basic_pendulum`
 
 ### 最适合拿来验证什么
 
-- 你是否已经把“examples 入口 -> 一个具体 example -> `Model / State / Control / Solver` -> 一次 `step`”这条最小链读顺。
+- 你是否已经把“examples 入口 -> 一个具体 example -> `Model / State / Control / Solver` 四层主干 + `Contacts` handoff -> 一次 `step`”这条最小链读顺。
 - 你是否能把 `Example.__init__()` 和 `simulate()` 分开看：前者负责把世界搭出来，后者负责每个 substep 的接力。
 - 你是否能在不引入 USD、批量 world、solver 切换之前，先看懂一个最小刚体 articulation 为什么能跑起来。
 
@@ -55,7 +55,7 @@ newton_commit: 1a230702
 
 - 源码里的 `capture()` 不是另一套物理逻辑，也不是 CLI 选项；它只是把 `simulate()` 的同一段操作在 CUDA 上录成 graph。
 - `viewer.apply_forces()` 是这一拍外部输入入口；不要把它和 `builder` 里的静态建模混成一类改动。
-- `contacts` 在这里是显式对象，不是 XPBD 私有黑箱；这一点和 `principle.md` 的四层图正好能对上。
+- `contacts` 在这里是显式对象，不是 XPBD 私有黑箱；它不是在推翻四层主干，而是在 runtime loop 里作为并列 handoff object 补上碰撞这条支线。
 
 ## 对照例子：`robot_cartpole --world-count 100`
 

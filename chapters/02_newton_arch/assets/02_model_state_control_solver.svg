@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="280" viewBox="0 0 1200 280" role="img" aria-labelledby="title desc">
-  <title id="title">Model State Control Solver</title>
-  <desc id="desc">A simple four-layer Newton architecture diagram.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">Model State Control Solver with Contacts handoff</title>
+  <desc id="desc">A Newton architecture diagram showing the four-layer backbone plus Contacts as a parallel runtime handoff object.</desc>
   <style>
     .title { font: 700 28px sans-serif; fill: #172033; }
     .label { font: 700 24px sans-serif; fill: #172033; }
@@ -15,7 +15,7 @@
     </marker>
   </defs>
 
-  <text x="60" y="48" class="title">Newton week-1: Model / State / Control / Solver</text>
+  <text x="60" y="48" class="title">Newton week-1: four-layer backbone + Contacts handoff</text>
 
   <rect x="50" y="80" width="240" height="110" rx="18" class="box"/>
   <text x="170" y="125" text-anchor="middle" class="label">Model</text>
@@ -33,9 +33,15 @@
   <text x="1025" y="125" text-anchor="middle" class="label">Solver</text>
   <text x="1025" y="158" text-anchor="middle" class="sub">一步数值推进</text>
 
+  <rect x="905" y="220" width="240" height="90" rx="18" class="box"/>
+  <text x="1025" y="255" text-anchor="middle" class="label">Contacts</text>
+  <text x="1025" y="283" text-anchor="middle" class="sub">并列 handoff / 每拍接触结果</text>
+
   <path d="M 290 135 L 335 135" class="arrow"/>
   <path d="M 575 135 L 620 135" class="arrow"/>
   <path d="M 860 135 L 905 135" class="arrow"/>
+  <path d="M 560 190 L 930 235" class="arrow"/>
+  <path d="M 1025 220 L 1025 190" class="arrow"/>
 
-  <text x="600" y="240" text-anchor="middle" class="foot">Go deeper only after mapping a concrete example to these four layers.</text>
+  <text x="600" y="335" text-anchor="middle" class="foot">先认四层主干，再把 Contacts 读成 runtime loop 里并列送给 solver 的 handoff object。</text>
 </svg>

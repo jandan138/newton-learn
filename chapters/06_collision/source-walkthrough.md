@@ -1,7 +1,7 @@
 ---
 chapter: 06
 title: 碰撞系统
-last_updated: 2026-04-19
+last_updated: 2026-04-20
 source_paths:
   - docs/concepts/collisions.rst
   - newton/_src/sim/model.py
@@ -18,17 +18,41 @@ newton_commit: 1a230702
 
 # 06 碰撞系统 源码走读
 
-如果你是第一次读这一章，最好先配合 `principle.md` 一起读；如果你是直接跳进源码走读也没关系，但一旦发现术语开始变快，就先回到 `principle.md` 把对象关系补齐，再回来追源码。
+如果你刚从 `05_rigid_articulation` 走到这里，最自然的问题通常是：
 
-这份主 walkthrough 是给第一次追 chapter 06 源码的人准备的。目标不是把 every branch 都摊平，而是让你不离开这页，也能把 collision 主干读成一条连续 handoff：`body/world state -> candidate pairs -> ContactData -> Contacts`。
+```text
+为什么不是 body 直接互相碰撞？为什么要先把 shape 放到 world，再先找 candidate pair？
+```
+
+先给一个不带太多算法名词的最短答案：
+
+- body 主要提供运动；真正有几何外形、能拿来做碰撞查询的是 shape。
+- 一个 body 上可以挂多个 shape，所以碰撞入口必须先把每个 shape 放到 world 里。
+- broad phase 先便宜地做一张 maybe-list，也就是 candidate pairs。
+- narrow phase 再把这些 maybe-pair 变成真正的接触几何。
+- `write_contact()` 最后把接触几何压进统一的 `Contacts` 缓冲区，交给后面的章节。
+
+这份主 walkthrough 是给第一次追 chapter 06 源码的人准备的。目标不是把所有 branch 都摊平，而是让你不离开这页，也能把 collision 主干读成一条连续 handoff：`body/world state -> candidate pairs -> ContactData -> Contacts`。
+
+如果你想再配一个更慢一点的概念版，可以再看 `principle.md`；但只读这一份，也应该能把 chapter 06 的主线讲顺。
+
+第一次先把下面几个词翻成人话：
+
+- `broad phase`：便宜地筛掉大多数明显不可能接触的 pair，只留下 maybe-list。
+- `candidate pair`：值得继续精查的一对 shape；它还不是最终 contact。
+- `narrow phase`：对 candidate pair 做真正接触几何查询的阶段。
+- `ContactData`：narrow phase 产出的统一接触几何记录，还没写进最终 `Contacts`。
+- `margin / gap`：shape 周围的接触包络设置。第一遍先把 `margin` 读成接触几何会参考的表面厚度，把 `gap` 读成“多早开始把接近当回事”的额外余量。比如你完全可以把 `margin=0.01` 暂时脑补成“先把表面看厚 1cm”，而 `gap` 则是在这个基础上再往外留一点提前预警空间。
+- `write_contact()`：碰撞链最后的 writer，把统一接触几何改写成 solver 直接读的 `Contacts` 数组。
 
 ## What This Walkthrough Follows
 
 只追这一条主线：
 
 ```text
-state.body_q + Model.shape_*
+body motion + Model.shape_*
 -> compute_shape_aabbs(...)
+-> world-space shape query objects
 -> broad phase candidate pairs
 -> narrow phase routing
 -> ContactData
@@ -47,6 +71,9 @@ state.body_q + Model.shape_*
 ## One-Screen Chapter Map
 
 ```text
+body gives motion, shape gives geometry
+                    |
+                    v
 Model.shape_transform / shape_body / shape_type / shape_margin / shape_gap / shape_world
                     +
                 state.body_q
@@ -79,16 +106,16 @@ Model.shape_transform / shape_body / shape_type / shape_margin / shape_gap / sha
 ## Beginner Path
 
 1. 先看 Stage 1。
-   - 想验证什么：`Model` 里哪些数组是静态 shape 数据，`state` 里哪些是每帧 body/world state。
-   - 看完后应该能说：`Model.collide()` 自己不做几何计算，它只是把这两类输入接到 `CollisionPipeline`。
+   - 想验证什么：为什么 body 不是直接碰撞对象，为什么 `Model` 里要单独保留 shape 元数据。
+   - 看完后应该能说：`Model.collide()` 自己不做几何计算，它只是把 body/world state 和静态 shape 数据接到 `CollisionPipeline`。
 2. 再看 Stage 2。
-   - 想验证什么：`body_q + shape_transform` 怎样长成每个 shape 的 world transform 和 expanded AABB。
-   - 看完后应该能说：broad phase 看到的是 shape 的 world AABB，不是 body 名单。
+   - 想验证什么：`body_q + shape_transform` 怎样长成每个 shape 的 world transform 和 expanded AABB，以及 `margin / gap` 为什么这么早就出现。
+   - 看完后应该能说：broad phase 看到的是 shape 的 world AABB，不是 body 名单；AABB 还会按 `margin + gap` 提前膨胀。
 3. 再看 Stage 3。
-   - 想验证什么：broad phase 到底写出了什么。
+   - 想验证什么：broad phase 到底写出了什么，为什么它只是一张 maybe-list。
    - 看完后应该能说：它只写 `candidate_pair` 和 `candidate_pair_count`，还没有真正 contact geometry。
 4. 最后看 Stage 4 和 Stage 5。
-   - 想验证什么：narrow phase 怎样把不同几何分支重新压回统一的 `ContactData`，以及 `write_contact()` 怎样写进 `Contacts`。
+   - 想验证什么：narrow phase 怎样把不同几何分支重新压回统一的 `ContactData`，writer 又怎样把它写进 `Contacts`。
    - 看完后应该能说：chapter 06 的终点不是某个 GJK 函数，而是 solver 能直接消费的 `Contacts` 数组。
 
 ## Main Walkthrough
@@ -97,11 +124,11 @@ Model.shape_transform / shape_body / shape_type / shape_margin / shape_gap / sha
 
 **Claim**
 
-`Model` 本身保存的是 shape 的静态描述，`state` 保存的是这一帧 body 的当前位置；`Model.collide()` 只是把这两类东西交给缓存好的 `CollisionPipeline`。
+`Model` 本身保存的是 shape 的静态描述，`state` 保存的是这一帧 body 的当前位置；`Model.collide()` 只是把这两类东西交给缓存好的 `CollisionPipeline`。第一遍可以直接把这里读成：body 带来“怎么动”，shape 带来“长什么样”。
 
 **Why it matters**
 
-这一步最能纠正新手的第一层误会：不是 body 直接拿去做碰撞，而是 body 提供运动，shape 提供几何，pipeline 再把两者接起来。
+这一步最能纠正新手的第一层误会：不是 body 直接拿去做碰撞，而是 body 提供运动，shape 提供几何，pipeline 再把两者接起来。只有先接受这个边界，后面“一个 body 对应多个 shape pair”才不会显得奇怪。
 
 **Source excerpt**
 
@@ -153,11 +180,11 @@ def collide(self, state: State, contacts: Contacts | None = None, *, collision_p
 
 **Claim**
 
-碰撞主线的第一跳不是 pair test，而是先把每个 shape 放到 world 里，并顺手准备两份后面都要用的数据：expanded AABB 给 broad phase，`geom_data + geom_transform` 给 narrow phase。
+碰撞主线的第一跳不是 pair test，而是先把每个 shape 放到 world 里，并顺手准备两份后面都要用的数据：expanded AABB 给 broad phase，`geom_data + geom_transform` 给 narrow phase。这里 `margin / gap` 之所以这么早出现，就是因为 broad phase 要先知道“多早该把两边视为值得继续检查”。
 
 **Why it matters**
 
-这一步把 chapter 05 留下的 `body_q` 真正接到 collision path。读懂这里之后，你就不会再把 broad phase 想成“直接看 body”，而会知道它看的是 shape 的 world-space 盒子。
+这一步把 chapter 05 留下的 `body_q` 真正接到 collision path。读懂这里之后，你就不会再把 broad phase 想成“直接看 body”，而会知道它看的是 shape 的 world-space 盒子；也会知道 `margin / gap` 不是后面才凭空冒出来的补丁。
 
 **Source excerpt**
 
@@ -214,7 +241,7 @@ geom_xform[shape_id] = X_ws
 **Verification cues**
 
 - `shape_body == -1` 的 shape 不挂在任何 body 上，所以直接用 `shape_transform`；这就是地面这类 world shape 的入口。
-- AABB 不是只包原始几何，而是额外按 `margin + gap` 膨胀；这和文档里“`margin` 决定 where，`gap` 决定 when”是同一套语义。
+- AABB 不是只包原始几何，而是额外按 `margin + gap` 膨胀；第一遍先把这件事读成“接触包络会提前放大 maybe-list 的搜索范围”。
 - `geom_xform` 和 `geom_data` 不是 broad phase 用的，它们是 narrow phase 后面直接复用的几何输入。
 
 **Output passed to next stage**
@@ -225,7 +252,7 @@ geom_xform[shape_id] = X_ws
 
 **Claim**
 
-broad phase 的工作就是便宜、保守地筛出“值得继续看一眼”的 shape pair，然后把 pair id 写进缓冲区；它的输出仍然只是 candidate 名单。
+broad phase 的工作就是便宜、保守地筛出“值得继续看一眼”的 shape pair，然后把 pair id 写进缓冲区；它的输出仍然只是 candidate 名单。这里的 `candidate pair` 第一遍就直接读成“也许值得进 narrow phase 的一对 shape”。
 
 **Why it matters**
 
@@ -276,7 +303,7 @@ def write_pair(pair, candidate_pair, candidate_pair_count, max_candidate_pair):
 
 **Claim**
 
-narrow phase 的确会按 `shape_type` 分路，但 chapter 06 最重要的不是背下每条支路，而是看清：这些分支最后都要把结果压回同一种接触语言，然后才能交给 writer。
+narrow phase 的确会按 `shape_type` 分路，但 chapter 06 最重要的不是背下每条支路，而是看清：这些分支最后都要把结果压回同一种接触语言，然后才能交给 writer。这里的 `ContactData` 可以先直接读成“某一条接触几何记录”。
 
 **Why it matters**
 
@@ -344,11 +371,11 @@ class ContactData:
 
 **Claim**
 
-`write_contact()` 是 chapter 06 真正的终点：它把 world-space contact geometry 转成 `Contacts` 里的 shape id、body-frame 接触点、body-frame offset、world-frame 法线和 margin 信息。
+`write_contact()` 是 chapter 06 真正的终点：它把 world-space contact geometry 转成 `Contacts` 里的 shape id、body-frame 接触点、body-frame offset、world-frame 法线和 margin 信息。第一遍直接把它读成 collision pipeline 的 writer 即可。
 
 **Why it matters**
 
-读到这里，你就能明白 `07` 和 `08` 为什么都从 `Contacts` 继续，而不是各自重新理解 mesh triangle、GJK simplex 或其它 narrow-phase 内部状态。
+读到这里，你就能明白 `07` 和 `08` 为什么都从 `Contacts` 继续，而不是各自重新理解 mesh triangle、GJK simplex 或其它 narrow-phase 内部状态。broad phase、narrow phase、writer 之所以分三段，就是因为它们在负责三种完全不同的工作：筛选、求几何、写统一 handoff。
 
 **Source excerpt**
 
@@ -422,9 +449,10 @@ self.rigid_contact_margin1 = wp.zeros(rigid_contact_max, dtype=wp.float32)
 如果你现在能用自己的话讲顺下面这句话，这一章的 beginner 目标就完成了：
 
 ```text
+body 提供运动，真正直接参加碰撞的是 shape；
 body_q 先把挂在 body 上的 shape 放到 world 里；
-broad phase 再写出“可能相撞”的 shape pair；
-narrow phase 把这些 pair 变成统一的 ContactData；
+broad phase 只写出“可能相撞”的 candidate pairs；
+narrow phase 再把这些 pair 变成统一的 ContactData；
 write_contact() 最后把它们压进 Contacts，交给后面的 contact math 和 solver。
 ```
 
