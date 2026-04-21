@@ -118,7 +118,7 @@ python -m newton.examples cable_twist
 - `create_cable_geometry_with_turns(...)` 只负责给出中心线和每段朝向。
 - `builder.add_rod(...)` 返回 `rod_bodies` 和 `_rod_joints`。
 - 第一段 capsule 被设成 kinematic 的那几行 `body_mass / body_inertia = 0`。
-- `spin_first_capsules_kernel(...)` 直接写的是 `body_q0` / `body_q1`，不是 `particle_q`。
+- `spin_first_capsules_kernel(...)` 最终改的是 `self.state_0.body_q` / `self.state_1.body_q`，不是 `particle_q`。
 
 这里也顺手接受一个命名事实：Newton 在 builder 里用 `add_rod(...)` 作为这条 cable helper 的名字，但它创建的就是 chapter 10 这里说的 cable family。
 

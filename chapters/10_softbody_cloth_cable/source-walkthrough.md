@@ -342,7 +342,7 @@ builder.body_inertia[first_body] = wp.mat33(0.0)
 builder.body_inv_inertia[first_body] = wp.mat33(0.0)
 ```
 
-甚至 twist 驱动都是直接改 `body_q0` / `body_q1`。
+甚至 twist 驱动最终也是直接改 `self.state_0.body_q` / `self.state_1.body_q` 这两份 rigid-body transform。
 
 **Verification cues**
 
@@ -393,12 +393,12 @@ cable 是 capsule rigid bodies + cable joints (+ articulation)。
 
 ## Go Deeper
 
-chapter 10 的 deep walkthrough 还没有写；现在这份就是 main version。
+chapter 10 的 deep walkthrough 已经写好：见 `source-walkthrough-deep.md`。
 
-如果你还想继续加深，但暂时不需要 deep 文档，推荐只做这三件事:
+这份 main walkthrough 的角色不变，仍然负责 first pass。读完这里后，如果你想核对精确 builder handoff，建议按这个顺序继续：
 
-- 回看 `principle.md`，确认你不会再把 `surface particle mesh` 和 `volumetric particle mesh` 混成一件事。
-- 直接追 `newton/_src/sim/builder.py` 里的 `add_cloth_grid`、`add_soft_grid`、`add_rod` 三段源码。
-- 对照三个例子里的状态对象，分清什么时候该盯 `particle_q`，什么时候该盯 `body_q`。
+- 先看 `source-walkthrough-deep.md` 的 `Fast Deep Index`，挑你要核对的 upstream anchor。
+- 再读 `source-walkthrough-deep.md` 的 `Exact Handoff Trace`，把 cloth / softbody / cable 的 builder handoff 固定下来。
+- 最后回看 `principle.md`，确认你不会再把 `surface particle mesh`、`volumetric particle mesh` 和 `capsule rigid-body chain` 混成一件事。
 
-等这三步都稳定了，再考虑补 chapter 10 的 deep walkthrough 才有意义。
+如果你只想查某条支线，不必整页重读，直接跳 `source-walkthrough-deep.md` 的 `Optional Branches` 和 `Verification Anchors` 即可。

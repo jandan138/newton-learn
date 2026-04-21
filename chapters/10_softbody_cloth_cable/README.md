@@ -37,9 +37,10 @@ cable    = capsule rigid bodies + cable joints (+ articulation)
 - `README.md`: 本章范围、阅读顺序、完成门槛。
 - `principle.md`: 解释为什么这三类“看起来都可变形”的东西，在 Newton 里其实属于不同内部对象家族。
 - `source-walkthrough.md`: beginner / main walkthrough。第一次追 chapter 10 源码，先看这一份。
+- `source-walkthrough-deep.md`: deep walkthrough。main walkthrough 读完后，用这一份钉住 builder handoff、optional branches 和 exact anchors。
 - `examples.md`: 三个教学锚点各司其职，分别守住 cloth、softbody、cable 三条主入口。
 
-这章暂时只有 main walkthrough，没有 deep walkthrough。
+这章现在有 main walkthrough + deep walkthrough；第一次追源码先看 main，再用 deep 固定精确 handoff。
 
 ## 完成门槛
 
@@ -74,7 +75,7 @@ cable    = capsule rigid bodies + cable joints (+ articulation)
 - 不重讲 chapter 09 的 XPBD / VBD / Style3D 数学和迭代层级。
 - 不做 cloth / softbody / cable 的参数大词典。
 - 不展开 Style3D 服装特化细节，也不展开 cable 的 quaternion / parallel transport 细节。
-- 不写 chapter 10 deep walkthrough；这一章先把 mainline 建稳。
+- deep walkthrough 不会替代 main walkthrough；这一章仍然先把 mainline 建稳。
 
 ## 前置依赖
 
@@ -86,8 +87,9 @@ cable    = capsule rigid bodies + cable joints (+ articulation)
 
 1. 先读本文件，把 chapter 10 的问题改写成“内部对象家族识别”。
 2. 第一次追源码时，直接读 `source-walkthrough.md`。
-3. 读完主 walkthrough，再回 `principle.md` 把 cloth / softbody / cable 的差别翻成人话。
-4. 最后用 `examples.md` 做三次分开的观察，不要一次混着看。
+3. 读完主 walkthrough，如果你想核对精确 handoff，再读 `source-walkthrough-deep.md`。
+4. 再回 `principle.md` 把 cloth / softbody / cable 的差别翻成人话。
+5. 最后用 `examples.md` 做三次分开的观察，不要一次混着看。
 
 如果你读完还会把三者统称成“deformable object”，就回到 `principle.md` 的对照表再看一遍。
 
@@ -95,6 +97,7 @@ cable    = capsule rigid bodies + cable joints (+ articulation)
 
 - `principle.md`: 一张 beginner-safe 对照图，讲清三种对象家族及其后果。
 - `source-walkthrough.md`: 一条 main walkthrough，把 `chapter 09 的 solver 问题 -> chapter 10 的 representation 问题` 顺下来。
+- `source-walkthrough-deep.md`: 一条 deep walkthrough，把 builder handoff、state ledger 和 optional branches 钉到精确源码锚点上。
 - `examples.md`: 三个独立教学锚点，分别回答“cloth 是什么”“softbody 是什么”“cable 是什么”。
 
 读完 chapter 10 后，你最该带走的不是一串参数名，而是这句更短的话:
