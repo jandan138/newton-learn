@@ -1,7 +1,7 @@
 ---
 chapter: 06
 title: 碰撞系统
-last_updated: 2026-04-19
+last_updated: 2026-04-23
 source_paths:
   - docs/concepts/collisions.rst
   - newton/_src/sim/model.py
@@ -36,6 +36,10 @@ state.body_q + model.shape_transform / shape_type
 -> 具体 contact 几何
 -> Contacts
 ```
+
+![从 `body_q` 到 `Contacts` 的碰撞桥接图](assets/06_collision_bridge_map.png)
+
+这张图只服务 first pass：先把 `body_q -> shape -> candidate pairs -> narrow phase -> Contacts` 这条 runtime bridge 看成同一条链，而不是一上来就掉进 broad phase / narrow phase 的具体算法细节。你现在先守住“哪一层在提供位姿，哪一层在提供几何，哪一层在写统一 contact 缓冲区”就够了。
 
 第一遍只要把下面这张表记住，后面的名字就不容易糊成一团：
 
