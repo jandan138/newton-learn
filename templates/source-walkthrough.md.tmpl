@@ -1,7 +1,7 @@
 ---
 chapter: {{章节号}}
 title: {{章节标题}}
-last_updated: 2026-04-17
+last_updated: 2026-04-21
 source_paths: []
 paper_keys: []
 newton_commit: {{Newton commit}}
@@ -9,33 +9,236 @@ newton_commit: {{Newton commit}}
 
 # {{章节号}} {{章节标题}} 源码走读
 
-## 涉及路径
+[用 2-4 句回答本章新手最容易卡住的 first-pass 问题，并说明这份 main walkthrough 只追哪条主线。]
 
-| 路径 | 角色 | 先读原因 |
-|------|------|----------|
-|  |  |  |
+[如果有必要，再补一句：如果想看更慢一点的概念版，可以配合 `principle.md`；但只读这一份，也应该能把本章主线讲顺。]
 
-## 调用链总览
+## What This Walkthrough Follows
 
-1. 入口函数 / CLI：
-2. 中层调度：
-3. 核心 kernel / solver / helper：
-4. 状态写回与下一步依赖：
+这一页只追下面这条 first-pass 主线：
 
-## 数据流切片
+```text
+[用 5-8 行 handoff / dataflow / control-flow，把本章真正追踪的窄主线写清楚]
+```
 
-| 切片 | 读入 | 中间缓存 / tile | 写出 | 证据 |
-|------|------|------------------|------|------|
-|  |  |  |  |  |
+这一页刻意不展开三到四类东西：
 
-## GPU 并行切片
+- [这份 main walkthrough 故意不展开的支线 1]
+- [这份 main walkthrough 故意不展开的支线 2]
+- [这份 main walkthrough 故意不展开的支线 3]
 
-| kernel / 函数 | 并行维度 | atomic | 内存访问 | tile | graph |
-|---------------|----------|--------|----------|------|-------|
-|  |  |  |  |  |  |
+第一遍先守住一句话：[用一句话概括本章最重要的 first-pass 读法。]
 
-## 回指原理
+## One-Screen Chapter Map
 
-| 源码点 | 对应原理 | 为什么不是别的原理 | 待补证据 |
-|--------|----------|--------------------|----------|
-|  |  |  |  |
+```text
+[把整章主线压成一屏能扫完的路线图]
+```
+
+## Beginner Path
+
+1. 先看 Stage 1。
+   - 想验证什么：[本 stage 最关键的问题]
+   - 看完后应该能说：[读者应带走的最短答案]
+2. 再看 Stage 2。
+   - 想验证什么：[本 stage 最关键的问题]
+   - 看完后应该能说：[读者应带走的最短答案]
+3. 再看 Stage 3。
+   - 想验证什么：[本 stage 最关键的问题]
+   - 看完后应该能说：[读者应带走的最短答案]
+4. 再看 Stage 4。
+   - 想验证什么：[本 stage 最关键的问题]
+   - 看完后应该能说：[读者应带走的最短答案]
+5. 最后看 Stage 5。
+   - 想验证什么：[本 stage 最关键的问题]
+   - 看完后应该能说：[读者应带走的最短答案]
+
+## Main Walkthrough
+
+<!--
+Annotation policy for main walkthrough excerpts:
+- Default to concise Chinese inline comments for beginner-critical source excerpts.
+- Comments should explain what a line does in the chapter story, not mechanically translate syntax.
+- Do not comment every line if that makes the block harder to scan.
+- When an excerpt is teaching-edited and line-commented, prefer adding: “以下摘录为教学注释版，注释非原源码。”
+- For math-heavy, declaration-heavy, or dense structural blocks, keep the code clean if inline comments would damage readability.
+- When keeping a block clean, move the explanation into the block lead-in and/or `Verification cues`.
+-->
+
+### Stage 1: {{Stage 1 标题}}
+
+<!-- 需要时补 `Definition`、`Backstory`、`Plain loop story`、`Variable name cheat sheet` 等辅助小节。 -->
+
+**Claim**
+
+[这一 stage 想让读者先相信什么。]
+
+**Why it matters**
+
+[如果这一层没读顺，后面会在哪些地方丢线。]
+
+**Source excerpt**
+
+以下摘录为教学注释版，注释非原源码。
+
+```python
+self.model = builder.finalize()  # builder 冻结成可运行的 Model
+self.state_0 = self.model.state()  # 当前状态缓冲区
+```
+
+<!-- 上面是“应优先注释”的示例：代码块本身承载主线，读者需要立刻看出每行在 handoff 里负责什么。 -->
+
+**Verification cues**
+
+- [读者扫代码块时最该验证的关系 1]
+- [读者扫代码块时最该验证的关系 2]
+
+**Checkpoint**
+
+[如果读者还答不上什么问题，就先不要继续。]
+
+**Output passed to next stage**
+
+[这一 stage 结束后，下一 stage 会继承什么心智模型或对象边界。]
+
+### Stage 2: {{Stage 2 标题}}
+
+**Claim**
+
+[这一 stage 想让读者先相信什么。]
+
+**Why it matters**
+
+[这一层和全章主线的关系。]
+
+**Source excerpt**
+
+下面这类块如果主要靠跨行结构理解，优先保持干净代码，把解释写到块前或块后。
+
+```python
+J = build_contact_jacobians(...)
+D = J M^-1 J^T
+```
+
+这类摘录不必强行逐行加注释；重点是先告诉读者“它在本章主线里负责哪一步”，再用 `Verification cues` 解释关键关系。
+
+**Verification cues**
+
+- [读者在干净代码块里应先抓住的结构关系 1]
+- [读者在干净代码块里应先抓住的结构关系 2]
+
+**Checkpoint**
+
+[如果读者还把这一块误读成别的层次，该怎么纠正。]
+
+**Output passed to next stage**
+
+[下一 stage 会沿用的对象、变量或主线。]
+
+### Stage 3: {{Stage 3 标题}}
+
+**Claim**
+
+[这一 stage 想让读者先相信什么。]
+
+**Why it matters**
+
+[这一层和全章主线的关系。]
+
+**Source excerpt**
+
+[在这里放本 stage 最关键的源码摘录。按上面的 annotation policy 决定是否加行内注释。]
+
+**Verification cues**
+
+- [关键关系 1]
+- [关键关系 2]
+
+**Checkpoint**
+
+[读者如果还没跟上，应该先回答哪一个问题。]
+
+**Output passed to next stage**
+
+[下一 stage 继承什么。]
+
+### Stage 4: {{Stage 4 标题}}
+
+**Claim**
+
+[这一 stage 想让读者先相信什么。]
+
+**Why it matters**
+
+[这一层和全章主线的关系。]
+
+**Source excerpt**
+
+[在这里放本 stage 最关键的源码摘录。按上面的 annotation policy 决定是否加行内注释。]
+
+**Verification cues**
+
+- [关键关系 1]
+- [关键关系 2]
+
+**Checkpoint**
+
+[读者如果还没跟上，应该先回答哪一个问题。]
+
+**Output passed to next stage**
+
+[下一 stage 继承什么。]
+
+### Stage 5: {{Stage 5 标题}}
+
+**Claim**
+
+[这一 stage 想让读者先相信什么。]
+
+**Why it matters**
+
+[这一层和全章主线的关系。]
+
+**Source excerpt**
+
+[在这里放本 stage 最关键的源码摘录。按上面的 annotation policy 决定是否加行内注释。]
+
+**Verification cues**
+
+- [关键关系 1]
+- [关键关系 2]
+
+**Checkpoint**
+
+[读者如果还没跟上，应该先回答哪一个问题。]
+
+**Output passed to next stage**
+
+[全章主线在这里如何收口。]
+
+## Object Ledger
+
+| 对象 | 谁生产 | 谁消费 | 第一遍盯什么 |
+|------|--------|--------|--------------|
+| [对象名] | [谁生产] | [谁消费] | [first-pass 最该盯的字段 / 角色] |
+
+## Stop Here
+
+[用 1-2 段收束本章 80-90% 的 first-pass 目标。]
+
+如果你现在能用自己的话讲顺下面这句话，这一章的 beginner 目标就完成了：
+
+```text
+[用 4-6 行把整章主线压成一段复述]
+```
+
+[如果需要，再列 3-6 个“现在还答不上就先别往下跳”的检查问题。]
+
+## Go Deeper
+
+如果你还想继续精确追源码，再去 `source-walkthrough-deep.md`：
+
+- 想保留所有 file/symbol/line anchors：看 `Fast Deep Index`
+- 想逐跳追 exact handoff：看 `Exact Handoff Trace`
+- 想知道哪些支线第一遍可以先跳过：看 `Optional Branches`
+- 想逐条核对这里的 claim：看 `Verification Anchors`

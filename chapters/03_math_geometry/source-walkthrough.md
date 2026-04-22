@@ -108,6 +108,8 @@ chapter 03 里的 `frame` 词汇不是抽象装饰，而是 builder 一开始就
 
 builder 先把这些关键字段记成 lists：
 
+这段本质上是局部关系账本的字段表，先保持干净代码，重点只看它确实把 shape / body / joint 两侧 frame 分开存。
+
 ```python
 self.shape_transform: list[Transform] = []
 self.shape_body: list[int] = []
@@ -120,13 +122,15 @@ self.joint_X_c: list[Transform] = []
 
 真正写入时也很直白：
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-self.joint_child.append(child)
-self.joint_X_p.append(parent_xform)
-self.joint_X_c.append(child_xform)
+self.joint_child.append(child)  # 先记这条 joint 指向哪个 child body
+self.joint_X_p.append(parent_xform)  # 记录 joint 在 parent 侧的局部锚点
+self.joint_X_c.append(child_xform)  # 记录 joint 在 child 侧的局部锚点
 ...
-self.shape_body.append(body)
-self.shape_transform.append(xform)
+self.shape_body.append(body)  # 记录这个 shape 挂在哪个 body 上
+self.shape_transform.append(xform)  # 记录 shape 相对 body 的局部位姿
 ```
 
 **Verification cues**
@@ -163,31 +167,33 @@ articulation FK 和 geometry query 并不是两套不同数学，它们都在做
 `Model` 先把 `body_q` 声明成 body world pose 的长期 buffer：
 
 ```python
-self.body_q: wp.array[wp.transform] | None = None
+self.body_q: wp.array[wp.transform] | None = None  # 每个 body 当前的 world pose buffer
 ```
 
 在 articulation FK 里，joint 两侧 frame 会一路拼到 child body：
 
-```python
-X_wpj = X_pj
-if parent >= 0:
-    X_wp = body_q[parent]
-    X_wpj = X_wp * X_wpj
+以下摘录为教学注释版，注释非原源码。
 
-X_wcj = X_wpj * X_j
-X_wc = X_wcj * wp.transform_inverse(X_cj)
+```python
+X_wpj = X_pj  # 先从 joint 在 parent 侧的局部 frame 开始
+if parent >= 0:
+    X_wp = body_q[parent]  # 取 parent body 当前的 world pose
+    X_wpj = X_wp * X_wpj  # 把 joint parent frame 接到 world
+
+X_wcj = X_wpj * X_j  # 再沿关节自由度走到 joint child frame
+X_wc = X_wcj * wp.transform_inverse(X_cj)  # 从 child 侧锚点还原出 child body 的 world pose
 ```
 
 在 geometry query 里，同一个想法只是换成 shape：
 
 ```python
-X_wb = body_q[rigid_index]
-X_bs = shape_transform[shape_index]
+X_wb = body_q[rigid_index]  # 先取这个 rigid body 当前的 world pose
+X_bs = shape_transform[shape_index]  # 再取 shape 相对 body 的局部 pose
 
-X_ws = wp.transform_multiply(X_wb, X_bs)
-X_sw = wp.transform_inverse(X_ws)
+X_ws = wp.transform_multiply(X_wb, X_bs)  # 把 shape 从 body frame 放到 world
+X_sw = wp.transform_inverse(X_ws)  # 准备把 world query 拉回 shape local
 
-x_local = wp.transform_point(X_sw, px)
+x_local = wp.transform_point(X_sw, px)  # 把 world-space query point 转成 shape local
 ```
 
 **Verification cues**
@@ -225,10 +231,12 @@ x_local = wp.transform_point(X_sw, px)
 `Model` 把 body 速度存成 spatial vector：
 
 ```python
-self.body_qd: wp.array[wp.spatial_vector] | None = None
+self.body_qd: wp.array[wp.spatial_vector] | None = None  # 每个 body 的 6D spatial velocity buffer
 ```
 
 `spatial.py` 里的三个关键 helper 都在做 layout / frame 的适配：
+
+这组三个 adapter 主要靠并排结构理解，先保持干净代码，重点看它们都在做“拆 layout -> 调 Warp helper -> 再装回”。
 
 ```python
 def velocity_at_point(qd: wp.spatial_vector, r: wp.vec3) -> wp.vec3:
@@ -284,6 +292,8 @@ def transform_wrench(t: wp.transform, x: wp.spatial_vector) -> wp.spatial_vector
 **Source excerpt**
 
 `GeoType` 先给出第一层分类：
+
+这段更像类型目录，先保持干净代码，重点看它后面如何决定 query 分支。
 
 ```python
 class GeoType(enum.IntEnum):
@@ -362,6 +372,8 @@ if geo_type == GeoType.HFIELD:
 
 `compute_inertia_shape()` 先按 shape type 给出局部质量属性：
 
+前后两段 dispatch / 合并公式都偏结构化，先保持干净代码；真正最值得盯的是 shape 级质量属性怎样被交给 body。
+
 ```python
 if type == GeoType.SPHERE:
     solid = compute_inertia_sphere(density, scale[0])
@@ -376,13 +388,17 @@ elif type == GeoType.MESH or type == GeoType.CONVEX_MESH:
 
 builder 再把 shape 级质量属性合并到 body 上：
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-(m, c, inertia) = compute_inertia_shape(type, scale, src, cfg.density, cfg.is_solid, cfg.margin)
-com_body = wp.transform_point(xform, c)
-self._update_body_mass(body, m, inertia, com_body, xform.q)
+(m, c, inertia) = compute_inertia_shape(type, scale, src, cfg.density, cfg.is_solid, cfg.margin)  # 先把这个 shape 压成局部质量属性
+com_body = wp.transform_point(xform, c)  # 再把 shape 局部 COM 变到 body frame
+self._update_body_mass(body, m, inertia, com_body, xform.q)  # 最后把这份质量贡献并进 body
 ```
 
 而 `_update_body_mass()` 真正在做的是重新计算 body COM 和 shifted inertia：
+
+这里的 COM / inertia 合并公式更适合保持干净代码，避免注释打断它的结构。
 
 ```python
 new_com = (self.body_com[i] * self.body_mass[i] + p * m) / new_mass

@@ -122,22 +122,28 @@ chapter 12 的 mainline 必须先从 shared backbone 开始: `joint_q` 经过 FK
 
 `example_ik_franka.py` 的初始化先把外部 state 准备好:
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-self.state = self.model.state()
-newton.eval_fk(self.model, self.model.joint_q, self.model.joint_qd, self.state)
+self.state = self.model.state()  # 先分配外部可读的 body-state 账本
+newton.eval_fk(self.model, self.model.joint_q, self.model.joint_qd, self.state)  # 把当前 joint_q / joint_qd 展开成这份 state
 ```
 
 而 `example_sensor_contact.py` 则把 contact side ledger 准备好:
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-self.state_0 = self.model.state()
-self.contacts = Contacts(...)
+self.state_0 = self.model.state()  # contact sensor 也要先有一份当前 state
+self.contacts = Contacts(...)  # 再单独准备 contact side ledger
 ```
 
 如果再往 IK 内部看，`ik_common.py` 里也把这条 backbone 写成了 batched FK helper:
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-def eval_fk_batched(model, joint_q, joint_qd, body_q, body_qd):
+def eval_fk_batched(model, joint_q, joint_qd, body_q, body_qd):  # 把一批 candidate joint_q 展开成 body-space buffers
     ...
 ```
 
@@ -175,24 +181,28 @@ def eval_fk_batched(model, joint_q, joint_qd, body_q, body_qd):
 
 `example_sensor_imu.py` 的骨架非常短:
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-self.imu = newton.sensors.SensorIMU(self.model, self.imu_sites)
+self.imu = newton.sensors.SensorIMU(self.model, self.imu_sites)  # 先创建一个只读 body state 的 IMU adapter
 ...
-self.solver.step(self.state_0, self.state_1, self.control, None, self.sim_dt)
-self.state_0, self.state_1 = self.state_1, self.state_0
-self.imu.update(self.state_0)
+self.solver.step(self.state_0, self.state_1, self.control, None, self.sim_dt)  # solver 先把 state 推到下一拍
+self.state_0, self.state_1 = self.state_1, self.state_0  # 交换到最新 state
+self.imu.update(self.state_0)  # 再从最新 state 打包 measurement
 ```
 
 `sensor_imu.py` 的 update 又把 dependency 写得很直白:
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
 if state.body_qdd is None:
-    raise ValueError(...)
+    raise ValueError(...)  # 没有 body 加速度就无法组成完整 IMU 读数
 
 inputs=[
-    state.body_q,
-    state.body_qd,
-    state.body_qdd,
+    state.body_q,  # 当前 body pose
+    state.body_qd,  # 当前 body velocity
+    state.body_qdd,  # 当前 body acceleration
 ]
 ```
 
@@ -230,11 +240,13 @@ inputs=[
 
 `example_sensor_contact.py` 的关键顺序是:
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-self.solver.step(self.state_0, self.state_0, self.control, None, self.sim_dt)
-self.solver.update_contacts(self.contacts, self.state_0)
+self.solver.step(self.state_0, self.state_0, self.control, None, self.sim_dt)  # 先把当前 state 原地推进一拍
+self.solver.update_contacts(self.contacts, self.state_0)  # 再把这份最新 state 对应的 contacts 刷新出来
 ...
-self.plate_contact_sensor.update(self.state_0, self.contacts)
+self.plate_contact_sensor.update(self.state_0, self.contacts)  # 最后 sensor 同时读取 state + contacts
 ```
 
 `sensor_contact.py` 的文档也直接写道:
@@ -283,23 +295,27 @@ so that contact forces are current.
 
 `example_ik_franka.py` 的 setup 骨架是:
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-self.pos_obj = ik.IKObjectivePosition(...)
-self.rot_obj = ik.IKObjectiveRotation(...)
-self.obj_joint_limits = ik.IKObjectiveJointLimit(...)
+self.pos_obj = ik.IKObjectivePosition(...)  # 把“TCP 到哪”写成位置残差
+self.rot_obj = ik.IKObjectiveRotation(...)  # 把“TCP 朝哪”写成姿态残差
+self.obj_joint_limits = ik.IKObjectiveJointLimit(...)  # 把“不要越界”写成关节限制残差
 
 self.solver = ik.IKSolver(
     model=self.model,
     n_problems=1,
-    objectives=[self.pos_obj, self.rot_obj, self.obj_joint_limits],
+    objectives=[self.pos_obj, self.rot_obj, self.obj_joint_limits],  # 把三类目标交给同一个 IK solve
 )
 ```
 
 而每帧 target 更新时，例子先做的是:
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-self.pos_obj.set_target_position(0, pos)
-self.rot_obj.set_target_rotation(0, ...)
+self.pos_obj.set_target_position(0, pos)  # 每帧先刷新位置目标
+self.rot_obj.set_target_rotation(0, ...)  # 再刷新姿态目标
 ```
 
 **Verification cues**
@@ -335,14 +351,18 @@ IK solver 并不是跳过 FK 直接优化 link pose。它每次都是先把 cand
 
 public solver 调用只有一句:
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-self.solver.step(self.joint_q, self.joint_q, iterations=self.ik_iters)
+self.solver.step(self.joint_q, self.joint_q, iterations=self.ik_iters)  # 让 solver 直接改写 joint_q 解
 ```
 
 `ik_solver.py` 里会先 sample/reset，再把真正的 solve 委托给 backend。继续往下看 `ik_lm_optimizer.py` 或 `ik_lbfgs_optimizer.py`，核心骨架都一样:
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-eval_fk_batched(
+eval_fk_batched(  # 先把候选 joint_q 展开成 body-space pose / velocity
     self.model,
     ctx.joint_q,
     ctx.joint_qd,
@@ -350,14 +370,16 @@ eval_fk_batched(
     ctx.fk_body_qd,
 )
 
-ctx.residuals.zero_()
-self._for_objectives_residuals(ctx)
+ctx.residuals.zero_()  # 清空这一轮误差向量
+self._for_objectives_residuals(ctx)  # 让每个 objective 把自己的 residual rows 写进去
 ```
 
 而 `_for_objectives_residuals(...)` 又会对每个 objective 调:
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-obj.compute_residuals(
+obj.compute_residuals(  # 每个 objective 从当前 FK 结果里提取自己的误差
     body_q_view,
     joint_q_view,
     model,
@@ -402,26 +424,32 @@ IK 求解结束之后，外部 `State` 并不会自动变新；你还要再 `eva
 
 `example_ik_franka.py` 的 render 里先刷新 state:
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-newton.eval_fk(self.model, self.model.joint_q, self.model.joint_qd, self.state)
-body_q_np = self.state.body_q.numpy()
+newton.eval_fk(self.model, self.model.joint_q, self.model.joint_qd, self.state)  # 先把求出来的 joint_q 重新翻译成 external state
+body_q_np = self.state.body_q.numpy()  # viewer 接下来就从这份最新 body pose 读取
 ```
 
 然后才把 viewer 和 gizmo 对齐到新的 TCP pose:
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-self.viewer.log_gizmo(
+self.viewer.log_gizmo(  # 用最新 TCP pose 对齐目标 gizmo
     "target_tcp",
     self.ee_tf,
     snap_to=wp.transform(*body_q_np[self.ee_index]),
 )
-self.viewer.log_state(self.state)
+self.viewer.log_state(self.state)  # 同时把刷新后的 state 交给 viewer
 ```
 
 如果再看 advanced systems branch，`example_ik_cube_stacking.py` 则把同样的 solved `joint_q` 继续喂给:
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-wp.copy(dest=joint_target_pos_view[:, :7], src=self.joint_q_ik[:, :7])
+wp.copy(dest=joint_target_pos_view[:, :7], src=self.joint_q_ik[:, :7])  # solved joint_q 也可以继续送进控制目标
 ```
 
 也就是说，write-side 结果既可以回到 viewer，也可以进入 control loop。

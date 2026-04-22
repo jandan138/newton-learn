@@ -133,11 +133,13 @@ for i in range(n):
 
 `selection_materials` 里的 `compute_middle_kernel`，就是把“逐元素写一个中间值”单独抽成 kernel：
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
 @wp.kernel
 def compute_middle_kernel(lower: wp.array3d[float], upper: wp.array3d[float], middle: wp.array3d[float]):
-    world, arti, dof = wp.tid()
-    middle[world, arti, dof] = 0.5 * (lower[world, arti, dof] + upper[world, arti, dof])
+    world, arti, dof = wp.tid()  # 当前这份执行负责哪个 (world, arti, dof) 槽位
+    middle[world, arti, dof] = 0.5 * (lower[world, arti, dof] + upper[world, arti, dof])  # 把这一格写成上下界平均值
 ```
 
 **Verification cues**
@@ -184,14 +186,16 @@ for i in range(n):
 
 同一个例子里，真正定义 batch 的是 launch：
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
 wp.launch(
-    compute_middle_kernel,
-    dim=self.default_ant_dof_positions.shape,
+    compute_middle_kernel,  # 把上面那条“单格规则”真正批量发出去
+    dim=self.default_ant_dof_positions.shape,  # batch 形状决定要跑多少个 (world, arti, dof)
     inputs=[
         dof_limit_lower,
         dof_limit_upper,
-        self.default_ant_dof_positions,
+        self.default_ant_dof_positions,  # 输出会写满这个 3D buffer
     ],
 )
 ```
@@ -217,15 +221,15 @@ wp.launch(
 然后 kernel 再把 `tid` 翻成具体 contact slot：
 
 ```python
-tid = wp.tid()
+tid = wp.tid()  # 当前线程对应哪个 contact slot
 
-count = min(contact_max, contact_count[0])
+count = min(contact_max, contact_count[0])  # 这次 launch 真正有效的 contact 数
 if tid >= count:
-    return
+    return  # 超出有效槽位就直接退出
 
-shape_index = contact_shape[tid]
-body_index = shape_body[shape_index]
-particle_index = contact_particle[tid]
+shape_index = contact_shape[tid]  # 先从 contact slot 找到命中的 shape
+body_index = shape_body[shape_index]  # 再从 shape 追到它所属的 body
+particle_index = contact_particle[tid]  # 同一个 slot 里还关联一个 particle
 ```
 
 **Verification cues**
@@ -271,6 +275,8 @@ for i in range(n):
 
 `Model` 先把很多长期数据声明成 `wp.array` 字段：
 
+这段更像长期 buffer 字段表，先保持干净代码，重点只看这些名字确实挂在 `Model` 上。
+
 ```python
 self.body_q: wp.array[wp.transform] | None = None
 self.body_qd: wp.array[wp.spatial_vector] | None = None
@@ -284,22 +290,24 @@ self.joint_X_c: wp.array[wp.transform] | None = None
 
 进入 runtime 后，再由 `Model` 派生出 `State` 和 `Control`：
 
-```python
-s = State()
-...
-s.body_q = wp.clone(self.body_q, requires_grad=requires_grad)
-s.body_qd = wp.clone(self.body_qd, requires_grad=requires_grad)
-s.body_f = wp.zeros_like(self.body_qd, requires_grad=requires_grad)
-...
-s.joint_q = wp.clone(self.joint_q, requires_grad=requires_grad)
-s.joint_qd = wp.clone(self.joint_qd, requires_grad=requires_grad)
+以下摘录为教学注释版，注释非原源码。
 
-c = Control()
+```python
+s = State()  # 先创建一份新的动态状态容器
 ...
-c.joint_target_pos = wp.clone(self.joint_target_pos, requires_grad=requires_grad)
-c.joint_target_vel = wp.clone(self.joint_target_vel, requires_grad=requires_grad)
-c.joint_act = wp.clone(self.joint_act, requires_grad=requires_grad)
-c.joint_f = wp.clone(self.joint_f, requires_grad=requires_grad)
+s.body_q = wp.clone(self.body_q, requires_grad=requires_grad)  # 从 Model 拷出 body pose 快照
+s.body_qd = wp.clone(self.body_qd, requires_grad=requires_grad)  # 从 Model 拷出 body 速度快照
+s.body_f = wp.zeros_like(self.body_qd, requires_grad=requires_grad)  # 给这一拍准备力缓冲区
+...
+s.joint_q = wp.clone(self.joint_q, requires_grad=requires_grad)  # joint-space 位置快照
+s.joint_qd = wp.clone(self.joint_qd, requires_grad=requires_grad)  # joint-space 速度快照
+
+c = Control()  # 再创建一份这一拍的输入容器
+...
+c.joint_target_pos = wp.clone(self.joint_target_pos, requires_grad=requires_grad)  # 目标位置输入
+c.joint_target_vel = wp.clone(self.joint_target_vel, requires_grad=requires_grad)  # 目标速度输入
+c.joint_act = wp.clone(self.joint_act, requires_grad=requires_grad)  # actuation 输入
+c.joint_f = wp.clone(self.joint_f, requires_grad=requires_grad)  # 直接施加的 joint 力输入
 ```
 
 **Verification cues**
@@ -356,28 +364,30 @@ thread 12 wants: body_f[3] += b
 
 在 `mpm_twoway_coupling` 里，很多 collider impulse 都可能回写同一个 body：
 
-```python
-i = wp.tid()
+以下摘录为教学注释版，注释非原源码。
 
-cid = collider_ids[i]
+```python
+i = wp.tid()  # 当前 collider impulse 槽位
+
+cid = collider_ids[i]  # 这个槽位命中的 collider id
 ...
-body_index = body_ids[cid]
+body_index = body_ids[cid]  # 从 collider 追到要回写的 body 槽位
 ...
-f_world = collider_impulses[i] / dt
+f_world = collider_impulses[i] / dt  # 把 impulse 换成这一拍施加到 body 的力
 ...
-wp.atomic_add(body_f, body_index, wp.spatial_vector(f_world, wp.cross(r, f_world)))
+wp.atomic_add(body_f, body_index, wp.spatial_vector(f_world, wp.cross(r, f_world)))  # 很多线程都可能累加到同一格 body_f
 ```
 
 XPBD contact kernel 里也是同一件事：
 
 ```python
-delta_total = (delta_f - delta_n) / denom * relaxation
+delta_total = (delta_f - delta_n) / denom * relaxation  # 这个 contact slot 对应的总修正量
 
-wp.atomic_add(delta, particle_index, w1 * delta_total)
+wp.atomic_add(delta, particle_index, w1 * delta_total)  # particle 输出槽位也可能被多个 contact 共同回写
 
 if body_index >= 0:
-    delta_t = wp.cross(r, delta_total)
-    wp.atomic_sub(body_delta, body_index, wp.spatial_vector(delta_total, delta_t))
+    delta_t = wp.cross(r, delta_total)  # 把线性修正转成绕 body 的力矩项
+    wp.atomic_sub(body_delta, body_index, wp.spatial_vector(delta_total, delta_t))  # body 侧同样需要原子写回
 ```
 
 **Verification cues**
@@ -424,22 +434,26 @@ for i in range(n):
 
 `selection_materials` 里的 graph capture / replay：
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
 def capture(self):
-    self.graph = None
+    self.graph = None  # 先清掉旧 graph
     if wp.get_device().is_cuda:
         with wp.ScopedCapture() as capture:
-            self.simulate()
-        self.graph = capture.graph
+            self.simulate()  # 把整条 simulate 工作流 capture 下来
+        self.graph = capture.graph  # 保存后续可 replay 的 graph
 
 def step(self):
     if self.graph:
-        wp.capture_launch(self.graph)
+        wp.capture_launch(self.graph)  # 已有 graph 时直接 replay
     else:
-        self.simulate()
+        self.simulate()  # 否则退回普通执行
 ```
 
 `diffsim_bear` 里的 tiled kernel / tiled launch：
+
+这段更适合保持干净代码；行内注释会打断 `tile_load -> tile_matmul -> tile_store` 的结构形状。
 
 ```python
 @wp.kernel

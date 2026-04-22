@@ -115,28 +115,32 @@ then use a solver to advance the state forward in time via step.
 
 `SolverBase` 再把这个外层入口固定成统一签名：
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
 def step(
     self,
-    state_in: State,
-    state_out: State,
-    control: Control | None,
-    contacts: Contacts | None,
-    dt: float,
+    state_in: State,  # 共享 public contract 里的当前状态槽位
+    state_out: State,  # 各家 solver 都要把下一拍写回这里
+    control: Control | None,  # 同一个外层 contract 的每拍输入槽位
+    contacts: Contacts | None,  # 不同 family 会各自决定怎么消费这份接触输入
+    dt: float,  # 外层统一看到的时间步长
 ) -> None:
-    raise NotImplementedError()
+    raise NotImplementedError()  # 具体 family 自己实现内部路线
 ```
 
 而 `example_robot_cartpole.py` 正好给了一个最省力的对照入口：
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-self.solver = newton.solvers.SolverMuJoCo(self.model)
-# self.solver = newton.solvers.SolverSemiImplicit(self.model, ...)
-# self.solver = newton.solvers.SolverFeatherstone(self.model)
+self.solver = newton.solvers.SolverMuJoCo(self.model)  # 外层只是在切 solver family
+# self.solver = newton.solvers.SolverSemiImplicit(self.model, ...)  # 同一个 public contract 的另一种内部路线
+# self.solver = newton.solvers.SolverFeatherstone(self.model)  # 还是同一个外层 step(...) 壳
 
-self.contacts = None
+self.contacts = None  # 这个例子让 MuJoCo backend 自己产 contacts
 
-newton.eval_fk(self.model, self.model.joint_q, self.model.joint_qd, self.state_0)
+newton.eval_fk(self.model, self.model.joint_q, self.model.joint_qd, self.state_0)  # 先把 joint-space 初值展开成 body state
 ```
 
 **Verification cues**
@@ -171,23 +175,25 @@ newton.eval_fk(self.model, self.model.joint_q, self.model.joint_qd, self.state_0
 
 `newton/_src/solvers/semi_implicit/solver_semi_implicit.py` 的 `step()` 基本就是一条直线往下读：
 
-```python
-eval_spring_forces(model, state_in, particle_f)
-eval_triangle_forces(model, state_in, control, particle_f)
-eval_bending_forces(model, state_in, particle_f)
-eval_tetrahedra_forces(model, state_in, control, particle_f)
+以下摘录为教学注释版，注释非原源码。
 
-eval_body_joint_forces(model, state_in, control, body_f_work, ...)
-eval_particle_contact_forces(model, state_in, particle_f)
+```python
+eval_spring_forces(model, state_in, particle_f)  # 先累计弹簧力
+eval_triangle_forces(model, state_in, control, particle_f)  # 三角单元力继续加到 particle_f
+eval_bending_forces(model, state_in, particle_f)  # 弯曲力也先当力源处理
+eval_tetrahedra_forces(model, state_in, control, particle_f)  # 体单元力继续累加
+
+eval_body_joint_forces(model, state_in, control, body_f_work, ...)  # 关节 / actuation 贡献写到 body force
+eval_particle_contact_forces(model, state_in, particle_f)  # 粒子接触也先转成粒子力
 
 eval_body_contact_forces(
-    model, state_in, contacts, friction_smoothing=self.friction_smoothing, body_f_out=body_f_work
+    model, state_in, contacts, friction_smoothing=self.friction_smoothing, body_f_out=body_f_work  # 刚体接触先翻成 body force
 )
 
-eval_particle_body_contact_forces(model, state_in, contacts, particle_f, body_f_work, ...)
+eval_particle_body_contact_forces(model, state_in, contacts, particle_f, body_f_work, ...)  # 粒子-刚体接触继续写入力缓冲
 
-self.integrate_particles(model, state_in, state_out, dt)
-self.integrate_bodies(model, state_in, state_out, dt, self.angular_damping)
+self.integrate_particles(model, state_in, state_out, dt)  # 然后统一积分粒子状态
+self.integrate_bodies(model, state_in, state_out, dt, self.angular_damping)  # 最后统一积分刚体状态
 ```
 
 **Verification cues**
@@ -222,22 +228,24 @@ self.integrate_bodies(model, state_in, state_out, dt, self.angular_damping)
 
 `newton/_src/solvers/featherstone/solver_featherstone.py` 的主骨架非常直白：
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
 wp.launch(
-    eval_rigid_fk,
-    dim=model.articulation_count,
+    eval_rigid_fk,  # 先用当前 joint state 刷新 articulation poses
+    dim=model.articulation_count,  # 每条 articulation 一次
     ...,
-    outputs=[state_in.body_q, state_aug.body_q_com],
+    outputs=[state_in.body_q, state_aug.body_q_com],  # 写回 body pose 和 COM pose
 )
 
 if contacts is not None and contacts.rigid_contact_max:
-    wp.launch(kernel=eval_body_contact, dim=contacts.rigid_contact_max, ..., outputs=[body_f])
+    wp.launch(kernel=eval_body_contact, dim=contacts.rigid_contact_max, ..., outputs=[body_f])  # 把 contact 先变成 body-side 输入力
 
-wp.launch(eval_rigid_jacobian, dim=model.articulation_count, ..., outputs=[self.J])
-wp.launch(eval_rigid_mass, dim=model.articulation_count, ..., outputs=[self.M])
+wp.launch(eval_rigid_jacobian, dim=model.articulation_count, ..., outputs=[self.J])  # 构建 articulation Jacobian
+wp.launch(eval_rigid_mass, dim=model.articulation_count, ..., outputs=[self.M])  # 构建 joint-space 质量矩阵
 ...
-wp.launch(eval_dense_solve_batched, dim=model.articulation_count, ..., outputs=[state_aug.joint_qdd, ...])
-wp.launch(kernel=integrate_generalized_joints, dim=model.joint_count, ..., outputs=[state_out.joint_q, ...])
+wp.launch(eval_dense_solve_batched, dim=model.articulation_count, ..., outputs=[state_aug.joint_qdd, ...])  # 解出 joint accelerations
+wp.launch(kernel=integrate_generalized_joints, dim=model.joint_count, ..., outputs=[state_out.joint_q, ...])  # 再积分 generalized joints
 ```
 
 **Verification cues**
@@ -280,31 +288,33 @@ If False, use the Newton contact solver
 
 `step()` 里真正的 handoff 则是：
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
 if self.mjw_model.opt.run_collision_detection:
-    self._mujoco_warp_step()
+    self._mujoco_warp_step()  # 让 backend 自己做碰撞并推进一步
 else:
-    self._convert_contacts_to_mjwarp(self.model, state_in, contacts)
-    self._mujoco_warp_step()
+    self._convert_contacts_to_mjwarp(self.model, state_in, contacts)  # 先把 Newton Contacts 桥接给 backend
+    self._mujoco_warp_step()  # 再让 backend 完整推进一步
 
-self._update_newton_state(self.model, state_out, self.mjw_data, state_prev=state_in)
+self._update_newton_state(self.model, state_out, self.mjw_data, state_prev=state_in)  # 把 backend 结果写回 Newton State
 ```
 
 而 `update_contacts(...)` 又保留了反向写回 Newton `Contacts` 的入口：
 
 ```python
 wp.launch(
-    self._convert_mjw_contacts_to_newton_kernel,
-    dim=mj_data.naconmax,
+    self._convert_mjw_contacts_to_newton_kernel,  # 反向把 backend contacts 写回 Newton
+    dim=mj_data.naconmax,  # 遍历 backend contact 槽位
     ...,
     outputs=[
-        contacts.rigid_contact_count,
+        contacts.rigid_contact_count,  # 回写活跃 contact 数
         contacts.rigid_contact_shape0,
         contacts.rigid_contact_shape1,
         contacts.rigid_contact_point0,
         contacts.rigid_contact_point1,
         contacts.rigid_contact_normal,
-        contacts.force,
+        contacts.force,  # 回写 Newton 侧 contact 输出槽
     ],
 )
 ```
@@ -350,18 +360,20 @@ wp.launch(
 
 外层 wrapper 先把 Newton `Contacts` 接成 Kamino 自己的 contact 容器：
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
 if contacts is not None:
-    self._kamino.convert_contacts_newton_to_kamino(self.model, state_in, contacts, self._contacts_kamino)
-    _detector = None
+    self._kamino.convert_contacts_newton_to_kamino(self.model, state_in, contacts, self._contacts_kamino)  # 先桥接成 solver-facing contact
+    _detector = None  # 已经有 contacts 时不再让 Kamino 自己检测
 else:
-    _detector = self._collision_detector_kamino
+    _detector = self._collision_detector_kamino  # 没给 contacts 就交给 Kamino detector
 
 self._solver_kamino.step(
     state_in=state_in_kamino,
     state_out=state_out_kamino,
     control=control_kamino,
-    contacts=self._contacts_kamino,
+    contacts=self._contacts_kamino,  # 这里已经是 Kamino 自己的 contact 容器
     detector=_detector,
     dt=dt,
 )
@@ -370,23 +382,23 @@ self._solver_kamino.step(
 内部 solver 构造和主 solve 又把 chapter 07 的名词重新排上了台面：
 
 ```python
-make_unilateral_constraints_info(model=self._model, data=self._data, limits=self._limits, contacts=contacts)
-self._jacobians = DenseSystemJacobians(...)
-self._problem_fd = DualProblem(...)
-self._solver_fd = PADMMSolver(...)
+make_unilateral_constraints_info(model=self._model, data=self._data, limits=self._limits, contacts=contacts)  # 先把 contacts 扩成 unilateral rows / info
+self._jacobians = DenseSystemJacobians(...)  # 约束 Jacobian 工作区
+self._problem_fd = DualProblem(...)  # 约束空间问题容器
+self._solver_fd = PADMMSolver(...)  # 真正执行求解的 PADMM solver
 
-self._update_constraint_info()
-self._update_jacobians(contacts=contacts)
-self._update_actuation_wrenches()
-self._forward(contacts=contacts)
+self._update_constraint_info()  # 刷新这一拍活跃约束信息
+self._update_jacobians(contacts=contacts)  # 刷新 Jacobians
+self._update_actuation_wrenches()  # 叠加 actuation 对应的 wrench
+self._forward(contacts=contacts)  # 进入真正的前向求解
 ```
 
 而 `_forward()` 真正做的事情就是：
 
 ```python
-self._solver_fd.solve(problem=self._problem_fd)
-compute_constraint_body_wrenches(...)
-unpack_constraint_solutions(...)
+self._solver_fd.solve(problem=self._problem_fd)  # 先解约束空间问题
+compute_constraint_body_wrenches(...)  # 再把解还原成 body wrenches
+unpack_constraint_solutions(...)  # 最后拆回公共输出槽位
 ```
 
 **Verification cues**

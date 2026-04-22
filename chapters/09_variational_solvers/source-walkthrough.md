@@ -111,28 +111,30 @@ chapter 09 把 `XPBD / VBD / Style3D` 放在同一章里，不是因为它们内
 
 `newton/examples/cloth/example_cloth_hanging.py` 先把 shared problem 立得很清楚：
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
 if self.solver_type == "semi_implicit":
-    self.sim_substeps = 32
+    self.sim_substeps = 32  # baseline 需要更多 substeps 才稳
 elif self.solver_type == "style3d":
-    self.sim_substeps = 2
+    self.sim_substeps = 2  # Style3D 每步更重，所以外层子步更少
 else:
-    self.sim_substeps = 10
+    self.sim_substeps = 10  # XPBD / VBD 落在中间这一档
 
 ...
 
 if self.solver_type == "style3d":
-    self.solver = newton.solvers.SolverStyle3D(model=self.model, iterations=self.iterations)
+    self.solver = newton.solvers.SolverStyle3D(model=self.model, iterations=self.iterations)  # 选整张 cloth 的全局 PD / PCG 路线
 elif self.solver_type == "xpbd":
-    self.solver = newton.solvers.SolverXPBD(model=self.model, iterations=self.iterations)
+    self.solver = newton.solvers.SolverXPBD(model=self.model, iterations=self.iterations)  # 选逐约束投影路线
 else:
-    self.solver = newton.solvers.SolverVBD(model=self.model, iterations=self.iterations, ...)
+    self.solver = newton.solvers.SolverVBD(model=self.model, iterations=self.iterations, ...)  # 选局部 block solve 路线
 
 ...
 
-self.model.collide(self.state_0, self.contacts)
-self.solver.step(self.state_0, self.state_1, self.control, self.contacts, self.sim_dt)
-self.state_0, self.state_1 = self.state_1, self.state_0
+self.model.collide(self.state_0, self.contacts)  # 先用当前 cloth state 刷新 contacts
+self.solver.step(self.state_0, self.state_1, self.control, self.contacts, self.sim_dt)  # 再让选中的 solver 推进到下一拍
+self.state_0, self.state_1 = self.state_1, self.state_0  # 交换双缓冲，准备下个 substep
 ```
 
 **Verification cues**
@@ -168,27 +170,31 @@ XPBD 是 chapter 09 最容易上手的一层，因为它最接近“我有一条
 
 `newton/_src/solvers/xpbd/solver_xpbd.py` 的主骨架就是“预测 -> 约束投影 -> apply delta”：
 
-```python
-self.integrate_particles(model, state_in, state_out, dt)
+以下摘录为教学注释版，注释非原源码。
 
-spring_constraint_lambdas = wp.empty_like(model.spring_rest_length)
+```python
+self.integrate_particles(model, state_in, state_out, dt)  # 先得到还没被约束拉回的预测状态
+
+spring_constraint_lambdas = wp.empty_like(model.spring_rest_length)  # 给每条 spring 约束准备 lambda 账本
 
 for i in range(self.iterations):
-    particle_deltas.zero_()
+    particle_deltas.zero_()  # 每轮先清空本轮累计的位置修正
 
     if model.spring_count:
-        spring_constraint_lambdas.zero_()
+        spring_constraint_lambdas.zero_()  # 这一类约束的 lambda 从零开始累计
         wp.launch(
             kernel=solve_springs,
             dim=model.spring_count,
-            inputs=[..., dt, spring_constraint_lambdas],
-            outputs=[particle_deltas],
+            inputs=[..., dt, spring_constraint_lambdas],  # kernel 一边读约束数据，一边读写 lambda
+            outputs=[particle_deltas],  # 所有约束先把修正写进共享 delta 容器
         )
 
-    particle_q, particle_qd = self._apply_particle_deltas(model, state_in, state_out, particle_deltas, dt)
+    particle_q, particle_qd = self._apply_particle_deltas(model, state_in, state_out, particle_deltas, dt)  # 这一轮结束时再把 delta 应回粒子状态
 ```
 
 而 `solve_springs(...)` 直接把 XPBD 的味道写在了 `lambda` 更新里：
+
+下面这段公式密集，先保持代码形状，只盯“先算 `dlambda`，再把它落实成两端粒子的 delta”这条主线：
 
 ```python
 c = l - rest
@@ -234,42 +240,48 @@ XPBD 给出了 chapter 09 的第一层答案：稳定更新可以先落在“单
 
 `newton/_src/solvers/vbd/solver_vbd.py` 先把整个 timestep 写成三阶段骨架：
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-self._initialize_rigid_bodies(state_in, control, contacts, dt, update_rigid_history)
-self._initialize_particles(state_in, state_out, dt)
+self._initialize_rigid_bodies(state_in, control, contacts, dt, update_rigid_history)  # 先把刚体支线的本轮输入准备好
+self._initialize_particles(state_in, state_out, dt)  # 再把粒子 predicted state / workspace 准备好
 
 for iter_num in range(self.iterations):
-    self._solve_rigid_body_iteration(state_in, state_out, control, contacts, dt)
-    self._solve_particle_iteration(state_in, state_out, contacts, dt, iter_num)
+    self._solve_rigid_body_iteration(state_in, state_out, control, contacts, dt)  # 先走刚体支线这一轮
+    self._solve_particle_iteration(state_in, state_out, contacts, dt, iter_num)  # 再走 cloth 粒子的局部 block 修正
 
-self._finalize_rigid_bodies(state_out, dt)
-self._finalize_particles(state_out, dt)
+self._finalize_rigid_bodies(state_out, dt)  # 收尾刚体状态
+self._finalize_particles(state_out, dt)  # 收尾粒子状态
 ```
 
 而 `_solve_particle_iteration(...)` 的粒子主线又是“先累计，再局部求解”：
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-self.particle_forces.zero_()
-self.particle_hessians.zero_()
+self.particle_forces.zero_()  # 每轮先清空局部力累计桶
+self.particle_hessians.zero_()  # 同时清空局部刚度 / Hessian 累计桶
 
 for color in range(len(self.model.particle_color_groups)):
-    wp.launch(kernel=accumulate_spring_force_and_hessian, ..., outputs=[self.particle_forces, self.particle_hessians])
+    wp.launch(kernel=accumulate_spring_force_and_hessian, ..., outputs=[self.particle_forces, self.particle_hessians])  # 先把这一批 vertex / block 的力和 Hessian 累起来
     ...
-    wp.launch(kernel=solve_elasticity, ..., outputs=[self.particle_displacements])
+    wp.launch(kernel=solve_elasticity, ..., outputs=[self.particle_displacements])  # 再把累计结果解成局部位移
 ```
 
 `solve_elasticity(...)` 最后则非常直白地把局部子问题解成 `h_inv * f`：
 
-```python
-f = mass[particle_index] * (inertia[particle_index] - pos[particle_index]) * dt_sqr_reciprocal
-h = mass[particle_index] * dt_sqr_reciprocal * wp.identity(n=3, dtype=float)
+以下摘录为教学注释版，注释非原源码。
 
-h = h + particle_hessians[particle_index]
-f = f + particle_forces[particle_index]
+```python
+f = mass[particle_index] * (inertia[particle_index] - pos[particle_index]) * dt_sqr_reciprocal  # 惯性目标给出的右端项
+h = mass[particle_index] * dt_sqr_reciprocal * wp.identity(n=3, dtype=float)  # 质量项先提供基础局部矩阵
+
+h = h + particle_hessians[particle_index]  # 把累计 Hessian 并进局部系统
+f = f + particle_forces[particle_index]  # 把累计力并进同一个右端项
 
 if abs(wp.determinant(h)) > 1e-8:
     h_inv = wp.inverse(h)
-    particle_displacements[particle_index] = particle_displacements[particle_index] + h_inv * f
+    particle_displacements[particle_index] = particle_displacements[particle_index] + h_inv * f  # 用 h_inv * f 得到这次局部位移修正
 ```
 
 **Verification cues**
@@ -316,26 +328,28 @@ Implicit-Euler method solves the following non-linear equation:
 
 构造器和 `step()` 又把这件事落实成固定 PD 矩阵加 PCG：
 
+以下摘录为教学注释版，注释非原源码。
+
 ```python
-self.pd_matrix_builder = PDMatrixBuilder(model.particle_count)
-self.linear_solver = PcgSolver(model.particle_count, self.device)
+self.pd_matrix_builder = PDMatrixBuilder(model.particle_count)  # 先准备整张 cloth 共用的 PD 矩阵骨架
+self.linear_solver = PcgSolver(model.particle_count, self.device)  # 再准备专门解全局线性系统的 PCG
 
 for _iter in range(self.nonlinear_iterations):
-    wp.launch(init_rhs_kernel, ..., outputs=[self.rhs])
-    wp.launch(eval_stretch_kernel, ..., outputs=[self.rhs])
-    wp.launch(eval_bend_kernel, ..., outputs=[self.rhs])
+    wp.launch(init_rhs_kernel, ..., outputs=[self.rhs])  # 先清并初始化这一轮全局 rhs
+    wp.launch(eval_stretch_kernel, ..., outputs=[self.rhs])  # stretch 项往全局 rhs 里加贡献
+    wp.launch(eval_bend_kernel, ..., outputs=[self.rhs])  # bend 项继续往同一个 rhs 里加贡献
     ...
     self.linear_solver.solve(
         self.pd_non_diags,
         self.static_A_diags,
-        self.dx if _iter == 0 else None,
-        self.rhs,
+        self.dx if _iter == 0 else None,  # 首轮可用旧 dx 当 warm start
+        self.rhs,  # 这一轮累计出来的全局右端项
         self.inv_A_diags,
-        self.dx,
+        self.dx,  # PCG 把求出的全局位移增量写回这里
         self.linear_iterations,
         ...,
     )
-    wp.launch(nonlinear_step_kernel, ..., outputs=[state_out.particle_q, self.dx])
+    wp.launch(nonlinear_step_kernel, ..., outputs=[state_out.particle_q, self.dx])  # 再把 dx 应回 cloth 顶点位置
 ```
 
 `PcgSolver` 本身也把这条路线写得很公开：
