@@ -1,7 +1,7 @@
 ---
 chapter: 03
 title: 03 数学与几何基础
-last_updated: 2026-04-19
+last_updated: 2026-04-22
 source_paths: []
 paper_keys: []
 newton_commit: 1a230702
@@ -52,6 +52,7 @@ newton_commit: 1a230702
 ## 前置依赖
 
 - 建议先读完 `02_newton_arch`；如果你还没有把 `Model / State / Control / Solver` 这条架构链读顺，本章会不知道这些词到底在服务谁。
+- 如果你在 `02_newton_arch` 里正卡在 `parent / child`、`p / q / axis`、joint frame 这些图像化困惑上，先回 `02_newton_arch/question-notes.md` 对照补充图解，再进入本章会更顺；chapter 03 会把这些问题重新提升成统一的 frame / transform 词汇。
 - `01_warp_basics` 的最低限度心智模型已经够用；这里只会把 `wp.transform`、quaternion 等词当成读码对象，不会展开完整 Warp 技巧。
 - 不要求你先学完整 Lie group、四元数课程或 Featherstone 推导；本章只补 Newton 第一遍阅读需要的那一层。
 
@@ -66,11 +67,12 @@ newton_commit: 1a230702
 ## 阅读顺序
 
 1. 先读 `principle.md`，把 frame -> transform -> quaternion -> spatial quantity -> shape -> inertia 这条概念链读顺。
-2. 第一次追源码时，先看 `source-walkthrough.md`，把这些词对到 `_src/math/`、`_src/geometry/`、builder 和 articulation helper 的源码锚点。
-3. 想精确追到上游文件、symbol 和行号，再看 `source-walkthrough-deep.md`。
-4. 然后进入 `04_scene_usd`，看场景输入怎样变成这些对象和局部关系。
-5. 再进入 `05_rigid_articulation`，看 frame、spatial quantity 和 inertia 怎样真正参与 articulation 动力学。
-6. 最后进入 `06_collision`，看 shape representation 怎样被碰撞系统消费，而不是在本章提前深挖算法。
+2. 如果你是从 `02_newton_arch/question-notes.md` 的 `p / q / axis 为什么这么容易混` 或 `为什么换一套 joint frame，物理还能不变` 跳过来的，就把这一章当成那两节的系统版：这里会把图里的直觉重新收束成统一的 frame / transform 语言。
+3. 第一次追源码时，先看 `source-walkthrough.md`，把这些词对到 `_src/math/`、`_src/geometry/`、builder 和 articulation helper 的源码锚点。
+4. 想精确追到上游文件、symbol 和行号，再看 `source-walkthrough-deep.md`。
+5. 然后进入 `04_scene_usd`，看场景输入怎样变成这些对象和局部关系。
+6. 再进入 `05_rigid_articulation`，看 frame、spatial quantity 和 inertia 怎样真正参与 articulation 动力学。
+7. 最后进入 `06_collision`，看 shape representation 怎样被碰撞系统消费，而不是在本章提前深挖算法。
 
 ## 预期产出
 
