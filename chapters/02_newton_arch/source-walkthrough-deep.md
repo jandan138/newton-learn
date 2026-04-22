@@ -1,7 +1,7 @@
 ---
 chapter: 02
 title: Newton 总体架构
-last_updated: 2026-04-19
+last_updated: 2026-04-22
 source_paths:
   - newton/examples/__main__.py
   - newton/examples/__init__.py
@@ -22,6 +22,8 @@ newton_commit: 1a230702
 # 02 Newton 总体架构 深读锚点版
 
 这份 deep walkthrough 把 chapter 02 的精确锚点集中在一起。第一次读本章时，建议先读完 `source-walkthrough.md`，把 `example entry -> runtime objects -> simulate loop -> solver` 这条主线读顺，再回来用这一页追具体文件和行号。
+
+如果你现在不是想追精确行号，而是卡在某个具体问题上，比如双 `__main__`、`joint` 连接关系、`p / q / axis` 的角色区别，先去 `question-notes.md` 看图解版，再回这里追精确锚点会更顺。
 
 ## Fast Deep Index
 
@@ -57,6 +59,23 @@ newton_commit: 1a230702
   - `SolverXPBD(self.model)`、两份 `state()`、一份 `control()`、一份 `contacts()` 在同一个 constructor 里建齐
   - `eval_fk()` 在进入主循环前把 generalized state 展开到 body state
 
+### Optional Deep Note: 怎样读一个 revolute joint
+
+下面这段只是 second pass 抓手，不属于 chapter 02 的完成门槛；它的作用只是把你在 `basic_pendulum` 里已经看到的 `parent_xform`、`child_xform`、`axis` 往前讲半步，免得你以后回头看时完全没有抓手。
+
+第一遍先只带走四件事：
+
+- `parent=-1` 表示这个 joint 一侧接世界，`child=link_0` 表示另一侧接第一根杆。
+- `parent_xform` / `child_xform` 都是在说“同一个关节点，分别在 parent / child 那一侧怎样表达”。
+- `j0` 额外在 `parent_xform.q` 上用了 `rot`，把整条 pendulum 链转到更侧对 viewer 的朝向；`j1` 则两侧都还是 `quat_identity()`。
+- 这里的 `transform(..., q=...)` 仍然是在写姿态四元数；它和 runtime state 里的 `joint_q` 不是同一种 `q`。
+
+再往前半步，你会遇到“同一个物理 joint，可以换一套 joint-frame 坐标系继续描述”的情况：
+
+有时你会看到 `parent_xform`、`child_xform`、`axis` 的表达一起变了，但物理 joint 仍然等价。这里先只记住一句话：joint parameterization 可能存在等价写法；这属于第二遍问题，不影响 chapter 02 现在这条 architecture handoff 主线。
+
+如果你想先用图把这个困惑看顺，再回源码核对，可以直接跳到 `question-notes.md` 里对应的两节：`p / q / axis 为什么这么容易混` 和 `为什么换一套 joint frame，物理还能不变`。
+
 ### 3. `Model` 是静态描述和对象工厂
 
 - `Model.state()` / `control()`：`newton/_src/sim/model.py:808-902`
@@ -75,7 +94,7 @@ newton_commit: 1a230702
 - pendulum simulate/step：`newton/examples/basic/example_basic_pendulum.py:87-113`
 - exact handoff：
   - `run()` 只负责 viewer 生命周期、step 和 render 的时机
-  - `Example.simulate()` 决定这章真正关心的链：`clear_forces -> collide -> solver.step -> swap`
+  - `Example.simulate()` 决定这章真正关心的链：`clear_forces -> apply_forces -> collide -> solver.step -> swap`
   - `step()` 还可以走 graph replay，所以 outer loop 与 inner simulation chain 是分层的
 
 ### 5. solver contract 的精确入口

@@ -1,7 +1,7 @@
 ---
 chapter: 02
 title: Newton 总体架构
-last_updated: 2026-04-18
+last_updated: 2026-04-22
 source_paths:
   - newton/examples/basic/example_basic_pendulum.py
   - newton/examples/robot/example_robot_cartpole.py
@@ -13,13 +13,13 @@ newton_commit: 1a230702
 
 # 02 Newton 总体架构 例子观察单
 
-`principle.md` 负责讲“这条架构链是什么”，这一页只负责把 quick-win 命令改成观察任务。先把默认命令跑一遍，再带着下面的观察点回看现象与源码；这里写的是观察提示，不是已经执行过的日志。每次只改一个量，再回到 `principle.md` 的四层主干 + `Contacts` handoff 标签判断你刚才动到的是哪一层。
+`principle.md` 负责讲“这条架构链是什么”，这一页只负责把 quick-win 命令改成观察任务。先把默认命令跑一遍，再带着下面的观察点回看现象与源码；这里写的是观察提示，不是已经执行过的日志。每次只改一个量，再回到 `principle.md` 的四层主干 + `Contacts` 结果缓冲区标签判断你刚才动到的是哪一层。
 
 ## 主例子：`basic_pendulum`
 
 ### 最适合拿来验证什么
 
-- 你是否已经把“examples 入口 -> 一个具体 example -> `Model / State / Control / Solver` 四层主干 + `Contacts` handoff -> 一次 `step`”这条最小链读顺。
+- 你是否已经把“examples 入口 -> 一个具体 example -> `Model / State / Control / Solver` 四层主干 + `Contacts` 结果缓冲区 -> 一次 `step`”这条最小链读顺。
 - 你是否能把 `Example.__init__()` 和 `simulate()` 分开看：前者负责把世界搭出来，后者负责每个 substep 的接力。
 - 你是否能在不引入 USD、批量 world、solver 切换之前，先看懂一个最小刚体 articulation 为什么能跑起来。
 
@@ -42,6 +42,16 @@ newton_commit: 1a230702
 - 源码里的 `capture()`：把它当成运行后回看的一处代码锚点，确认为什么同一段 `simulate()` 逻辑既能直接跑，也能在 CUDA 上被 graph 重放；它不是命令行参数。
 - `simulate()`：这是本章最值得背下来的最小 substep 顺序。
 
+如果你第一次盯 `Example.__init__()` 里的 `j0` / `j1`，先把它看成这条最小关节链：
+
+![`basic_pendulum` two-joint chain intuition](assets/02_pendulum_joint_chain.svg)
+
+- `j0` 用 `parent=-1` 把世界锚点接到 `link_0`。
+- `j1` 用 `parent=link_0` 把 `link_1` 接到 `link_0` 末端。
+- chapter 02 先把它读成 `world -> link_0 -> link_1` 的两级关节链；`parent_xform`、`child_xform` 和 joint frame 的完整细节，留到后面的 articulation 章节再展开。
+
+顺手记一个符号提醒：`wp.transform(..., q=...)` 里的 `q` 是姿态四元数；`joint_q` 里的 `q` 是关节广义坐标。名字一样，但不是同一种量。
+
 ### 改这里会怎样
 
 | 改这里 | 更像在动哪一层 | 预期现象 | 最值得观察 |
@@ -49,13 +59,25 @@ newton_commit: 1a230702
 | `hx / hy / hz`（连杆盒体尺寸） | `Model` | 连杆长度、厚度和转动惯量一起变，摆动节奏和离地距离也会跟着变。 | 第一帧的几何外形是否和关节位置仍然对得上；如果更长、更低，`viewer.log_contacts()` 里的接触是否更早出现。 |
 | `parent_xform` 里 `p=wp.vec3(0.0, 0.0, 5.0)` | `Model` | 整个 pendulum 锚点高度变化，最直接影响是离地余量和何时碰到 ground plane。 | 先别急着看 solver，先看接触有没有从“根本不发生”变成“很快发生”。 |
 | `self.sim_substeps`（因此也改了 `self.sim_dt`） | `Solver` 的时间推进设置 | substep 更少时每步更粗，画面和状态更新更容易显得生硬；substep 更多时通常更平滑但每帧工作更多。 | 对照 `simulate()` 的循环次数理解“一帧”和“一次 solver step”不是同一件事。 |
-| `axis=wp.vec3(0.0, 1.0, 0.0)` | `Model` | 关节转轴一改，摆动平面就会变，`rot` 只是 viewer 朝向友好化，不是动力学本体。 | 这是区分“相机看起来怎样”和“系统真实在哪个平面运动”的最快办法。 |
+| `axis=wp.vec3(0.0, 1.0, 0.0)` | `Model` | 关节转轴一改，摆动平面就会变；而 `rot` 是在构造时把 pendulum 链绕 `z` 轴转到更侧对 viewer 的朝向，它不是摄像机参数，也不是和 `axis` 同一种改动。 | 先问“真实绕哪根轴摆、在哪个平面里摆”有没有变，再问“从这个视角看起来像不像侧视图”。 |
+
+如果你总把 `rot` 和 `axis` 混成同一种旋钮，可以直接对照这张图：
+
+![`rot` vs `axis` visual comparison](assets/02_rot_view_comparison.png)
+
+最实用的区分方法只有三句：
+
+- 改 `axis`：改的是 joint 允许旋转的真实方向，所以摆动平面会变。
+- 改 `rot`：改的是 `parent_xform.q` 给整条 pendulum 链的初始朝向；它会改变这条链在世界里的摆放，也会改变 viewer 看到的正侧关系，但它不是“只是把摄像机转一下”。
+- 所以 `rot` 和 `axis` 都可能改变你看到的画面；差别在于，一个是在改关节轴向表达，一个是在改这条链被放进世界时的朝向。
+
+源码实际写的是 `wp.quat_from_axis_angle(..., -wp.pi * 0.5)`；图里把它画成 `90°` 的直观示意，只看“整条链被绕 `z` 轴转到另一侧”这层意思就够了，精确符号以源码为准。
 
 ### 这一例子最容易看错的地方
 
 - 源码里的 `capture()` 不是另一套物理逻辑，也不是 CLI 选项；它只是把 `simulate()` 的同一段操作在 CUDA 上录成 graph。
 - `viewer.apply_forces()` 是这一拍外部输入入口；不要把它和 `builder` 里的静态建模混成一类改动。
-- `contacts` 在这里是显式对象，不是 XPBD 私有黑箱；它不是在推翻四层主干，而是在 runtime loop 里作为并列 handoff object 补上碰撞这条支线。
+- `contacts` 在这里是显式对象，不是 XPBD 私有黑箱；它不是在推翻四层主干，而是在 runtime loop 里作为并列结果缓冲区补上碰撞这条支线。
 
 ## 对照例子：`robot_cartpole --world-count 100`
 

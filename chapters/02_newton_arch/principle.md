@@ -1,7 +1,7 @@
 ---
 chapter: 02
 title: Newton 总体架构
-last_updated: 2026-04-18
+last_updated: 2026-04-22
 source_paths:
   - newton/__init__.py
   - newton/_src/core/
@@ -29,21 +29,21 @@ newton_commit: 1a230702
 
 第二站是公共 API。沿着 `basic_pendulum` 往里看时，最值得先抓住的不是内部模块树，而是 Newton 选择把哪些名字暴露给用户。把 `newton/__init__.py` 当成目录来读，会更容易看清哪些对象是你应该先认得的核心表面，再决定哪些实现细节可以晚一点追。
 
-第三站才是把这些对象重新放回你在 `00` 里见过的“一步仿真”框架里。到了这里，`basic_pendulum` 的最小执行链就可以顺成下面四句话，再外加一句 `Contacts` handoff：
+第三站才是把这些对象重新放回你在 `00` 里见过的“一步仿真”框架里。到了这里，`basic_pendulum` 的最小执行链就可以顺成下面四句话，再外加一句 `Contacts` 结果缓冲区：
 
 1. 例子先选定一个场景和一组参数，把“我要模拟什么”说清楚。
 2. 它通过公共 API 触达核心对象，其中 `Model` 负责把这个场景写成静态描述，也就是“世界里有什么、怎样连着、哪些量通常不会每步重建”。
 3. 然后例子准备会随时间变化的 `State`，以及这一拍可能会施加的 `Control`。把它们分别看成“当前快照”和“当前输入”就够支撑第一遍阅读。
 4. 最后 `Solver` 读入 `Model`、当前 `State` 和可能存在的 `Control`，完成一次 step，把系统推进到下一拍。
-5. 而 `Contacts` 不是另一层静态骨架，而是这条主干旁边的并列 handoff object：它接住“这一拍碰撞后得到了什么”，再送给 solver 消费。
+5. 而 `Contacts` 不是另一层静态骨架，而是这条主干旁边的并列结果缓冲区 / handoff object：它接住“这一拍碰撞后得到了什么”，再送给 solver 消费。
 
-这样读时，`basic_pendulum` 就不再只是一个“能跑的 demo 名字”，而是一个教学入口：它把 examples 入口、公共 API、四层主干对象、`Contacts` handoff，以及一次 step 串成了同一条链。只要你能用这条主链复述它，后面看更大的例子就有抓手了。
+这样读时，`basic_pendulum` 就不再只是一个“能跑的 demo 名字”，而是一个教学入口：它把 examples 入口、公共 API、四层主干对象、`Contacts` 结果缓冲区，以及一次 step 串成了同一条链。只要你能用这条主链复述它，后面看更大的例子就有抓手了。
 
 ## 2. 四层关系图
 
 ![Model / State / Control / Solver 四层关系](assets/02_model_state_control_solver.svg)
 
-这张图不是在引入新的抽象，而是在把 `00` 章的四格直觉换成 Newton 的真实名字。读图时，重点不是背定义，而是看它们在一次 step 里怎样接力：`Model` 先给出边界，`State` 提供当前快照，`Control` 提供这一拍的外部输入，`Solver` 再把前三者组装成一次推进。与此同时，`Contacts` 会作为并列 handoff object 在 runtime loop 里出现，负责把碰撞结果送到 solver 手上。
+这张图不是在引入新的抽象，而是在把 `00` 章的四格直觉换成 Newton 的真实名字。读图时，重点不是背定义，而是看它们在一次 step 里怎样接力：`Model` 先给出边界，`State` 提供当前快照，`Control` 提供这一拍的外部输入，`Solver` 再把前三者组装成一次推进。与此同时，`Contacts` 会作为并列结果缓冲区 / handoff object 在 runtime loop 里出现，负责把碰撞结果送到 solver 手上。
 
 - `Model` 先定边界：拓扑、质量、关节、碰撞形状这类结构，通常不在每步里重建。
 - `State` 是时间轴上的快照：位置、速度以及 solver 运行时会更新的量，都放在这一层。
@@ -70,7 +70,7 @@ newton_commit: 1a230702
 
 ## 4. 快速胜利示例
 
-先把下面四条命令跑过一遍，不求一次讲透全部内部实现，只求把刚才那条主链再走稳一遍：例子名字怎样落到四层主干对象和 `Contacts` handoff，又怎样把你带到不同 solver 家族。
+先把下面四条命令跑过一遍，不求一次讲透全部内部实现，只求把刚才那条主链再走稳一遍：例子名字怎样落到四层主干对象和 `Contacts` 结果缓冲区，又怎样把你带到不同 solver 家族。
 
 ```bash
 uv sync --extra examples
@@ -98,4 +98,4 @@ uv run -m newton.examples cloth_hanging --solver xpbd
 - `newton/__init__.py`：这里能直接看到 Newton 暴露给用户的基础对象，包括 `Model`、`State`、`Control`、`CollisionPipeline` 等；它是“先认哪些公共名字”的最好目录。
 - `newton/_src/core/`：它帮助你理解这些对象背后的基础类型和共用骨架，但 Newton 的总体架构并不只藏在某个 core 大文件里，而是分散在 public API、sim、solver 与 examples 的协作关系中。
 
-如果你读到这里，已经能把 `basic_pendulum` 讲成一条完整链：examples 入口先接住读者，公共 API 给出核心对象名，`Model / State / Control / Solver` 构成四层主干，`Contacts` 作为并列 handoff object 接住碰撞结果。接下来有两条自然分叉：想先把 `Model` 背后的数学和场景构建补稳，就继续到 `03_math_geometry` 和 `04_scene_usd`；想沿刚体主线往下走，就去 `05_rigid_articulation`，再到 `08_rigid_solvers` 看刚体 solver 家族怎样真正展开。
+如果你读到这里，已经能把 `basic_pendulum` 讲成一条完整链：examples 入口先接住读者，公共 API 给出核心对象名，`Model / State / Control / Solver` 构成四层主干，`Contacts` 作为并列结果缓冲区接住碰撞结果。接下来有两条自然分叉：想先把 `Model` 背后的数学和场景构建补稳，就继续到 `03_math_geometry` 和 `04_scene_usd`；想沿刚体主线往下走，就去 `05_rigid_articulation`，再到 `08_rigid_solvers` 看刚体 solver 家族怎样真正展开。

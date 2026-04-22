@@ -1,7 +1,7 @@
 ---
 chapter: 02
 title: Newton 总体架构
-last_updated: 2026-04-21
+last_updated: 2026-04-22
 source_paths:
   - newton/examples/__main__.py
   - newton/examples/__init__.py
@@ -219,6 +219,17 @@ def main():
     sys.argv = [target_module, *sys.argv[2:]]  # 剩余参数原样转交给目标模块
     runpy.run_module(target_module, run_name="__main__")  # 正式跳进具体 example
 ```
+
+如果你总在这里把 `__main__.py`、`__init__.py` 和真正的 example script 混成一层，可以先对照这张图：
+
+![`newton.examples` launcher handoff timeline](assets/02_launcher_handoff.svg)
+
+这里最容易漏掉的是：`__main__` 这层身份会出现两次。
+
+1. 第一次：`python -m newton.examples basic_pendulum` 让 `newton/examples/__main__.py` 以入口模块身份执行。
+2. 第二次：`runpy.run_module(target_module, run_name="__main__")` 又把目标 example module 当成新的主程序执行，所以 `example_basic_pendulum.py` 里的 `if __name__ == "__main__":` 也会触发。
+
+所以 `examples.__init__.py` 更像一个路由器：它负责查 short name、改写 `sys.argv`、再把执行权交给真正的 example module；真正创建 `Example(...)` 并进入 `newton.examples.run(...)` 的，还是目标 example 自己。
 
 **Verification cues**
 
