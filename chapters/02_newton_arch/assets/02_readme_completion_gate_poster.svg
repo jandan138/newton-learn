@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="390" viewBox="0 0 1200 390" role="img" aria-labelledby="title desc">
+  <title id="title">Chapter 02 completion gate poster</title>
+  <desc id="desc">A clustered completion poster showing the three groups of skills needed to consider chapter 02 finished.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 22px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 16px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .badge { fill: #ffffff; stroke: #6a87b8; stroke-width: 2.2; }
+    .cardA { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardB { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .cardC { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.5; }
+  </style>
+
+  <rect width="1200" height="390" fill="#ffffff"/>
+  <text x="50" y="46" class="title">Completion gate: chapter 02 什么时候算真的读完</text>
+  <text x="50" y="76" class="sub">不是记住文件名，而是能把组装点、step 层级和最小执行链讲清并跑通。</text>
+
+  <circle cx="210" cy="118" r="26" class="badge"/>
+  <text x="210" y="126" text-anchor="middle" class="label">1</text>
+  <rect x="70" y="145" width="280" height="165" rx="18" class="cardA"/>
+  <text x="100" y="180" class="label">组装点与对象分工</text>
+  <text x="100" y="208" class="body">指出 Example.__init__()</text>
+  <text x="100" y="232" class="body">解释 Model / State / Control / Solver</text>
+  <text x="100" y="256" class="body">知道 Contacts 为什么并列出现</text>
+  <text x="100" y="280" class="body">理解为何先调用 eval_fk(...)</text>
+
+  <circle cx="600" cy="118" r="26" class="badge"/>
+  <text x="600" y="126" text-anchor="middle" class="label">2</text>
+  <rect x="460" y="145" width="280" height="165" rx="18" class="cardB"/>
+  <text x="490" y="180" class="label">step 层级与状态交换</text>
+  <text x="490" y="208" class="body">区分 examples.run()</text>
+  <text x="490" y="232" class="body">Example.step() / Solver.step()</text>
+  <text x="490" y="256" class="body">知道 simulate() 是 substep chain</text>
+  <text x="490" y="280" class="body">解释 state_0 / state_1 swap</text>
+
+  <circle cx="990" cy="118" r="26" class="badge"/>
+  <text x="990" y="126" text-anchor="middle" class="label">3</text>
+  <rect x="850" y="145" width="280" height="165" rx="18" class="cardC"/>
+  <text x="880" y="180" class="label">最小执行链能落地</text>
+  <text x="880" y="208" class="body">跑通 basic_pendulum</text>
+  <text x="880" y="232" class="body">口述入口到 solver.step()</text>
+  <text x="880" y="256" class="body">指出 runtime stack 与 Contacts</text>
+  <text x="880" y="280" class="body">把图和真实执行过程对上</text>
+
+  <text x="600" y="355" text-anchor="middle" class="foot">会解释、会定位、会跑通，这三件事同时成立才算过门槛。</text>
+</svg>

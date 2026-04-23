@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="360" viewBox="0 0 1400 360" role="img" aria-labelledby="title desc">
+  <title id="title">basic_pendulum observation scope</title>
+  <desc id="desc">A scope bridge showing basic_pendulum as the smallest observation task for chapter 02: run once, trace the four-layer backbone, and vary one knob at a time.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 22px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 16px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .code { font: 700 16px "JetBrains Mono","DejaVu Sans Mono","Noto Sans Mono CJK SC",monospace; fill: #24406a; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .cardA { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardB { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .cardC { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.5; }
+    .band { fill: #f7f9fc; stroke: #8ca0bf; stroke-width: 2.5; }
+    .arrow { stroke: #667c9f; stroke-width: 3.2; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="360" fill="#ffffff"/>
+  <text x="50" y="46" class="title">`basic_pendulum` 是 chapter 02 最小也最稳的观察入口</text>
+  <text x="50" y="76" class="sub">先跑默认命令，再把注意力收束到四层主干、一次 substep 链和单个关节链上，不急着引入 USD、多 world 或 solver family 切换。</text>
+
+  <rect x="50" y="120" width="370" height="138" rx="18" class="cardA"/>
+  <text x="80" y="156" class="label">先原样跑一次</text>
+  <text x="80" y="184" class="code">uv run -m newton.examples basic_pendulum</text>
+  <text x="80" y="212" class="body">确认你看到的是最小刚体 articulation</text>
+  <text x="80" y="236" class="body">不是多功能 demo，而是主线教学入口</text>
+
+  <rect x="515" y="120" width="370" height="138" rx="18" class="cardB"/>
+  <text x="545" y="156" class="label">再把链读顺</text>
+  <text x="545" y="184" class="body">example 入口 -&gt; `Example.__init__()`</text>
+  <text x="545" y="208" class="body">`Model / State / Control / Solver` + `Contacts`</text>
+  <text x="545" y="232" class="body">`simulate()` 里的最小 substep 顺序</text>
+
+  <rect x="980" y="120" width="370" height="138" rx="18" class="cardC"/>
+  <text x="1010" y="156" class="label">最后只改单个旋钮</text>
+  <text x="1010" y="184" class="body">一次只改尺寸、高度、substeps 或关节轴</text>
+  <text x="1010" y="208" class="body">先问这次主要动到哪一层</text>
+  <text x="1010" y="232" class="body">再看现象有没有跟着落到你预期的位置</text>
+
+  <path d="M 420 189 L 515 189" class="arrow"/>
+  <path d="M 885 189 L 980 189" class="arrow"/>
+
+  <rect x="180" y="285" width="1040" height="46" rx="16" class="band"/>
+  <text x="700" y="315" text-anchor="middle" class="foot">这条最小路径的价值不是覆盖全部 Newton，而是先让你稳定地区分“要跑什么、要改什么、要回看哪里”。</text>
+</svg>

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1380" height="420" viewBox="0 0 1380 420" role="img" aria-labelledby="title desc">
+  <title id="title">Next chapter map after chapter 02</title>
+  <desc id="desc">A navigation map showing where chapter 02 hands off to later chapters based on what the reader wants to understand next.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 21px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 16px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .core { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.8; }
+    .cardA { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardB { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .cardC { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+    .cardD { fill: #f7f9fc; stroke: #8ca0bf; stroke-width: 2.5; }
+    .arrow { stroke: #667c9f; stroke-width: 3.2; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1380" height="420" fill="#ffffff"/>
+  <text x="50" y="46" class="title">chapter 02 的接口图：这一章搭地图，后面几章分路线展开</text>
+  <text x="50" y="76" class="sub">不用在这里把后续细节吃完，只要知道下一步该去哪条线继续。</text>
+
+  <rect x="60" y="140" width="300" height="150" rx="20" class="core"/>
+  <text x="90" y="177" class="label">02 Newton 总体架构</text>
+  <text x="90" y="205" class="body">先把 examples 入口、公共 API、</text>
+  <text x="90" y="229" class="body">四层主干与 solver 地图接起来</text>
+  <text x="90" y="253" class="body">回答“系统怎样被组织起来”</text>
+
+  <rect x="470" y="90" width="290" height="92" rx="18" class="cardA"/>
+  <text x="500" y="124" class="label">03_math_geometry</text>
+  <text x="500" y="150" class="body">补对象背后的坐标、变换、几何词汇</text>
+
+  <rect x="470" y="220" width="290" height="92" rx="18" class="cardB"/>
+  <text x="500" y="254" class="label">04_scene_usd</text>
+  <text x="500" y="280" class="body">补 `Model` 怎样从场景输入被构建出来</text>
+
+  <rect x="830" y="90" width="290" height="92" rx="18" class="cardC"/>
+  <text x="860" y="124" class="label">05_rigid_articulation</text>
+  <text x="860" y="150" class="body">沿刚体树、关节与 articulation 主线继续</text>
+
+  <rect x="830" y="220" width="290" height="92" rx="18" class="cardD"/>
+  <text x="860" y="254" class="label">08_rigid_solvers</text>
+  <text x="860" y="280" class="body">正面对比 rigid solver 家族各条路线</text>
+
+  <path d="M 360 186 L 470 136" class="arrow"/>
+  <path d="M 360 230 L 470 266" class="arrow"/>
+  <path d="M 360 186 L 830 136" class="arrow"/>
+  <path d="M 360 230 L 830 266" class="arrow"/>
+
+  <text x="690" y="388" text-anchor="middle" class="foot">如果你已经能复述 chapter 02 的主链，就该按问题类型分流，而不是继续把这一章堆成通用索引。</text>
+</svg>

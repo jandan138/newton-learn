@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1460" height="420" viewBox="0 0 1460 420" role="img" aria-labelledby="title desc">
+  <title id="title">Newton implementation handoff bridge</title>
+  <desc id="desc">A concept-first mapping from examples entry and public API to core/shared code and the broader runtime collaboration across Newton modules.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 20px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .code { font: 700 16px "JetBrains Mono","DejaVu Sans Mono","Noto Sans Mono CJK SC",monospace; fill: #243754; }
+    .body { font: 400 16px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .cardA { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardB { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+    .cardC { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .cardD { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.8; }
+    .arrow { stroke: #667c9f; stroke-width: 3.2; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1460" height="420" fill="#ffffff"/>
+  <text x="50" y="46" class="title">与 Newton 实现的映射：先认入口和边界，再接受它本来就是跨模块协作</text>
+  <text x="50" y="76" class="sub">chapter 02 只帮你把“先看哪里”讲顺，不把实现压缩成某个神奇单文件。</text>
+
+  <rect x="50" y="130" width="270" height="150" rx="18" class="cardA"/>
+  <text x="80" y="166" class="code">newton/examples/__main__.py</text>
+  <text x="80" y="194" class="label">薄入口</text>
+  <text x="80" y="220" class="body">提醒你 examples 的运行入口很轻</text>
+  <text x="80" y="244" class="body">重点应落在被调起的 example</text>
+
+  <rect x="360" y="130" width="290" height="150" rx="18" class="cardB"/>
+  <text x="390" y="166" class="code">newton/__init__.py</text>
+  <text x="390" y="194" class="label">公共表面</text>
+  <text x="390" y="220" class="body">先认 `Model`、`State`、`Control`</text>
+  <text x="390" y="244" class="body">和 `CollisionPipeline` 这些公共名字</text>
+
+  <rect x="690" y="130" width="270" height="150" rx="18" class="cardC"/>
+  <text x="720" y="166" class="code">newton/_src/core/</text>
+  <text x="720" y="194" class="label">共享骨架</text>
+  <text x="720" y="220" class="body">帮助你理解基础类型与共用结构</text>
+  <text x="720" y="244" class="body">但不是总体架构的全部答案</text>
+
+  <rect x="1000" y="116" width="360" height="178" rx="20" class="cardD"/>
+  <text x="1030" y="152" class="label">真正的架构映射</text>
+  <text x="1030" y="180" class="body">examples、public API、sim、solver</text>
+  <text x="1030" y="204" class="body">一起组成 runtime 协作关系</text>
+  <text x="1030" y="228" class="body">chapter 02 只先给你这层边界感</text>
+  <text x="1030" y="252" class="body">再去 `source-walkthrough.md` 追更细 handoff</text>
+
+  <path d="M 320 205 L 360 205" class="arrow"/>
+  <path d="M 650 205 L 690 205" class="arrow"/>
+  <path d="M 960 205 L 1000 205" class="arrow"/>
+
+  <text x="730" y="390" text-anchor="middle" class="foot">先把“入口在哪、公共名字在哪、共享骨架在哪、协作关系在哪”记清，再去更深的 walkthrough 看具体流向。</text>
+</svg>

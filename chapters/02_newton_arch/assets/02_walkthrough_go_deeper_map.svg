@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="340" viewBox="0 0 1280 340" role="img" aria-labelledby="title desc">
+  <title id="title">go deeper map</title>
+  <desc id="desc">A navigation map from the beginner walkthrough into the deep walkthrough sections for exact anchors, handoff tracing, optional branches, and verification.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 15px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .cardA { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardB { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+    .cardC { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .cardD { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.5; }
+    .hub { fill: #f7f9fc; stroke: #8ca0bf; stroke-width: 2.5; }
+    .arrow { stroke: #667c9f; stroke-width: 3.0; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="340" fill="#ffffff"/>
+  <text x="50" y="46" class="title">Go Deeper: beginner 主线讲顺后，再带着问题去精确追源码</text>
+  <text x="50" y="76" class="sub">这是导航压缩图，不新增 source semantics；它只帮你决定接下来该去 `source-walkthrough-deep.md` 的哪一段。</text>
+
+  <rect x="450" y="124" width="380" height="92" rx="20" class="hub"/>
+  <text x="480" y="160" class="label">`source-walkthrough-deep.md`</text>
+  <text x="480" y="188" class="body">把 beginner handoff 继续拆成 file / symbol / line anchors</text>
+
+  <rect x="60" y="122" width="260" height="96" rx="18" class="cardA"/>
+  <text x="90" y="158" class="label">Fast Deep Index</text>
+  <text x="90" y="184" class="body">想快速定位文件和符号入口</text>
+
+  <rect x="950" y="122" width="260" height="96" rx="18" class="cardB"/>
+  <text x="980" y="158" class="label">Exact Handoff Trace</text>
+  <text x="980" y="184" class="body">想逐跳追 `basic_pendulum` 主链</text>
+
+  <rect x="170" y="240" width="260" height="74" rx="18" class="cardC"/>
+  <text x="200" y="272" class="label">Optional Branches</text>
+  <text x="200" y="294" class="body">viewer/device、finalize、其它 examples</text>
+
+  <rect x="850" y="240" width="260" height="74" rx="18" class="cardD"/>
+  <text x="880" y="272" class="label">Verification Anchors</text>
+  <text x="880" y="294" class="body">想逐条核对本页 claim</text>
+
+  <path d="M 450 170 L 320 170" class="arrow"/>
+  <path d="M 830 170 L 950 170" class="arrow"/>
+  <path d="M 530 216 L 420 240" class="arrow"/>
+  <path d="M 750 216 L 850 240" class="arrow"/>
+
+  <text x="640" y="328" text-anchor="middle" class="foot">带着具体问题下潜，比一开始就扑向全部内部目录更稳，也更符合这份 beginner walkthrough 的角色分工。</text>
+</svg>

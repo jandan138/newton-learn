@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="470" viewBox="0 0 1320 470" role="img" aria-labelledby="title desc">
+  <title id="title">Chapter 02 reading order map</title>
+  <desc id="desc">A suggested reading route with an optional warm-up, the main walkthrough path, and side branches for questions and deeper reading.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .num { font: 700 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .label { font: 700 19px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 15px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .badge { fill: #ffffff; stroke: #8ca0bf; stroke-width: 2.2; }
+    .main { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .side { fill: #f7f9fc; stroke: #8ca0bf; stroke-width: 2.5; }
+    .run { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .deep { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+    .return { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.5; }
+    .arrow { stroke: #667c9f; stroke-width: 3.2; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1320" height="470" fill="#ffffff"/>
+  <text x="50" y="46" class="title">Suggested reading route: 主线默认直走，支线按需插入</text>
+  <text x="50" y="76" class="sub">真正的 first pass 主线是 walkthrough + 一次真实运行，其它文档作为预热、补图或深读插槽。</text>
+
+  <circle cx="110" cy="138" r="24" class="badge"/>
+  <text x="110" y="146" text-anchor="middle" class="num">1</text>
+  <rect x="145" y="100" width="250" height="78" rx="16" class="main"/>
+  <text x="175" y="132" class="label">带着 00 / 01 的答案进入 02</text>
+  <text x="175" y="156" class="body">不再重讲前置词和 Warp 执行模型</text>
+
+  <circle cx="470" cy="138" r="24" class="badge"/>
+  <text x="470" y="146" text-anchor="middle" class="num">2</text>
+  <rect x="505" y="100" width="230" height="78" rx="16" class="side"/>
+  <text x="535" y="132" class="label">可选预热 principle.md</text>
+  <text x="535" y="156" class="body">10 分钟概念热身，不替代主线</text>
+
+  <circle cx="820" cy="138" r="24" class="badge"/>
+  <text x="820" y="146" text-anchor="middle" class="num">3</text>
+  <rect x="855" y="100" width="280" height="78" rx="16" class="main"/>
+  <text x="885" y="132" class="label">主线：source-walkthrough.md</text>
+  <text x="885" y="156" class="body">第一次只跟 basic_pendulum 这条链</text>
+
+  <circle cx="1210" cy="138" r="24" class="badge"/>
+  <text x="1210" y="146" text-anchor="middle" class="num">4</text>
+  <rect x="1010" y="210" width="250" height="78" rx="16" class="run"/>
+  <text x="1040" y="242" class="label">实际运行 basic_pendulum</text>
+  <text x="1040" y="266" class="body">把 clear_forces -> swap 对上号</text>
+
+  <circle cx="830" cy="328" r="24" class="badge"/>
+  <text x="830" y="336" text-anchor="middle" class="num">5</text>
+  <rect x="865" y="290" width="270" height="78" rx="16" class="side"/>
+  <text x="895" y="322" class="label">再读 examples.md</text>
+  <text x="895" y="346" class="body">把 quick-win 命令变成观察任务</text>
+
+  <circle cx="470" cy="328" r="24" class="badge"/>
+  <text x="470" y="336" text-anchor="middle" class="num">6</text>
+  <rect x="505" y="290" width="260" height="78" rx="16" class="deep"/>
+  <text x="535" y="322" class="label">卡住时跳到 question-notes.md</text>
+  <text x="535" y="346" class="body">处理双 __main__、joint frame 等困惑</text>
+
+  <circle cx="115" cy="328" r="24" class="badge"/>
+  <text x="115" y="336" text-anchor="middle" class="num">7</text>
+  <rect x="150" y="290" width="280" height="78" rx="16" class="deep"/>
+  <text x="180" y="322" class="label">需要精确定位再看 deep walkthrough</text>
+  <text x="180" y="346" class="body">追 file / symbol / line 号</text>
+
+  <rect x="470" y="392" width="380" height="52" rx="16" class="return"/>
+  <text x="500" y="424" class="label">8. 如果前置又松了，就回 00_prerequisites 或 01_warp_basics 补洞</text>
+
+  <path d="M 395 139 L 505 139" class="arrow"/>
+  <path d="M 735 139 L 855 139" class="arrow"/>
+  <path d="M 1135 168 L 1135 210" class="arrow"/>
+  <path d="M 1010 249 L 865 329" class="arrow"/>
+  <path d="M 855 329 L 765 329" class="arrow"/>
+  <path d="M 505 329 L 430 329" class="arrow"/>
+  <path d="M 635 368 L 635 392" class="arrow"/>
+
+  <text x="660" y="455" text-anchor="middle" class="foot">主线先走完，支线只在需要时插入，不要一开始就把所有文档同时展开。</text>
+</svg>

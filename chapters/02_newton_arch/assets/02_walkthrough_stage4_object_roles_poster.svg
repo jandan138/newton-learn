@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="430" viewBox="0 0 1440 430" role="img" aria-labelledby="title desc">
+  <title id="title">stage 4 object roles poster</title>
+  <desc id="desc">A source-exact poster showing Model, State, Control, Contacts, and Solver as distinct runtime roles, with eval_fk bridging joint-space defaults into body-space state.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 19px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 15px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .code { font: 700 14px "JetBrains Mono","DejaVu Sans Mono","Noto Sans Mono CJK SC",monospace; fill: #24406a; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .cardA { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardB { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+    .cardC { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .cardD { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.5; }
+    .cardE { fill: #f7f9fc; stroke: #8ca0bf; stroke-width: 2.5; }
+    .arrow { stroke: #667c9f; stroke-width: 3.0; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1440" height="430" fill="#ffffff"/>
+  <text x="50" y="46" class="title">Stage 4: 四层主干和 `Contacts` 结果缓冲区各自分工</text>
+  <text x="50" y="76" class="sub">`Model` 负责静态描述和对象工厂；`State / Control / Contacts` 是明确分离的 runtime buffers；`Solver.step(...)` 只负责推进。</text>
+
+  <rect x="50" y="120" width="240" height="136" rx="18" class="cardA"/>
+  <text x="80" y="156" class="label">`Model`</text>
+  <text x="80" y="182" class="body">静态 body / joint / shape buffers</text>
+  <text x="80" y="206" class="code">state() / control() / contacts()</text>
+  <text x="80" y="230" class="code">collide(state, contacts)</text>
+
+  <rect x="340" y="120" width="250" height="136" rx="18" class="cardB"/>
+  <text x="370" y="156" class="label">`State`</text>
+  <text x="370" y="182" class="code">body_q / body_qd / body_f</text>
+  <text x="370" y="206" class="code">joint_q / joint_qd</text>
+  <text x="370" y="230" class="body">当前或下一拍的动态快照</text>
+
+  <rect x="640" y="120" width="240" height="136" rx="18" class="cardC"/>
+  <text x="670" y="156" class="label">`Control`</text>
+  <text x="670" y="182" class="code">joint_target_pos / vel</text>
+  <text x="670" y="206" class="code">joint_act / joint_f</text>
+  <text x="670" y="230" class="body">这一拍的输入缓冲区</text>
+
+  <rect x="980" y="96" width="330" height="160" rx="18" class="cardE"/>
+  <text x="1010" y="132" class="label">`Solver.step(...)`</text>
+  <text x="1010" y="160" class="code">step(state_in, state_out,</text>
+  <text x="1010" y="184" class="code">     control, contacts, dt)</text>
+  <text x="1010" y="210" class="body">统一消费对象并推进到下一拍</text>
+
+  <rect x="930" y="294" width="380" height="88" rx="18" class="cardD"/>
+  <text x="960" y="328" class="label">`Contacts`</text>
+  <text x="960" y="352" class="body">collision pipeline 写入的本拍接触结果缓冲区</text>
+
+  <rect x="180" y="304" width="560" height="78" rx="18" class="cardA"/>
+  <text x="210" y="338" class="label">`eval_fk(model, model.joint_q, model.joint_qd, state_0)`</text>
+  <text x="210" y="362" class="body">把 `joint_q / joint_qd` 展开成 `state_0` 里的 `body_q / body_qd`，所以 solver 前先有 body-space 快照。</text>
+
+  <path d="M 290 188 L 340 188" class="arrow"/>
+  <path d="M 590 188 L 640 188" class="arrow"/>
+  <path d="M 880 188 L 980 188" class="arrow"/>
+  <path d="M 240 256 L 280 304" class="arrow"/>
+  <path d="M 1110 294 L 1110 256" class="arrow"/>
+  <path d="M 520 256 L 930 338" class="arrow"/>
+
+  <text x="720" y="414" text-anchor="middle" class="foot">如果你能把这些名字按职责拆开，后面看碰撞、约束或 solver internals 时才不会把“谁生产、谁保存、谁消费”混成一团。</text>
+</svg>

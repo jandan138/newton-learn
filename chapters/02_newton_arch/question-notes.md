@@ -1,7 +1,7 @@
 ---
 chapter: 02
 title: Newton 总体架构 问题驱动补充图解
-last_updated: 2026-04-22
+last_updated: 2026-04-23
 source_paths:
   - newton/examples/__main__.py
   - newton/examples/__init__.py
@@ -109,6 +109,10 @@ chapter 02 这里先只要求你接受一个结论：
 如果你现在还在追 chapter 02 的 core pass，只要先把这节读成“joint parameterization 可能有等价自由度”就够了，不需要把公式推完。
 
 ## 5. 这页怎么和主线配合
+
+![Question notes page relationships map](assets/02_question_notes_page_relationships_map.svg)
+
+这张图只想帮你把 `question-notes.md` 放回正确位置：它是 chapter 02 主线旁边的一张问题索引图，不是新的总导航。最稳的用法是卡在某个具体困惑时先来这里拆结，然后立刻回主线文件继续核对和推进。
 
 - 想守住最小执行链：回 `source-walkthrough.md`。
 - 想做 quick-win 观察任务：回 `examples.md`。

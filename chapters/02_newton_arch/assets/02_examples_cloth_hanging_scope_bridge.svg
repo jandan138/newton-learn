@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1460" height="380" viewBox="0 0 1460 380" role="img" aria-labelledby="title desc">
+  <title id="title">cloth_hanging scope bridge</title>
+  <desc id="desc">A scope bridge for the cloth_hanging example, showing the solver family choice, cloth scene construction, and the collide plus XPBD route.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 21px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 16px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .code { font: 700 16px "JetBrains Mono","DejaVu Sans Mono","Noto Sans Mono CJK SC",monospace; fill: #5b3b8a; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .cardA { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+    .cardB { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .cardC { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardD { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.5; }
+    .arrow { stroke: #667c9f; stroke-width: 3.2; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1460" height="380" fill="#ffffff"/>
+  <text x="50" y="46" class="title">`cloth_hanging --solver xpbd` 的观察重点，是“同一类布料场景怎样换 solver family”</text>
+  <text x="50" y="76" class="sub">它保留了 chapter 02 的主链，只是把关注点从刚体 articulation 移到 cloth builder、contacts 和 solver family 选择。</text>
+
+  <rect x="50" y="126" width="300" height="148" rx="18" class="cardA"/>
+  <text x="80" y="162" class="label">先选 solver family</text>
+  <text x="80" y="190" class="code">`--solver xpbd`</text>
+  <text x="80" y="214" class="body">入口先决定求解路线，而不是先改布料形状</text>
+
+  <rect x="400" y="126" width="300" height="148" rx="18" class="cardB"/>
+  <text x="430" y="162" class="label">再搭 cloth 场景</text>
+  <text x="430" y="190" class="body">`add_ground_plane()` + `add_cloth_grid(...)`</text>
+  <text x="430" y="214" class="body">同类场景主题保持不变</text>
+
+  <rect x="750" y="126" width="300" height="148" rx="18" class="cardC"/>
+  <text x="780" y="162" class="label">然后显式过碰撞</text>
+  <text x="780" y="190" class="body">`contacts()` -&gt; `model.collide(...)`</text>
+  <text x="780" y="214" class="body">这一步会把 soft/cloth 的 runtime 观察补齐</text>
+
+  <rect x="1100" y="126" width="310" height="148" rx="18" class="cardD"/>
+  <text x="1130" y="162" class="label">最后进 XPBD</text>
+  <text x="1130" y="190" class="code">`SolverXPBD(...).step(...)`</text>
+  <text x="1130" y="214" class="body">让你看到“场景不变，solver route 变”的最直接版本</text>
+
+  <path d="M 350 200 L 400 200" class="arrow"/>
+  <path d="M 700 200 L 750 200" class="arrow"/>
+  <path d="M 1050 200 L 1100 200" class="arrow"/>
+
+  <text x="730" y="338" text-anchor="middle" class="foot">这一例子最值钱的观察不是布料细节本身，而是你能不能分清 scene knobs 与 solver knobs 是两层不同旋钮。</text>
+</svg>

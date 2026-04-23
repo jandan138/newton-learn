@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="370" viewBox="0 0 1400 370" role="img" aria-labelledby="title desc">
+  <title id="title">basic_pendulum pitfalls poster</title>
+  <desc id="desc">A poster of common reading mistakes in the basic_pendulum example: capture, apply_forces, and contacts.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 21px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 16px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .warn { font: 700 16px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #a04632; }
+    .cardA { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.5; }
+    .cardB { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardC { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+  </style>
+
+  <rect width="1400" height="370" fill="#ffffff"/>
+  <text x="50" y="46" class="title">读 `basic_pendulum` 时，最常见的三次误判</text>
+  <text x="50" y="76" class="sub">先把这些误判排掉，再去问你刚才改的量到底落在哪个对象上。</text>
+
+  <rect x="50" y="120" width="400" height="180" rx="18" class="cardA"/>
+  <text x="82" y="158" class="warn">不要误判 1</text>
+  <text x="82" y="190" class="label">`capture()` 不是另一套物理</text>
+  <text x="82" y="220" class="body">它只是把同一段 `simulate()` 操作录成 CUDA graph，</text>
+  <text x="82" y="244" class="body">不是第二条 solver 路线，也不是命令行参数。</text>
+
+  <rect x="500" y="120" width="400" height="180" rx="18" class="cardB"/>
+  <text x="532" y="158" class="warn">不要误判 2</text>
+  <text x="532" y="190" class="label">`viewer.apply_forces()` 不是建模</text>
+  <text x="532" y="220" class="body">这里是当前拍外部输入入口，</text>
+  <text x="532" y="244" class="body">和 `builder.add_*` 的静态场景搭建不是一类改动。</text>
+
+  <rect x="950" y="120" width="400" height="180" rx="18" class="cardC"/>
+  <text x="982" y="158" class="warn">不要误判 3</text>
+  <text x="982" y="190" class="label">`contacts` 不是 XPBD 私有黑箱</text>
+  <text x="982" y="220" class="body">它在这里就是显式 runtime 结果缓冲区，</text>
+  <text x="982" y="244" class="body">和四层主干并列出现，不是在推翻主干本身。</text>
+</svg>
