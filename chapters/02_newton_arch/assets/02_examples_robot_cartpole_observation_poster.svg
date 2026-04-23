@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="360" viewBox="0 0 1400 360" role="img" aria-labelledby="title desc">
+  <title id="title">robot_cartpole observation poster</title>
+  <desc id="desc">A poster summarizing the best observation angles for the robot_cartpole example: world replication, USD import, and MuJoCo route with no explicit contacts object.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 21px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 16px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .cardA { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .cardB { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardC { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+  </style>
+
+  <rect width="1400" height="360" fill="#ffffff"/>
+  <text x="50" y="46" class="title">`robot_cartpole` 最值得补的是这三种观察</text>
+  <text x="50" y="76" class="sub">它不是替代 `basic_pendulum` 的主例子，而是给你一个更适合练“模板复制 + solver 路线差异”的对照场。</text>
+
+  <rect x="50" y="120" width="400" height="168" rx="18" class="cardA"/>
+  <text x="82" y="158" class="label">多 world 思维</text>
+  <text x="82" y="188" class="body">把它看成一个模板被切片复制到很多 world，</text>
+  <text x="82" y="212" class="body">不要看成一个越来越大的单体场景。</text>
+
+  <rect x="500" y="120" width="400" height="168" rx="18" class="cardB"/>
+  <text x="532" y="158" class="label">补上 USD 场景来源</text>
+  <text x="532" y="188" class="body">这一步让你把 `basic_pendulum` 的手工 builder 直觉，</text>
+  <text x="532" y="212" class="body">扩展到“先导入一个机器人场景模板”。</text>
+
+  <rect x="950" y="120" width="400" height="168" rx="18" class="cardC"/>
+  <text x="982" y="158" class="label">补上无显式接触路径</text>
+  <text x="982" y="188" class="body">在 MuJoCo 路线上，chapter 02 的骨架依然成立，</text>
+  <text x="982" y="212" class="body">只是这里没有 `model.collide(...)` 这一站。</text>
+</svg>

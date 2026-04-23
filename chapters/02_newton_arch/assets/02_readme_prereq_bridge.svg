@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="430" viewBox="0 0 1400 430" role="img" aria-labelledby="title desc">
+  <title id="title">Chapter 02 prerequisite and neighbor map</title>
+  <desc id="desc">A chapter-neighbor map showing the prerequisites feeding into chapter 02 and the likely next chapters after it.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 22px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 16px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .preA { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .preB { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .paper { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+    .core { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.8; }
+    .next { fill: #f7f9fc; stroke: #8ca0bf; stroke-width: 2.5; }
+    .arrow { stroke: #667c9f; stroke-width: 3.2; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="430" fill="#ffffff"/>
+  <text x="50" y="46" class="title">Chapter-neighbor map: 先接好 00 / 01 / paper，再进入 02 的组织问题</text>
+  <text x="50" y="76" class="sub">本章站在前置章节之上，也给 03 / 04 / 05 提供下一步跳板。</text>
+
+  <rect x="60" y="105" width="280" height="95" rx="18" class="preA"/>
+  <text x="90" y="138" class="label">00_prerequisites</text>
+  <text x="90" y="164" class="body">术语、articulation、M、J</text>
+  <text x="90" y="188" class="body">先回答“这些词是什么意思”</text>
+
+  <rect x="60" y="235" width="280" height="95" rx="18" class="preB"/>
+  <text x="90" y="268" class="label">01_warp_basics</text>
+  <text x="90" y="294" class="body">kernel、wp.array、wp.launch</text>
+  <text x="90" y="318" class="body">先回答“批量执行模型怎样工作”</text>
+
+  <rect x="380" y="285" width="230" height="78" rx="16" class="paper"/>
+  <text x="410" y="317" class="label">mujoco-warp-paper</text>
+  <text x="410" y="341" class="body">路线背景锚点</text>
+
+  <rect x="520" y="132" width="360" height="150" rx="20" class="core"/>
+  <text x="550" y="170" class="label">02 Newton 总体架构</text>
+  <text x="550" y="198" class="body">把 examples 入口、公共 API、四层主干</text>
+  <text x="550" y="222" class="body">和 Contacts handoff 组织成最小执行链</text>
+  <text x="550" y="246" class="body">核心问题：Newton 自己怎样把这些东西串起来</text>
+
+  <rect x="960" y="80" width="280" height="82" rx="16" class="next"/>
+  <text x="990" y="112" class="label">03_math_geometry</text>
+  <text x="990" y="136" class="body">补稳 Model 背后的数学</text>
+
+  <rect x="960" y="180" width="280" height="82" rx="16" class="next"/>
+  <text x="990" y="212" class="label">04_scene_usd</text>
+  <text x="990" y="236" class="body">补稳场景构建与 finalize 背景</text>
+
+  <rect x="960" y="280" width="280" height="82" rx="16" class="next"/>
+  <text x="990" y="312" class="label">05_rigid_articulation</text>
+  <text x="990" y="336" class="body">沿刚体主线继续往下走</text>
+
+  <path d="M 340 152 L 520 182" class="arrow"/>
+  <path d="M 340 282 L 520 232" class="arrow"/>
+  <path d="M 610 285 L 650 282" class="arrow"/>
+  <path d="M 880 182 L 960 121" class="arrow"/>
+  <path d="M 880 207 L 960 221" class="arrow"/>
+  <path d="M 880 236 L 960 321" class="arrow"/>
+
+  <text x="700" y="400" text-anchor="middle" class="foot">左边先帮你站稳词汇和执行模型，中间才轮到 Newton 的组织层，右边再决定下一章往哪走。</text>
+</svg>

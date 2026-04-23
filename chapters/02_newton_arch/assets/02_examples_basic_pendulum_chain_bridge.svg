@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="400" viewBox="0 0 1480 400" role="img" aria-labelledby="title desc">
+  <title id="title">basic_pendulum architecture chain</title>
+  <desc id="desc">A source-exact bridge for the basic_pendulum architecture chain from the launcher through Example construction, runtime objects, and the simulate loop.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 20px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 15px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .code { font: 700 15px "JetBrains Mono","DejaVu Sans Mono","Noto Sans Mono CJK SC",monospace; fill: #243754; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .cardA { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardB { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+    .cardC { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .cardD { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.5; }
+    .cardE { fill: #f7f9fc; stroke: #8ca0bf; stroke-width: 2.5; }
+    .arrow { stroke: #667c9f; stroke-width: 3.2; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1480" height="400" fill="#ffffff"/>
+  <text x="50" y="46" class="title">`basic_pendulum` 覆盖的是一条完整但很薄的架构链</text>
+  <text x="50" y="76" class="sub">先认 handoff 次序，不把这张图读成内部实现展开图。</text>
+
+  <rect x="40" y="126" width="240" height="128" rx="18" class="cardA"/>
+  <text x="70" y="162" class="label">统一 launcher</text>
+  <text x="70" y="190" class="code">python -m newton.examples</text>
+  <text x="70" y="214" class="body">例子名先从同一个入口进入</text>
+
+  <rect x="320" y="126" width="250" height="128" rx="18" class="cardB"/>
+  <text x="350" y="162" class="label">`Example.__init__()`</text>
+  <text x="350" y="190" class="code">example_basic_pendulum.py</text>
+  <text x="350" y="214" class="body">组 world、link、joint、ground</text>
+
+  <rect x="610" y="126" width="250" height="128" rx="18" class="cardC"/>
+  <text x="640" y="162" class="label">`builder.finalize()`</text>
+  <text x="640" y="190" class="body">把静态建模冻结成 `Model`</text>
+  <text x="640" y="214" class="body">再派生 runtime objects</text>
+
+  <rect x="900" y="104" width="250" height="150" rx="18" class="cardD"/>
+  <text x="930" y="140" class="label">runtime objects</text>
+  <text x="930" y="168" class="code">state() / control() / contacts()</text>
+  <text x="930" y="192" class="body">同一拍要读写的快照、输入、</text>
+  <text x="930" y="216" class="body">接触结果缓冲区在这里接齐</text>
+
+  <rect x="1190" y="126" width="250" height="128" rx="18" class="cardE"/>
+  <text x="1220" y="162" class="label">`simulate()`</text>
+  <text x="1220" y="190" class="body">`clear_forces -&gt; apply_forces`</text>
+  <text x="1220" y="214" class="body">`-&gt; collide -&gt; solver.step -&gt; swap`</text>
+
+  <path d="M 280 190 L 320 190" class="arrow"/>
+  <path d="M 570 190 L 610 190" class="arrow"/>
+  <path d="M 860 190 L 900 178" class="arrow"/>
+  <path d="M 1150 178 L 1190 190" class="arrow"/>
+
+  <rect x="360" y="300" width="760" height="52" rx="16" fill="#f8fbff" stroke="#a5b9d6" stroke-width="2"/>
+  <text x="740" y="332" text-anchor="middle" class="foot">这一页最值得记住的是：`basic_pendulum` 已经把例子入口、对象分工和一次 substep 顺序全都摆到了台面上。</text>
+</svg>

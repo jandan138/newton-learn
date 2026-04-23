@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="420" viewBox="0 0 1440 420" role="img" aria-labelledby="title desc">
+  <title id="title">object ledger poster</title>
+  <desc id="desc">A source-grounded ledger poster grouping chapter 02 objects into routing, constructor ownership, and loop consumption contracts.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 19px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 15px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .code { font: 700 14px "JetBrains Mono","DejaVu Sans Mono","Noto Sans Mono CJK SC",monospace; fill: #24406a; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .cardA { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardB { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+    .cardC { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .arrow { stroke: #667c9f; stroke-width: 3.0; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1440" height="420" fill="#ffffff"/>
+  <text x="50" y="46" class="title">Object Ledger: 先把对象放回它们真正的生产与消费位置</text>
+  <text x="50" y="76" class="sub">表格里会逐项列出 producer / consumer；这张图只先把 chapter 02 的三段 ledger 边界钉住。</text>
+
+  <rect x="50" y="118" width="400" height="228" rx="20" class="cardA"/>
+  <text x="80" y="156" class="label">Routing ledger</text>
+  <text x="80" y="186" class="code">get_examples() -&gt; short name `basic_pendulum`</text>
+  <text x="80" y="210" class="code">main() -&gt; target module path</text>
+  <text x="80" y="234" class="code">runpy.run_module(target_module)</text>
+  <text x="80" y="262" class="body">这一段只负责把名字送到 concrete module</text>
+
+  <rect x="520" y="118" width="400" height="228" rx="20" class="cardB"/>
+  <text x="550" y="156" class="label">Constructor ledger</text>
+  <text x="550" y="186" class="code">builder.finalize() -&gt; model</text>
+  <text x="550" y="210" class="code">model.state() x2 -&gt; state_0, state_1</text>
+  <text x="550" y="234" class="code">model.control() -&gt; control</text>
+  <text x="550" y="258" class="code">eval_fk(..., state_0)</text>
+  <text x="550" y="282" class="code">model.contacts() -&gt; contacts</text>
+  <text x="550" y="306" class="code">SolverXPBD(model) -&gt; solver</text>
+  <text x="550" y="330" class="body">这些对象和初值准备都发生在 `Example.__init__()`</text>
+
+  <rect x="990" y="118" width="400" height="228" rx="20" class="cardC"/>
+  <text x="1020" y="156" class="label">Loop ledger</text>
+  <text x="1020" y="198" class="code">collide(state_0, contacts)</text>
+  <text x="1020" y="222" class="code">solver.step(state_0, state_1, control, contacts, dt)</text>
+  <text x="1020" y="246" class="code">state_0, state_1 = state_1, state_0</text>
+  <text x="1020" y="278" class="body">这一段才是运行时对象真的被重复消费的地方</text>
+
+  <path d="M 450 232 L 520 232" class="arrow"/>
+  <path d="M 920 232 L 990 232" class="arrow"/>
+
+  <text x="720" y="392" text-anchor="middle" class="foot">一旦把对象放回各自 ledger，表里的 producer / consumer 关系就不再只是死记硬背，而会和源码里的 handoff 顺序对上。</text>
+</svg>

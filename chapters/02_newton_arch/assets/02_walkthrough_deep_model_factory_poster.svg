@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="410" viewBox="0 0 1440 410" role="img" aria-labelledby="title desc">
+  <title id="title">model factory poster</title>
+  <desc id="desc">A source-exact poster showing Model as static description plus factory methods for State, Control, Contacts, and collide, along with the main State field groups.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 15px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .code { font: 700 14px "JetBrains Mono","DejaVu Sans Mono","Noto Sans Mono CJK SC",monospace; fill: #24406a; }
+    .foot { font: 400 17px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .cardA { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardB { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+    .cardC { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .cardD { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.5; }
+    .hub { fill: #f7f9fc; stroke: #8ca0bf; stroke-width: 2.5; }
+    .arrow { stroke: #667c9f; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1440" height="410" fill="#ffffff"/>
+  <text x="48" y="44" class="title">3. `Model` 是静态描述和对象工厂</text>
+  <text x="48" y="74" class="sub">`Model` 自己持有冻结后的静态数组; 真正每拍会变的 `State / Control / Contacts` 由它按需创建, 并由 `collide()` 填充。</text>
+
+  <rect x="90" y="122" width="290" height="106" rx="18" class="cardA"/>
+  <text x="116" y="156" class="label">static description on `Model`</text>
+  <text x="116" y="180" class="code">body_q / body_qd / body_mass</text>
+  <text x="116" y="200" class="code">joint_q / joint_qd / joint_axis</text>
+  <text x="116" y="220" class="code">shape_* / gravity / world_start arrays</text>
+
+  <rect x="474" y="112" width="500" height="126" rx="22" class="hub"/>
+  <text x="506" y="154" class="label">`Model`</text>
+  <text x="506" y="180" class="body">静态 scene description + cached `CollisionPipeline` handle</text>
+  <text x="506" y="206" class="body">chapter 02 里最值钱的不是所有字段名, 而是这四个 factory method 的边界:</text>
+  <text x="506" y="228" class="code">state() / control() / contacts() / collide(state, contacts)</text>
+
+  <rect x="1068" y="112" width="292" height="68" rx="18" class="cardB"/>
+  <text x="1094" y="142" class="label">`state()`</text>
+  <text x="1094" y="164" class="code">clone q/qd, zero force buffers</text>
+
+  <rect x="1068" y="192" width="292" height="68" rx="18" class="cardC"/>
+  <text x="1094" y="222" class="label">`control()`</text>
+  <text x="1094" y="244" class="code">clone targets / actuation / joint_f</text>
+
+  <rect x="1068" y="272" width="292" height="68" rx="18" class="cardD"/>
+  <text x="1094" y="302" class="label">`contacts()` and `collide()`</text>
+  <text x="1094" y="324" class="code">pipeline.contacts() / pipeline.collide(state, contacts)</text>
+
+  <path d="M 380 176 L 474 176" class="arrow"/>
+  <path d="M 974 146 L 1068 146" class="arrow"/>
+  <path d="M 974 226 L 1068 226" class="arrow"/>
+  <path d="M 974 306 L 1068 306" class="arrow"/>
+
+  <rect x="180" y="286" width="744" height="84" rx="18" class="cardA"/>
+  <text x="208" y="320" class="label">`State` field directory from `state.py`</text>
+  <text x="208" y="344" class="code">particle_q / particle_qd / particle_f | body_q / body_qd / body_f | joint_q / joint_qd</text>
+  <text x="208" y="364" class="code">optional on request: body_qdd / body_parent_f / mujoco.qfrc_actuator</text>
+
+  <text x="720" y="398" text-anchor="middle" class="foot">所以 `Model` 不是一份正在被 solver 原地改写的万能对象; 它更像冻结描述 + runtime object factory + collision entrypoint。</text>
+</svg>

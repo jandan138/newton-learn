@@ -2,10 +2,10 @@
   <title id="title">Model State Control Solver with Contacts handoff</title>
   <desc id="desc">A Newton architecture diagram showing the four-layer backbone plus Contacts as a parallel runtime handoff object.</desc>
   <style>
-    .title { font: 700 28px sans-serif; fill: #172033; }
-    .label { font: 700 24px sans-serif; fill: #172033; }
-    .sub { font: 400 18px sans-serif; fill: #39506b; }
-    .foot { font: 400 18px sans-serif; fill: #5d6b82; }
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .label { font: 700 24px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #39506b; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5d6b82; }
     .box { fill: #f6f8fc; stroke: #8ca0bf; stroke-width: 2.5; rx: 18; }
     .arrow { stroke: #60759a; stroke-width: 4; fill: none; marker-end: url(#arrow); }
   </style>

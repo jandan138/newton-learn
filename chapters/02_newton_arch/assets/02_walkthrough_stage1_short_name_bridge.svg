@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="340" viewBox="0 0 1400 340" role="img" aria-labelledby="title desc">
+  <title id="title">stage 1 short name bridge</title>
+  <desc id="desc">A source-exact bridge showing how get_examples derives the basic_pendulum short name from the example_basic_pendulum.py filename and maps it to a module path.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 19px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 15px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .code { font: 700 14px "JetBrains Mono","DejaVu Sans Mono","Noto Sans Mono CJK SC",monospace; fill: #24406a; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .cardA { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardB { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+    .cardC { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .cardD { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.5; }
+    .arrow { stroke: #667c9f; stroke-width: 3.2; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="340" fill="#ffffff"/>
+  <text x="50" y="46" class="title">Stage 1: `basic_pendulum` 先只是 `get_examples()` 产出的 short name</text>
+  <text x="50" y="76" class="sub">关键源码是文件名裁剪和 `short name -&gt; module path` 这张映射表，还没有 `Example` 实例出现。</text>
+
+  <rect x="50" y="122" width="250" height="118" rx="18" class="cardA"/>
+  <text x="80" y="160" class="label">filesystem filename</text>
+  <text x="80" y="190" class="code">example_basic_pendulum.py</text>
+
+  <rect x="350" y="122" width="220" height="118" rx="18" class="cardB"/>
+  <text x="380" y="160" class="label">slice rule</text>
+  <text x="380" y="190" class="code">filename[8:-3]</text>
+  <text x="380" y="214" class="body">去掉 `example_` 和 `.py`</text>
+
+  <rect x="620" y="122" width="220" height="118" rx="18" class="cardC"/>
+  <text x="650" y="160" class="label">CLI short name</text>
+  <text x="650" y="190" class="code">basic_pendulum</text>
+
+  <rect x="890" y="110" width="460" height="142" rx="18" class="cardD"/>
+  <text x="920" y="148" class="label">`example_map[example_name] = ...`</text>
+  <text x="920" y="178" class="code">newton.examples.basic.example_basic_pendulum</text>
+  <text x="920" y="204" class="body">value 是真实模块路径，不是 `Example` 对象</text>
+
+  <path d="M 300 181 L 350 181" class="arrow"/>
+  <path d="M 570 181 L 620 181" class="arrow"/>
+  <path d="M 840 181 L 890 181" class="arrow"/>
+
+  <text x="700" y="292" text-anchor="middle" class="foot">第一遍只要记住：CLI 输入的是一个路由 key，它稍后才会被 launcher 解析成真正的 Python module。</text>
+</svg>

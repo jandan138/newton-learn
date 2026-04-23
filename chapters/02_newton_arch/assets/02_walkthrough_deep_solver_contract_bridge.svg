@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="430" viewBox="0 0 1440 430" role="img" aria-labelledby="title desc">
+  <title id="title">solver contract bridge</title>
+  <desc id="desc">A source-exact bridge showing the common SolverBase.step signature, the base integrate helpers, and the first-level entrance inside SolverXPBD.step.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 15px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .code { font: 700 14px "JetBrains Mono","DejaVu Sans Mono","Noto Sans Mono CJK SC",monospace; fill: #24406a; }
+    .foot { font: 400 17px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .cardA { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardB { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+    .cardC { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .cardD { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.5; }
+    .band { fill: #f7f9fc; stroke: #8ca0bf; stroke-width: 2.5; }
+    .arrow { stroke: #667c9f; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1440" height="430" fill="#ffffff"/>
+  <text x="48" y="44" class="title">5. solver contract 的精确入口</text>
+  <text x="48" y="74" class="sub">chapter 02 先只钉住统一调用签名和 XPBD 的第一层入口; 更深的 kernel 序列留给 solver 章节。</text>
+
+  <rect x="196" y="110" width="1048" height="54" rx="18" class="band"/>
+  <text x="224" y="144" class="code">self.solver.step(self.state_0, self.state_1, self.control, self.contacts, self.sim_dt)</text>
+
+  <rect x="430" y="188" width="580" height="92" rx="20" class="cardA"/>
+  <text x="458" y="224" class="label">abstract contract on `SolverBase.step(...)`</text>
+  <text x="458" y="248" class="code">step(state_in, state_out, control, contacts, dt)</text>
+  <text x="458" y="270" class="body">无论 concrete family 是谁, chapter 02 先把外层 envelope 看成这一组 5 个输入。</text>
+
+  <path d="M 720 164 L 720 188" class="arrow"/>
+
+  <rect x="108" y="210" width="250" height="70" rx="18" class="cardB"/>
+  <text x="136" y="240" class="label">base helper 1</text>
+  <text x="136" y="262" class="code">integrate_particles(model, state_in, state_out, dt)</text>
+
+  <rect x="1082" y="210" width="250" height="70" rx="18" class="cardC"/>
+  <text x="1110" y="240" class="label">base helper 2</text>
+  <text x="1110" y="262" class="code">integrate_bodies(model, state_in, state_out, dt, angular_damping)</text>
+
+  <path d="M 430 234 L 358 244" class="arrow"/>
+  <path d="M 1010 234 L 1082 244" class="arrow"/>
+
+  <rect x="244" y="316" width="952" height="84" rx="18" class="cardD"/>
+  <text x="274" y="348" class="label">first-level entrance in `SolverXPBD.step(...)`</text>
+  <text x="274" y="372" class="code">if contacts: allocate weighting / impulse buffers; if control is None: control = model.control(clone_variables=False)</text>
+  <text x="274" y="392" class="code">integrate_particles(...) and/or integrate_bodies(...); for i in range(self.iterations): solve contacts, then solve joints</text>
+
+  <path d="M 720 280 L 720 316" class="arrow"/>
+
+  <text x="720" y="424" text-anchor="middle" class="foot">也就是说, solver contract 的重点不是“XPBD 内部有多少 kernel”, 而是外层永远先把 `state_in / state_out / control / contacts / dt` 这组对象凑齐再交进去。</text>
+</svg>

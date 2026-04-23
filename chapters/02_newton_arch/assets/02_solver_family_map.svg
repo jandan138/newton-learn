@@ -2,10 +2,10 @@
   <title id="title">Newton solver family map</title>
   <desc id="desc">A panorama of eight Newton solvers grouped into two families.</desc>
   <style>
-    .title { font: 700 30px sans-serif; fill: #172033; }
-    .group { font: 700 24px sans-serif; fill: #22314d; }
-    .label { font: 700 20px sans-serif; fill: #172033; }
-    .sub { font: 400 16px sans-serif; fill: #41556f; }
+    .title { font: 700 30px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .group { font: 700 24px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #22314d; }
+    .label { font: 700 20px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 16px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #41556f; }
     .cardA { fill: #f5f8ff; stroke: #8ba0ca; stroke-width: 2.5; }
     .cardB { fill: #f8f7ff; stroke: #9a93cf; stroke-width: 2.5; }
   </style>

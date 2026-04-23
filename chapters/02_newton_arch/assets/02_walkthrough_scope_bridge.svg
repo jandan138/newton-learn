@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="340" viewBox="0 0 1440 340" role="img" aria-labelledby="title desc">
+  <title id="title">source-walkthrough scope bridge</title>
+  <desc id="desc">A narrow chapter 02 handoff chain from example short name through launcher and concrete module into Example.__init__ and the first simulate loop.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 20px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 16px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .cardA { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardB { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+    .cardC { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .cardD { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.5; }
+    .cardE { fill: #f7f9fc; stroke: #8ca0bf; stroke-width: 2.5; }
+    .arrow { stroke: #667c9f; stroke-width: 3.2; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1440" height="340" fill="#ffffff"/>
+  <text x="50" y="46" class="title">这份 walkthrough 只追一条很窄的 core pass</text>
+  <text x="50" y="76" class="sub">从 CLI short name 出发，追到 concrete example module、runtime object assembly，再追到第一条 simulate loop。</text>
+
+  <rect x="50" y="120" width="180" height="104" rx="18" class="cardA"/>
+  <text x="80" y="158" class="label">short name</text>
+  <text x="80" y="186" class="body">`basic_pendulum`</text>
+
+  <rect x="280" y="120" width="200" height="104" rx="18" class="cardB"/>
+  <text x="310" y="158" class="label">launcher</text>
+  <text x="310" y="186" class="body">`__main__` -&gt; `main()`</text>
+
+  <rect x="530" y="120" width="250" height="104" rx="18" class="cardC"/>
+  <text x="560" y="158" class="label">concrete module</text>
+  <text x="560" y="186" class="body">`example_basic_pendulum.py`</text>
+
+  <rect x="830" y="120" width="190" height="104" rx="18" class="cardD"/>
+  <text x="860" y="158" class="label">`Example.__init__()`</text>
+  <text x="860" y="186" class="body">第一次真正组装对象</text>
+
+  <rect x="1070" y="96" width="320" height="128" rx="18" class="cardE"/>
+  <text x="1100" y="134" class="label">runtime objects</text>
+  <text x="1100" y="162" class="body">`Model / State / Control / Solver`</text>
+  <text x="1100" y="186" class="body">加上一份 `Contacts` 结果缓冲区</text>
+
+  <rect x="1080" y="246" width="300" height="50" rx="16" class="cardA"/>
+  <text x="1110" y="278" class="label">`simulate()` inner loop</text>
+
+  <path d="M 230 172 L 280 172" class="arrow"/>
+  <path d="M 480 172 L 530 172" class="arrow"/>
+  <path d="M 780 172 L 830 172" class="arrow"/>
+  <path d="M 1020 172 L 1070 172" class="arrow"/>
+  <path d="M 1230 224 L 1230 246" class="arrow"/>
+
+  <text x="720" y="320" text-anchor="middle" class="foot">故意先不展开 `finalize()` 内部冻结、CUDA graph replay、XPBD 数学细节和其它 examples 的横向对读。</text>
+</svg>

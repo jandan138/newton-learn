@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1380" height="380" viewBox="0 0 1380 380" role="img" aria-labelledby="title desc">
+  <title id="title">question notes page relationships map</title>
+  <desc id="desc">A lightweight navigation map showing question-notes.md as a sidecar page that redirects readers back to source-walkthrough.md, examples.md, and source-walkthrough-deep.md depending on what they need next.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 21px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 16px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .sidecar { fill: #f7f9fc; stroke: #8ca0bf; stroke-width: 2.5; }
+    .core { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.8; }
+    .cardA { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .cardB { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+    .arrow { stroke: #667c9f; stroke-width: 3.2; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1380" height="380" fill="#ffffff"/>
+  <text x="50" y="46" class="title">`question-notes.md` 是卡点旁路，不是 chapter 02 的新主线</text>
+  <text x="50" y="76" class="sub">先用这页拆开局部困惑，再回主文件继续读；它负责补问题，不负责接管整章导航。</text>
+
+  <rect x="60" y="126" width="300" height="164" rx="20" class="sidecar"/>
+  <text x="90" y="162" class="label">`question-notes.md`</text>
+  <text x="90" y="190" class="body">只在你卡住某个具体问题时临时进入</text>
+  <text x="90" y="214" class="body">用教学压缩图先把结拆开</text>
+  <text x="90" y="238" class="body">看完后立刻回主文件核对</text>
+
+  <rect x="450" y="126" width="330" height="164" rx="20" class="core"/>
+  <text x="480" y="162" class="label">`source-walkthrough.md`</text>
+  <text x="480" y="190" class="body">想守住最小执行链时回这里</text>
+  <text x="480" y="214" class="body">重点仍是 launcher -&gt; `Example.__init__()`</text>
+  <text x="480" y="238" class="body">-&gt; runtime objects -&gt; `simulate()`</text>
+
+  <rect x="870" y="92" width="420" height="92" rx="18" class="cardA"/>
+  <text x="900" y="126" class="label">`examples.md`</text>
+  <text x="900" y="152" class="body">想做 quick-win 观察任务，就回这页跑、改、看</text>
+
+  <rect x="870" y="214" width="420" height="92" rx="18" class="cardB"/>
+  <text x="900" y="248" class="label">`source-walkthrough-deep.md`</text>
+  <text x="900" y="274" class="body">想精确追 symbol / line anchors，就回这页继续下潜</text>
+
+  <path d="M 360 208 L 450 208" class="arrow"/>
+  <path d="M 360 198 C 560 120, 720 106, 870 138" class="arrow"/>
+  <path d="M 360 218 C 560 298, 720 312, 870 260" class="arrow"/>
+
+  <text x="690" y="346" text-anchor="middle" class="foot">最省力的读法是：主线先走在前面；只有遇到局部困惑时才借这页补一张图，然后马上回到主线文件。</text>
+</svg>

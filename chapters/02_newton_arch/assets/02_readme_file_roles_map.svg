@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="460" viewBox="0 0 1320 460" role="img" aria-labelledby="title desc">
+  <title id="title">Chapter 02 file roles map</title>
+  <desc id="desc">A map showing README as the boundary document and the other chapter files as specialized follow-up documents.</desc>
+  <style>
+    .title { font: 700 28px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .sub { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #49617c; }
+    .label { font: 700 21px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #172033; }
+    .body { font: 400 16px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #3f536d; }
+    .foot { font: 400 18px "Noto Sans SC","Noto Sans CJK SC","Microsoft YaHei","PingFang SC","Source Han Sans SC","WenQuanYi Zen Hei","DejaVu Sans",Arial,sans-serif; fill: #5a6d87; }
+    .main { fill: #fff5ea; stroke: #d59b62; stroke-width: 2.5; }
+    .cardA { fill: #eef5ff; stroke: #7c99cb; stroke-width: 2.5; }
+    .cardB { fill: #eefaf5; stroke: #72ac93; stroke-width: 2.5; }
+    .cardC { fill: #f6f0ff; stroke: #a287d3; stroke-width: 2.5; }
+    .cardD { fill: #fdf6ff; stroke: #c38ab9; stroke-width: 2.5; }
+    .cardE { fill: #f7f9fc; stroke: #8ca0bf; stroke-width: 2.5; }
+    .arrow { stroke: #667c9f; stroke-width: 3.2; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667c9f"/>
+    </marker>
+  </defs>
+
+  <rect width="1320" height="460" fill="#ffffff"/>
+  <text x="50" y="46" class="title">Chapter 02 docs split: README 只给边界，其余文件各司其职</text>
+  <text x="50" y="76" class="sub">先把人送到对的文档，再决定要不要继续展开。</text>
+
+  <rect x="60" y="160" width="280" height="145" rx="18" class="main"/>
+  <text x="90" y="196" class="label">README.md</text>
+  <text x="90" y="224" class="body">章节边界</text>
+  <text x="90" y="248" class="body">完成门槛</text>
+  <text x="90" y="272" class="body">阅读入口</text>
+
+  <rect x="410" y="70" width="250" height="110" rx="18" class="cardA"/>
+  <text x="440" y="104" class="label">principle.md</text>
+  <text x="440" y="130" class="body">先讲顺最小主干</text>
+  <text x="440" y="154" class="body">给概念预热</text>
+
+  <rect x="700" y="70" width="250" height="110" rx="18" class="cardB"/>
+  <text x="730" y="104" class="label">examples.md</text>
+  <text x="730" y="130" class="body">把三个 example</text>
+  <text x="730" y="154" class="body">变成观察任务</text>
+
+  <rect x="990" y="70" width="270" height="110" rx="18" class="cardC"/>
+  <text x="1020" y="100" class="label">source-walkthrough</text>
+  <text x="1020" y="124" class="label">.md</text>
+  <text x="1020" y="148" class="body">第一次追源码的主线</text>
+  <text x="1020" y="170" class="body">只跟 basic_pendulum</text>
+
+  <rect x="560" y="270" width="300" height="110" rx="18" class="cardD"/>
+  <text x="590" y="300" class="label">source-walkthrough-</text>
+  <text x="590" y="324" class="label">deep.md</text>
+  <text x="590" y="346" class="body">精确追 file / symbol / line</text>
+  <text x="590" y="368" class="body">主线跟上后再看</text>
+
+  <rect x="920" y="270" width="300" height="110" rx="18" class="cardE"/>
+  <text x="950" y="304" class="label">question-notes.md</text>
+  <text x="950" y="330" class="body">接住高频图像化困惑</text>
+  <text x="950" y="354" class="body">不是新的 completion gate</text>
+
+  <path d="M 340 190 L 410 125" class="arrow"/>
+  <path d="M 340 205 L 700 125" class="arrow"/>
+  <path d="M 340 220 L 990 125" class="arrow"/>
+  <path d="M 340 250 L 560 315" class="arrow"/>
+  <path d="M 340 270 L 920 315" class="arrow"/>
+
+  <text x="660" y="425" text-anchor="middle" class="foot">README 不讲到最深，而是把你准确送到下一份应该读的文档。</text>
+</svg>
