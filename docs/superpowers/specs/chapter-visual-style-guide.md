@@ -4,11 +4,11 @@
 
 Use this guide for future Newton Learn chapter image generation. Chapter 02 does not need to be revised, but later chapters should not repeat the same 3D-diorama PNG direction unless explicitly requested.
 
-The preferred target is a dense, clear Chinese teaching infographic: more like a teacher's one-page review sheet than a decorative illustration.
+The preferred target is a dense, clear Chinese tutorial infographic: more like a teacher's one-page review sheet than a decorative illustration. The structure should match the teaching job; it does not have to be a fixed "six questions" layout.
 
 ## Reference Style
 
-Primary reference: the user-provided `basic_pendulum / Chapter 02 六个核心问题` infographic shared on 2026-04-24.
+Primary reference: the user-provided `basic_pendulum / Chapter 02 六个核心问题` infographic shared on 2026-04-24. Use it as a style reference for information-rich tutorial diagrams, not as a requirement that every future image use six question panels.
 
 If the reference image is later saved into the repo, put it under:
 
@@ -20,8 +20,8 @@ Future specs and plans should cite this style guide instead of relying on chat h
 
 - white background with thin blue card borders
 - strong dark-blue chapter title and section headings
-- numbered circular badges for question blocks or teaching steps
-- multiple compact cards in one image, each focused on one learner question
+- numbered circular badges for question blocks, process steps, object roles, or teaching checkpoints
+- multiple compact cards in one image, each focused on a learner question, flow stage, role comparison, or common misconception
 - Chinese-first explanatory text, with English only for exact code names, filenames, API names, or short labels
 - small icons, arrows, boxes, callouts, and flow strips to make relationships explicit
 - high information density, but with clear grouping and whitespace
@@ -29,11 +29,12 @@ Future specs and plans should cite this style guide instead of relying on chat h
 
 ## Content Pattern
 
-Prefer images that answer a small set of concrete learner questions.
+Prefer images that teach concrete structure: a question set, an execution flow, an object relationship, a before/after contrast, or a mistake-correction path.
 
 Good patterns:
 
-- "six core questions" overview sheet
+- multi-question overview sheet
+- process walkthrough sheet
 - one-page execution-chain summary
 - object-role comparison table with icons
 - misconception card: wrong intuition -> corrected intuition
@@ -68,7 +69,7 @@ Visual style: white background, thin blue rounded card borders, dark-blue title 
 
 Language: Chinese-first. Use English only for exact code/API names such as `Model`, `State`, `simulate()`, `solver.step()`. Keep labels short and readable.
 
-Content goal: answer these learner questions: <questions>. Show the relationships visually with cards, arrows, and a bottom recap strip. Do not invent code. Do not include long paragraphs. Do not use SVG, HTML, screenshot, terminal UI, or photorealistic 3D rendering. Generate a raster PNG.
+Content goal: teach this structure: <learner questions, process flow, object relationship, or misconception>. Show the relationships visually with cards, arrows, tables, flow strips, and a short recap. Do not invent code. Do not include long paragraphs. Do not use SVG, HTML, screenshot, terminal UI, or photorealistic 3D rendering. Generate a raster PNG.
 ```
 
 ## Acceptance Criteria
@@ -88,7 +89,7 @@ A generated image is acceptable when:
 For every future chapter image-generation spec or plan:
 
 - cite this guide in the visual-language section
-- define the chapter's core learner questions before generating images
+- define the chapter's core learner questions, flows, object roles, and misconceptions before generating images
 - generate the first overview infographic as a style calibration image
 - review that image before expanding to the rest of the chapter
 - keep exact source details in Markdown, not inside generated image text
