@@ -1,7 +1,7 @@
 ---
 chapter: 02
 title: Newton 总体架构 问题驱动补充图解
-last_updated: 2026-04-23
+last_updated: 2026-04-24
 source_paths:
   - newton/examples/__main__.py
   - newton/examples/__init__.py
@@ -54,7 +54,7 @@ examples.run()
 - `axis=(0, 1, 0)` 回答的是“这个 hinge 允许绕哪根轴转”。
 - `parent_xform` / `child_xform` 回答的是“这个 joint 点分别在 parent / child 那一侧怎样表达”。
 
-这张图和 pinned source 是基本对齐的，所以可以把它当成 `Example.__init__()` 的图解版。但它仍然只覆盖“构造这条两级关节链”这一层，没有把 runtime objects、`eval_fk(...)` 或 `simulate()` 拉进来；所以它是 chapter 02 的补充，不是新的主线。
+这张图和 pinned source 是基本对齐的，所以可以把它当成 `Example.__init__()` 的图解版。但它仍然是一张教学压缩图，不是 pinned source 的逐行镜像；它只覆盖“构造这条两级关节链”这一层，没有把 runtime objects、`eval_fk(...)` 或 `simulate()` 拉进来，所以它是 chapter 02 的补充，不是新的主线。
 
 这里也要补一条精确说明：图左上把 `(0, 0, 5)` 绕 `z` 轴画成了 `(5, 0, 0)`，这是为了单独强调 `q` 会改变朝向的教学示意，不是 pinned source 的字面执行结果。对 chapter 02 这里真正要守住的是：源码里 `parent_xform.p` 仍然就是 `(0, 0, 5)`，`rot` 填的是 `parent_xform.q`，不要把 `p` 和 `q` 的 job 混掉。
 
@@ -110,9 +110,9 @@ chapter 02 这里先只要求你接受一个结论：
 
 ## 5. 这页怎么和主线配合
 
-![Question notes page relationships map](assets/02_question_notes_page_relationships_map.svg)
+![Question notes page relationships map](assets/02_question_notes_page_relationships_map.png)
 
-这张图只想帮你把 `question-notes.md` 放回正确位置：它是 chapter 02 主线旁边的一张问题索引图，不是新的总导航。最稳的用法是卡在某个具体困惑时先来这里拆结，然后立刻回主线文件继续核对和推进。
+这是一张教学压缩图：它只想帮你把 `question-notes.md` 放回正确位置，它是 chapter 02 主线旁边的一张问题索引图，不是新的总导航。最稳的用法是卡在某个具体困惑时先来这里拆结，然后立刻回主线文件继续核对和推进。
 
 - 想守住最小执行链：回 `source-walkthrough.md`。
 - 想做 quick-win 观察任务：回 `examples.md`。

@@ -1,7 +1,7 @@
 ---
 chapter: 02
 title: Newton 总体架构
-last_updated: 2026-04-22
+last_updated: 2026-04-24
 source_paths:
   - newton/__init__.py
   - newton/_src/core/
@@ -21,9 +21,9 @@ newton_commit: 1a230702
 
 本章只做三件事：先用 `basic_pendulum` 接住读者，再从 `newton.examples` 和公共 API 看清 Newton 暴露了哪些核心对象，最后把这些对象收束成 `Model / State / Control / Solver` 四层主干，并补一句 `Contacts` 为什么会在 runtime loop 里并列出现，然后给 8 个 solver 一张鸟瞰地图。目标不是立刻吃透所有 solver，而是先把“一个例子为什么能跑起来”讲顺。
 
-![从 `00` / `01` 走到 Newton 本体的桥接图](assets/02_principle_00_01_to_newton_bridge.svg)
+![从 `00` / `01` 走到 Newton 本体的桥接图](assets/02_principle_00_01_to_newton_bridge.png)
 
-这张桥接图只强调一个转折：`00` 和 `01` 先把词汇与批量执行直觉补齐，`02` 才开始回答 Newton 自己怎样把这些东西组织成可运行的架构。只要你能把“词义 / 执行模型”过渡到“对象与 runtime 主链”这句话讲顺，本章的入口就站稳了。
+这是一张教学压缩图：它只强调一个转折，`00` 和 `01` 先把词汇与批量执行直觉补齐，`02` 才开始回答 Newton 自己怎样把这些东西组织成可运行的架构。只要你能把“词义 / 执行模型”过渡到“对象与 runtime 主链”这句话讲顺，本章的入口就站稳了。
 
 ## 1. 从 `basic_pendulum` 走到一次 step
 
@@ -43,15 +43,15 @@ newton_commit: 1a230702
 
 这样读时，`basic_pendulum` 就不再只是一个“能跑的 demo 名字”，而是一个教学入口：它把 examples 入口、公共 API、四层主干对象、`Contacts` 结果缓冲区，以及一次 step 串成了同一条链。只要你能用这条主链复述它，后面看更大的例子就有抓手了。
 
-![`basic_pendulum` 到一次 step 的最小执行链](assets/02_principle_basic_pendulum_step_bridge.svg)
+![`basic_pendulum` 到一次 step 的最小执行链](assets/02_principle_basic_pendulum_step_bridge.png)
 
-这张图故意只保留第一次阅读最需要的 handoff：例子入口先把场景带进来，公共 API 让你认出核心对象，`Solver.step()` 再把当前拍推进到下一拍。它的作用不是替代 `source-walkthrough.md`，而是让你先能用一张图复述 `basic_pendulum` 为什么已经足够代表 Newton 的最小主链。
+这是一张教学压缩图：它只保留第一次阅读最需要的 handoff，先让你看见例子入口怎样把场景带进来，公共 API 怎样让你认出核心对象，`Solver.step()` 又怎样把当前拍推进到下一拍。它的作用不是替代 `source-walkthrough.md`，而是让你先能用一张图复述 `basic_pendulum` 为什么已经足够代表 Newton 的最小主链。
 
 ## 2. 四层关系图
 
-![Model / State / Control / Solver 四层关系](assets/02_model_state_control_solver.svg)
+![Model / State / Control / Solver 四层关系](assets/02_model_state_control_solver.png)
 
-这张图不是在引入新的抽象，而是在把 `00` 章的四格直觉换成 Newton 的真实名字。读图时，重点不是背定义，而是看它们在一次 step 里怎样接力：`Model` 先给出边界，`State` 提供当前快照，`Control` 提供这一拍的外部输入，`Solver` 再把前三者组装成一次推进。与此同时，`Contacts` 会作为并列结果缓冲区 / handoff object 在 runtime loop 里出现，负责把碰撞结果送到 solver 手上。
+这是一张教学压缩图：它不是在引入新的抽象，而是在把 `00` 章的四格直觉换成 Newton 的真实名字。读图时，重点不是背定义，而是看它们在一次 step 里怎样接力：`Model` 先给出边界，`State` 提供当前快照，`Control` 提供这一拍的外部输入，`Solver` 再把前三者组装成一次推进。与此同时，`Contacts` 会作为并列结果缓冲区 / handoff object 在 runtime loop 里出现，负责把碰撞结果送到 solver 手上。
 
 - `Model` 先定边界：拓扑、质量、关节、碰撞形状这类结构，通常不在每步里重建。
 - `State` 是时间轴上的快照：位置、速度以及 solver 运行时会更新的量，都放在这一层。
@@ -61,9 +61,9 @@ newton_commit: 1a230702
 
 ## 3. 8 个 solver 的全景图
 
-![8 个 solver 的全景图](assets/02_solver_family_map.svg)
+![8 个 solver 的全景图](assets/02_solver_family_map.png)
 
-8 个 solver 可以先粗分成两簇：一簇偏刚体与通用动力学主线，另一簇偏约束投影、布料软体和 MPM。第一遍只要先记住“各自大概在哪条路线上、以后去哪一章再展开”，不急着提前吃数学细节。
+这也是一张教学压缩图：8 个 solver 先粗分成几条直觉路线来记，一簇偏刚体与通用动力学主线，另一簇偏约束投影、布料软体和 MPM。第一遍只要先记住“各自大概在哪条路线上、以后去哪一章再展开”，不急着提前吃数学细节。
 
 | Solver | 这一章先记住什么 | 后续章节 |
 |--------|------------------|----------|
@@ -93,9 +93,9 @@ uv run -m newton.examples cloth_hanging --solver xpbd
 - 改 `cloth_hanging` 的 `--solver`：直接体会“同一类场景，不同 solver 家族”的入口切换。
 - 改 `basic_pendulum` 或 `robot_cartpole` 的初始条件/驱动相关参数：区分这是在改 `State`、`Control` 还是 `Model`。
 
-![快速胜利示例的三条观察线](assets/02_principle_quick_win_examples_bridge.svg)
+![快速胜利示例的三条观察线](assets/02_principle_quick_win_examples_bridge.png)
 
-这三条命令不是为了扩大例子清单，而是为了让你用最低成本对比三种观察角度：最小 step、多 world 复制、同场景切 solver 家族。每次只改一个 knob，再回问它主要落在 `Model`、`State`、`Control` 还是 solver 选择上，就能把本章的四层主线真正用起来。
+这是一张教学压缩图：这三条命令不是为了扩大例子清单，而是为了让你用最低成本对比三种观察角度，最小 step、多 world 复制、同场景切 solver 家族。每次只改一个 knob，再回问它主要落在 `Model`、`State`、`Control` 还是 solver 选择上，就能把本章的四层主线真正用起来。
 
 ## 5. 与后续章节的接口
 
@@ -104,9 +104,9 @@ uv run -m newton.examples cloth_hanging --solver xpbd
 - `05_rigid_articulation`：本章只把 Featherstone 放进地图，`05` 才真正进入刚体树、关节和 articulation 本身。
 - `08_rigid_solvers`：本章只给刚体 solver 地图，`08` 再正面对比 Featherstone、MuJoCo、SemiImplicit、Kamino 这些 rigid routes。
 
-![从 chapter 02 走向后续章节的接口地图](assets/02_principle_next_chapters_map.svg)
+![从 chapter 02 走向后续章节的接口地图](assets/02_principle_next_chapters_map.png)
 
-把这张图当成分流表就够了：如果你卡在对象背后的数学，去 `03`；如果卡在场景怎样长成 `Model`，去 `04`；如果想沿刚体主线继续，去 `05` 和 `08`。它的价值不是展开后续细节，而是帮你知道当前这章应该在什么位置停手。
+这是一张教学压缩图：把它当成分流表就够了，如果你卡在对象背后的数学，去 `03`；如果卡在场景怎样长成 `Model`，去 `04`；如果想沿刚体主线继续，去 `05` 和 `08`。它的价值不是展开后续细节，而是帮你知道当前这章应该在什么位置停手。
 
 ## 6. 与 Newton 实现的映射
 
@@ -116,6 +116,6 @@ uv run -m newton.examples cloth_hanging --solver xpbd
 
 如果你读到这里，已经能把 `basic_pendulum` 讲成一条完整链：examples 入口先接住读者，公共 API 给出核心对象名，`Model / State / Control / Solver` 构成四层主干，`Contacts` 作为并列结果缓冲区接住碰撞结果。接下来有两条自然分叉：想先把 `Model` 背后的数学和场景构建补稳，就继续到 `03_math_geometry` 和 `04_scene_usd`；想沿刚体主线往下走，就去 `05_rigid_articulation`，再到 `08_rigid_solvers` 看刚体 solver 家族怎样真正展开。
 
-![Newton 实现映射的概念 handoff 图](assets/02_principle_newton_impl_handoff_bridge.svg)
+![Newton 实现映射的概念 handoff 图](assets/02_principle_newton_impl_handoff_bridge.png)
 
-这张图强调的不是“哪一个文件最重要”，而是“入口、公共表面、共享骨架和 runtime 协作各自在哪一层出现”。读 chapter 02 时先认这些边界，比提前钻进某个实现大文件更符合本章目标。
+这是一张教学压缩图：它强调的不是“哪一个文件最重要”，而是“入口、公共表面、共享骨架和 runtime 协作各自在哪一层出现”。读 chapter 02 时先认这些边界，比提前钻进某个实现大文件更符合本章目标。

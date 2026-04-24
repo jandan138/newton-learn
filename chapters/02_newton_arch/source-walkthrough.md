@@ -1,7 +1,7 @@
 ---
 chapter: 02
 title: Newton 总体架构
-last_updated: 2026-04-22
+last_updated: 2026-04-24
 source_paths:
   - newton/examples/__main__.py
   - newton/examples/__init__.py
@@ -67,9 +67,9 @@ example short name
 
 第一遍先守住一句话：chapter 02 真正讲的不是“有哪些对象名”，而是 **一个 example 怎么被送到这些对象，再被这些对象推进起来**。
 
-![This walkthrough follows a narrow chapter-02 handoff chain](assets/02_walkthrough_scope_bridge.svg)
+![This walkthrough follows a narrow chapter-02 handoff chain](assets/02_walkthrough_scope_bridge.png)
 
-这张桥接图对应的就是本页真正要追的那条窄主线：从 short name、launcher、concrete module，一路走到 `Example.__init__()` 组装出的 runtime objects，再走到第一条 `simulate()` loop。
+这是一张教学压缩图：它对应的就是本页真正要追的那条窄主线，从 short name、launcher、concrete module，一路走到 `Example.__init__()` 组装出的 runtime objects，再走到第一条 `simulate()` loop。
 
 ## One-Screen Chapter Map
 
@@ -112,9 +112,9 @@ target module: newton.examples.basic.example_basic_pendulum
   clear_forces -> apply_forces -> collide -> solver.step -> swap state
 ```
 
-![One-screen chapter 02 map from CLI entry to solver step](assets/02_walkthrough_one_screen_map.svg)
+![One-screen chapter 02 map from CLI entry to solver step](assets/02_walkthrough_one_screen_map.png)
 
-这张一屏图保留了本页后面会反复核对的精确 handoff 节点：入口路由、constructor 组装、外层 `run()`、`Example.step()` 包装，以及 `simulate()` 里的 substep 链。
+这是一张教学压缩图：它把 chapter 02 的 handoff 压成一条教学接力台，先抓入口路由、constructor 组装、外层 `run()`、`Example.step()` 包装，以及 `simulate()` 里的 substep 链。上面的 ASCII 链和后面的源码 excerpt 仍然是这一页的精确顺序锚点。
 
 ## Beginner Path
 
@@ -134,15 +134,15 @@ target module: newton.examples.basic.example_basic_pendulum
     - 想验证什么：这些对象真正怎样被重复消费成一次次 substep，以及三层 `step` 到底是谁管谁。
     - 看完后应该能说：`run()` 管外层时机，`Example.step()` 是 frame wrapper，`simulate()` 定义 `clear_forces -> apply_forces -> collide -> solver.step -> swap` 这条内层推进链。
 
-![Beginner path stage-by-stage reading order](assets/02_walkthrough_beginner_path_map.svg)
+![Beginner path stage-by-stage reading order](assets/02_walkthrough_beginner_path_map.png)
 
-这是一张阅读顺序压缩图，不是新的 runtime layer；它只是把五个 stage 各自要回答的新手问题先排成一条稳定路径。
+这是一张教学压缩图，不是新的 runtime layer；它只是把五个 stage 各自要回答的新手问题先排成一条稳定路径。
 
 ## Main Walkthrough
 
-![Main walkthrough stage overview](assets/02_walkthrough_stage_overview_map.svg)
+![Main walkthrough stage overview](assets/02_walkthrough_stage_overview_map.png)
 
-这张总览图也是教学压缩版：它先把五段 handoff 的接力关系钉住，后面的 Stage 1-5 再分别回到源码 excerpt 里核对每一段。
+这也是一张教学压缩图：它先把五段 handoff 的接力关系钉住，后面的 Stage 1-5 再分别回到源码 excerpt 里核对每一段。
 
 ### Stage 1: `basic_pendulum` 先只是一个 example short name
 
@@ -162,9 +162,9 @@ target module: newton.examples.basic.example_basic_pendulum
 
 Newton 有很多 examples。让用户直接输入一长串模块路径当然也能工作，但学习入口会非常重。short name 的意义，就是先把“我要看哪个例子”说清楚，再把真正的 Python 路径留给内部去解析。
 
-![Stage 1 short name bridge from filename slice to module path mapping](assets/02_walkthrough_stage1_short_name_bridge.svg)
+![Stage 1 short name bridge from filename slice to module path mapping](assets/02_walkthrough_stage1_short_name_bridge.png)
 
-这张图对应的正是 `get_examples()` 里那两步关键动作：先从 `example_basic_pendulum.py` 裁出 `basic_pendulum`，再把它挂到真实 module path 上；这时还没有 `Example` 实例出现。
+这是一张教学压缩图：它对应的正是 `get_examples()` 里那两步关键动作，先从 `example_basic_pendulum.py` 裁出 `basic_pendulum`，再把它挂到真实 module path 上；这时还没有 `Example` 实例出现。
 
 **Source excerpt**
 
@@ -242,9 +242,9 @@ def main():
 
 如果你总在这里把 `__main__.py`、`__init__.py` 和真正的 example script 混成一层，可以先对照这张图：
 
-![`newton.examples` launcher handoff timeline](assets/02_launcher_handoff.svg)
+![`newton.examples` launcher handoff timeline](assets/02_launcher_handoff.png)
 
-这里最容易漏掉的是 `__main__` 会出现两次。先是 `newton/examples/__main__.py` 作为入口模块执行；随后 `runpy.run_module(..., run_name="__main__")` 又把目标 example module 当成新的主程序执行。所以 launcher 的 job 仍然只是查表、改写 `sys.argv`、再交接控制权；真正创建 `Example(...)` 并进入 `newton.examples.run(...)` 的，还是目标 example 自己。
+这是一张教学压缩图：这里最容易漏掉的是 `__main__` 会出现两次。先是 `newton/examples/__main__.py` 作为入口模块执行；随后 `runpy.run_module(..., run_name="__main__")` 又把目标 example module 当成新的主程序执行。所以 launcher 的 job 仍然只是查表、改写 `sys.argv`、再交接控制权；真正创建 `Example(...)` 并进入 `newton.examples.run(...)` 的，还是目标 example 自己。
 
 **Verification cues**
 
@@ -347,9 +347,9 @@ self.contacts = self.model.contacts()  # 这一拍 contacts 结果缓冲区
 - `Control`：这一拍想喂给 solver 的输入缓冲区。
 - `Contacts`：碰撞检测写出来、再交给 solver 消费的结果缓冲区。
 
-![Stage 3 runtime stack assembly inside Example.__init__](assets/02_walkthrough_stage3_runtime_stack_bridge.svg)
+![Stage 3 runtime stack assembly inside Example.__init__](assets/02_walkthrough_stage3_runtime_stack_bridge.png)
 
-图里只保留 chapter 02 真正要交接的对象，所以没有把 `self.viewer.set_model(...)` 和 `self.capture()` 画进去；它们仍在源码里，但这一遍先作为 viewer / graph replay 支线跳过即可。
+这是一张教学压缩图：它把 constructor 组装画成一张教具工作台，只保留 chapter 02 真正要交接的对象，所以没有把 `self.viewer.set_model(...)` 和 `self.capture()` 画进去；它们仍在源码里，但这一遍先作为 viewer / graph replay 支线跳过即可。
 
 **Why `eval_fk(...)` sits here**
 
@@ -418,9 +418,9 @@ self.contacts = self.model.contacts()  # 这一拍 contacts 结果缓冲区
 - `Contacts` 回答“按照当前 `State` 做完碰撞后，这一拍接触结果是什么”。第一遍你可以直接把它当成 contacts result buffer 来读。
 - `Solver` 回答“拿着上面这些输入，怎样算出下一拍”。
 
-![Stage 4 object roles across Model, State, Control, Contacts, and Solver](assets/02_walkthrough_stage4_object_roles_poster.svg)
+![Stage 4 object roles across Model, State, Control, Contacts, and Solver](assets/02_walkthrough_stage4_object_roles_poster.png)
 
-这张图把 Stage 4 要守住的边界摆成一眼能对照的方法签名和缓冲区分工：`Model` 生产对象并做 `collide(...)`，`State / Control / Contacts` 各自保存不同语义，而 `Solver.step(...)` 统一消费它们。
+这是一张教学压缩图：它把 Stage 4 要守住的边界改画成五种不同教具角色，重点是让你先一眼看出 `Model / State / Control / Contacts / Solver` 不是一团近义词。精确的方法边界和缓冲区分工，仍以下面的源码 excerpt 为准。
 
 **Source excerpt**
 
@@ -521,9 +521,9 @@ def step(
 
 而 `simulate()` 不算第四层顶级 step。它更准确的角色是：`Example.step()` 里面那条真正展开 substep 顺序的内层链。
 
-![Stage 5 simulate loop from outer run loop to solver step and state swap](assets/02_walkthrough_stage5_simulate_loop_bridge.svg)
+![Stage 5 simulate loop from outer run loop to solver step and state swap](assets/02_walkthrough_stage5_simulate_loop_bridge.png)
 
-这张图把外层 `run()`、中层 `Example.step()` 和内层 `simulate()` 的关系压在同一屏里，同时把 `state_0` 读当前拍、`state_1` 写下一拍、最后再 swap 的双缓冲语义先钉住。
+这是一张教学压缩图：它把外层 `run()`、中层 `Example.step()` 和内层 `simulate()` 压成一个循环教具，同时把 `state_0` 读当前拍、`state_1` 写下一拍、最后再 swap 的双缓冲语义钉住。图里还把 `State -> collide(...) -> Contacts` 这条支线单独画出来，并把 `Control` 保留成 `solver.step(...)` 的另一条独立输入。具体 substep 顺序和调用边界，仍以下面的代码和文字说明为准。
 
 **Source excerpt**
 
@@ -611,9 +611,9 @@ substep 结束后交换名字
 | `Contacts` | `Model.contacts()` / collision pipeline | `solver.step()`、viewer | 这一拍接触结果缓冲区 |
 | `Solver` | example 构造函数 | `Example.simulate()` | `step(state_in, state_out, control, contacts, dt)` |
 
-![Object ledger grouped by routing, constructor ownership, and loop consumption](assets/02_walkthrough_object_ledger_poster.svg)
+![Object ledger grouped by routing, constructor ownership, and loop consumption](assets/02_walkthrough_object_ledger_poster.png)
 
-上面这张表逐项列出 producer / consumer；这张图再把同一批对象分回 routing、constructor、loop 三本账里，帮助你避免把 constructor 里的初值准备和 loop 里的重复消费混成一层。
+上面这张表逐项列出 producer / consumer；这也是一张教学压缩图，它再把同一批对象压成一排更容易记住的教具账本，帮助你避免把 constructor 里的初值准备和 loop 里的重复消费混成一层。精确的 producer / consumer 关系仍以上面的表格为准。
 
 ## Stop Here
 
@@ -642,7 +642,7 @@ module 里的 `Example.__init__()` 组出 `Model / State / Control / Solver` 四
 
 这几件事能答顺，你就已经带着稳定主线进入 `03_math_geometry`、`04_scene_usd` 或 `05_rigid_articulation` 了。
 
-![Stop-here completion gate for the beginner walkthrough](assets/02_walkthrough_stop_here_gate.svg)
+![Stop-here completion gate for the beginner walkthrough](assets/02_walkthrough_stop_here_gate.png)
 
 这是一张学习门槛图，不是新的源码路径；它只是把本页结束前你应该能独立讲顺的几件关键判断收成一个最后检查点。
 
@@ -655,6 +655,6 @@ module 里的 `Example.__init__()` 组出 `Model / State / Control / Solver` 四
 - 想知道哪些支线第一遍可以先跳过：看 `Optional Branches`
 - 想逐条核对这里的 claim：看 `Verification Anchors`
 
-![Go deeper map into source-walkthrough-deep.md](assets/02_walkthrough_go_deeper_map.svg)
+![Go deeper map into source-walkthrough-deep.md](assets/02_walkthrough_go_deeper_map.png)
 
 这张图只是深挖导航压缩版，不额外引入新 source semantics；它的作用是把你现在脑子里的 beginner 主线，接到下一份 deep walkthrough 的具体入口上。

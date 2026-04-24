@@ -1,7 +1,7 @@
 ---
 chapter: 02
 title: Newton 总体架构
-last_updated: 2026-04-23
+last_updated: 2026-04-24
 source_paths:
   - newton/examples/basic/example_basic_pendulum.py
   - newton/examples/robot/example_robot_cartpole.py
@@ -17,15 +17,15 @@ newton_commit: 1a230702
 
 ## 主例子：`basic_pendulum`
 
-![`basic_pendulum` 观察范围图](assets/02_examples_basic_pendulum_scope_bridge.svg)
+![`basic_pendulum` 观察范围图](assets/02_examples_basic_pendulum_scope_bridge.png)
 
-这张图只把 `basic_pendulum` 限定成 chapter 02 的最小观察入口：先跑默认命令，再把注意力收在最小关节链、runtime objects 和单个旋钮上。只要你还在问“这次改动主要动到哪一层”，就还没有偏离这页的用途。
+这是一张教学压缩图：它只把 `basic_pendulum` 限定成 chapter 02 的最小观察入口，先让你看见最小摆锤场景，再把注意力收在 runtime objects 和单个旋钮上。只要你还在问“这次改动主要动到哪一层”，就还没有偏离这页的用途。
 
 ### 最适合拿来验证什么
 
-![`basic_pendulum` 验证重点海报](assets/02_examples_basic_pendulum_validation_poster.svg)
+![`basic_pendulum` 验证重点海报](assets/02_examples_basic_pendulum_validation_poster.png)
 
-先把这三项当成 `basic_pendulum` 的检查表，而不是把它当成“已经代表全部 Newton”的例子。它的教学价值在于最小而完整，不在于覆盖面最大。
+这是一张教学压缩图：先把这三项当成 `basic_pendulum` 的检查表，而不是把它当成“已经代表全部 Newton”的例子。它的教学价值在于最小而完整，不在于覆盖面最大。
 
 - 你是否已经把“examples 入口 -> 一个具体 example -> `Model / State / Control / Solver` 四层主干 + `Contacts` 结果缓冲区 -> 一次 `step`”这条最小链读顺。
 - 你是否能把 `Example.__init__()` 和 `simulate()` 分开看：前者负责把世界搭出来，后者负责每个 substep 的接力。
@@ -33,9 +33,9 @@ newton_commit: 1a230702
 
 ### 它覆盖的架构链
 
-![`basic_pendulum` 架构链桥接图](assets/02_examples_basic_pendulum_chain_bridge.svg)
+![`basic_pendulum` 架构链桥接图](assets/02_examples_basic_pendulum_chain_bridge.png)
 
-先把 handoff 次序读顺就够了，不用急着把这张图继续展开成 `finalize()` 或 solver internals 教程。对这一页来说，最值钱的是你能把“入口、对象、substep 顺序”连成一口气。
+这是一张教学压缩图：先把 handoff 次序读顺就够了，不用急着把这张图继续展开成 `finalize()` 或 solver internals 教程。对这一页来说，最值钱的是你能把“入口、对象、substep 顺序”连成一口气；下面这条文字链才是更精确的阅读锚点。
 
 `python -m newton.examples basic_pendulum`
 -> `newton.examples` 的统一 launcher
@@ -48,9 +48,9 @@ newton_commit: 1a230702
 
 ### 跑完后先盯这几个位置
 
-![`basic_pendulum` run-after checkpoints map](assets/02_examples_basic_pendulum_checkpoints_map.svg)
+![`basic_pendulum` run-after checkpoints map](assets/02_examples_basic_pendulum_checkpoints_map.png)
 
-先把这一节当成一个三点检查流程：先看 constructor 组装，再看 `capture()` 有没有被误读成另一条物理支线，最后回到 `simulate()` 把 substep 顺序钉住。
+这是一张教学压缩图：先把这一节当成一个三点检查流程，先看 constructor 组装，再看 `capture()` 有没有被误读成另一条物理支线，最后回到 `simulate()` 把 substep 顺序钉住。
 
 先原样跑一次 `basic_pendulum`，确认你看到的是基线行为，再回到下面三个代码点对照。
 
@@ -60,7 +60,7 @@ newton_commit: 1a230702
 
 如果你第一次盯 `Example.__init__()` 里的 `j0` / `j1`，先把它看成这条最小关节链：
 
-![`basic_pendulum` two-joint chain intuition](assets/02_pendulum_joint_chain.svg)
+![`basic_pendulum` two-joint chain intuition](assets/02_pendulum_joint_chain.png)
 
 - `j0` 用 `parent=-1` 把世界锚点接到 `link_0`。
 - `j1` 用 `parent=link_0` 把 `link_1` 接到 `link_0` 末端。
@@ -70,9 +70,9 @@ newton_commit: 1a230702
 
 ### 改这里会怎样
 
-![`basic_pendulum` knob grouping map](assets/02_examples_basic_pendulum_knobs_map.svg)
+![`basic_pendulum` knob grouping map](assets/02_examples_basic_pendulum_knobs_map.png)
 
-这张图先帮你把四种改动分层：前两种更偏 `Model` 布置，第三种是时间推进设置，第四种才是真实转轴方向。先分层，再看下面表格，会比一上来逐格读更快。
+这是一张教学压缩图：它先帮你把四种改动分层，前两种更偏 `Model` 布置，第三种是时间推进设置，第四种才是真实转轴方向。先分层，再看下面表格，会比一上来逐格读更快。图里的 `Size` 应该读成 link box 尺寸与惯量一起变化，而不是只把摆球单独放大。
 
 | 改这里 | 更像在动哪一层 | 预期现象 | 最值得观察 |
 |--------|----------------|----------|------------|
@@ -93,9 +93,9 @@ newton_commit: 1a230702
 
 ### 这一例子最容易看错的地方
 
-![`basic_pendulum` 常见误判海报](assets/02_examples_basic_pendulum_pitfalls_poster.svg)
+![`basic_pendulum` 常见误判海报](assets/02_examples_basic_pendulum_pitfalls_poster.png)
 
-如果你已经开始把 `capture()`、`apply_forces()` 或 `contacts` 看成另一套平行系统，先停下来用这张图纠偏。把这些误判排掉后，再回头看每个符号落在哪个对象上会更稳。
+这是一张教学压缩图：如果你已经开始把 `capture()`、`apply_forces()` 或 `contacts` 看成另一套平行系统，先停下来用这张图纠偏。把这些误判排掉后，再回头看每个符号落在哪个对象上会更稳。
 
 - 源码里的 `capture()` 不是另一套物理逻辑，也不是 CLI 选项；它只是把 `simulate()` 的同一段操作在 CUDA 上录成 graph。
 - `viewer.apply_forces()` 是这一拍外部输入入口；不要把它和 `builder` 里的静态建模混成一类改动。
@@ -103,15 +103,15 @@ newton_commit: 1a230702
 
 ## 对照例子：`robot_cartpole --world-count 100`
 
-![`robot_cartpole` 观察范围图](assets/02_examples_robot_cartpole_scope_bridge.svg)
+![`robot_cartpole` 观察范围图](assets/02_examples_robot_cartpole_scope_bridge.png)
 
-这张图把 `robot_cartpole` 的作用压缩成一句话：它不是来替代主例子，而是拿来补“USD 场景模板 + 多 world 复制 + MuJoCo 路线”这组观察。看它时，先强迫自己把“复制多少 world”与“单个 world 内部发生什么”分开。
+这是一张教学压缩图：它把 `robot_cartpole` 的作用压缩成一句话，它不是来替代主例子，而是拿来补“USD 场景模板 + 多 world 复制 + MuJoCo 路线”这组观察。看它时，先强迫自己把“复制多少 world”与“单个 world 内部发生什么”分开。
 
 ### 它最适合补哪一块观察
 
-![`robot_cartpole` 观察重点海报](assets/02_examples_robot_cartpole_observation_poster.svg)
+![`robot_cartpole` 观察重点海报](assets/02_examples_robot_cartpole_observation_poster.png)
 
-如果你觉得 `basic_pendulum` 已经把主链讲顺了，但对 batch world 还没有图像感，就直接来这一节。它补的不是新的原理页，而是新的观察角度。
+这是一张教学压缩图：如果你觉得 `basic_pendulum` 已经把主链讲顺了，但对 batch world 还没有图像感，就直接来这一节。它补的不是新的原理页，而是新的观察角度。
 
 - 看“同一个场景模板怎样被复制成很多 world”，把单例思维切换成批量 world 思维。
 - 看 `basic_pendulum` 没覆盖到的两件事：USD 场景导入，以及 `contacts = None` 的刚体无接触路径。
@@ -119,9 +119,9 @@ newton_commit: 1a230702
 
 ### 它覆盖的架构链
 
-![`robot_cartpole` 架构链桥接图](assets/02_examples_robot_cartpole_chain_bridge.svg)
+![`robot_cartpole` 架构链桥接图](assets/02_examples_robot_cartpole_chain_bridge.png)
 
-读这张图时，最该圈出来的新站点只有三处：`add_usd(...)`、`replicate(...)` 和“没有 `model.collide(...)`”。只要这三点站稳，`robot_cartpole` 对 chapter 02 的补充就足够了。
+这是一张教学压缩图：读它时，最该圈出来的新站点只有三处：`add_usd(...)`、`replicate(...)` 和“没有 `model.collide(...)`”。图里故意没有再单独画一站 `collide`，就是为了提醒你这条分支本来就不走那一步；下面的文字链继续保留更精确的源码锚点。
 
 `robot_cartpole`
 -> `add_usd(...)` 先把单个 cartpole 搭出来
@@ -132,9 +132,9 @@ newton_commit: 1a230702
 
 ### 改这里会怎样
 
-![`robot_cartpole` 旋钮观察海报](assets/02_examples_robot_cartpole_knobs_poster.svg)
+![`robot_cartpole` 旋钮观察海报](assets/02_examples_robot_cartpole_knobs_poster.png)
 
-这三种改法分别对应“复制数量、world 排布、共享初值”三个观察层次。每次只改一个量，会比一次混改多个参数更容易看出你到底是在动模板外层，还是在动每个 cartpole 自己的状态。
+这是一张教学压缩图：这三种改法分别对应“复制数量、world 排布、共享初值”三个观察层次。每次只改一个量，会比一次混改多个参数更容易看出你到底是在动模板外层，还是在动每个 cartpole 自己的状态。
 
 | 改这里 | 预期现象 | 最值得观察 |
 |--------|----------|------------|
@@ -144,15 +144,15 @@ newton_commit: 1a230702
 
 ## 对照例子：`cloth_hanging --solver xpbd`
 
-![`cloth_hanging` 观察范围图](assets/02_examples_cloth_hanging_scope_bridge.svg)
+![`cloth_hanging` 观察范围图](assets/02_examples_cloth_hanging_scope_bridge.png)
 
-`cloth_hanging` 这一节只负责把注意力转到“同一类布料场景怎样换 solver family”。它不是布料原理页，而是 chapter 02 里观察 solver route 差异的最快入口。
+这是一张教学压缩图：`cloth_hanging` 这一节只负责把注意力转到“同一类布料场景怎样换 solver family”。它不是布料原理页，而是 chapter 02 里观察 solver route 差异的最快入口。
 
 ### 它最适合补哪一块观察
 
-![`cloth_hanging` 观察重点海报](assets/02_examples_cloth_hanging_observation_poster.svg)
+![`cloth_hanging` 观察重点海报](assets/02_examples_cloth_hanging_observation_poster.png)
 
-如果你总把 cloth builder 参数和 solver 参数混成一团，先看这张图再读下面的 bullets。把“场景规模”和“求解路线”分层看，是这条例子最值钱的训练。
+这是一张教学压缩图：如果你总把 cloth builder 参数和 solver 参数混成一团，先看这张图再读下面的 bullets。把“场景规模”和“求解路线”分层看，是这条例子最值钱的训练。
 
 - 看“同一类场景怎样在 solver family 之间切换”，这比直接背 8 个 solver 名字更容易形成直觉。
 - 看 chapter 02 在 soft/cloth 路线下仍然保留同一条主链：建场景、拿 runtime objects、碰撞、solver step。
@@ -160,9 +160,9 @@ newton_commit: 1a230702
 
 ### 它覆盖的架构链
 
-![`cloth_hanging` 架构链桥接图](assets/02_examples_cloth_hanging_chain_bridge.svg)
+![`cloth_hanging` 架构链桥接图](assets/02_examples_cloth_hanging_chain_bridge.png)
 
-这张图最该帮你记住两件事：solver family 是在 CLI 入口先选的，碰撞是在 `contacts()` 之后显式接上的。只要这两站清楚，后面的 soft/cloth 章节会好读很多。
+这是一张教学压缩图：它最该帮你记住两件事，solver family 是在 CLI 入口先选的，碰撞是在 `contacts()` 之后显式接上的。图里把 `contacts()` 缓冲区创建和后续 `model.collide(...)` 填充压成了一条更短的视觉 handoff，所以真正的先后关系仍以下面的文字链为准。只要这两站清楚，后面的 soft/cloth 章节会好读很多。
 
 `cloth_hanging --solver xpbd`
 -> CLI 先选 solver family
@@ -174,9 +174,9 @@ newton_commit: 1a230702
 
 ### 改这里会怎样
 
-![`cloth_hanging` 旋钮观察海报](assets/02_examples_cloth_hanging_knobs_poster.svg)
+![`cloth_hanging` 旋钮观察海报](assets/02_examples_cloth_hanging_knobs_poster.png)
 
-最实用的读法是先把这三种改动分成三类：换 solver family、调同一路线内部刚度、改 cloth 场景规模。先分层，再去看画面和代码，判断会快很多。
+这是一张教学压缩图：最实用的读法是先把这三种改动分成三类，换 solver family、调同一路线内部刚度、改 cloth 场景规模。先分层，再去看画面和代码，判断会快很多。
 
 | 改这里 | 预期现象 | 最值得观察 |
 |--------|----------|------------|
@@ -186,9 +186,9 @@ newton_commit: 1a230702
 
 ## 这页怎么配合其他文件
 
-![`examples.md` 页面关系图](assets/02_examples_page_relationships_map.svg)
+![`examples.md` 页面关系图](assets/02_examples_page_relationships_map.png)
 
-把这张图当成分工提醒就够了：这里不负责重复讲原理，也不负责重走源码，只负责把三个 quick-win 命令变成观察任务。每当你觉得自己开始写成第二份原理页或第二份 walkthrough，就该回到这张图纠偏。
+这是一张教学压缩图：把这张图当成分工提醒就够了，这里不负责重复讲原理，也不负责重走源码，只负责把三个 quick-win 命令变成观察任务。每当你觉得自己开始写成第二份原理页或第二份 walkthrough，就该回到这张图纠偏。
 
 - `principle.md`：负责回答“为什么 chapter 02 要先讲这条链”。
 - `examples.md`：只负责把三个 quick-win 命令改写成“先跑、再改哪里、再看哪里”的观察单。
