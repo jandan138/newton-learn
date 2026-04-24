@@ -13,12 +13,16 @@ newton_commit: 1a230702
 
 如果 `02_newton_arch` 让你第一次接受了 `Model / State / Control / Solver` 这条架构链，那么 chapter 03 的工作就是把这条链背后的 geometry / spatial vocabulary 补稳。它不是完整数学课，而是把 `Model` 先变得可读，再把你送去 `04_scene_usd`、`05_rigid_articulation` 和 `06_collision`。
 
+![Chapter 03 概念主线总览](assets/03_readme_chapter_spine_overview.png)
+
 ## 文件分工
 
 - `README.md`：只负责本章边界、完成门槛和阅读入口。
 - `principle.md`：先把 frame、transform、quaternion、spatial quantity、shape、inertia 这些词翻译成人话。
 - `source-walkthrough.md`：新手 / 主 walkthrough。第一次追 chapter 03 源码先看这一份；它把 `frame -> transform -> spatial -> shape -> inertia` 主线直接讲顺。
 - `source-walkthrough-deep.md`：深读锚点版。已经跟上主线后，如果你想精确追上游文件、symbol 和行号，再看这一份。
+
+![Chapter 03 文件分工与阅读顺序](assets/03_readme_file_roles_and_reading_order.png)
 
 ## 完成门槛
 
@@ -29,6 +33,8 @@ newton_commit: 1a230702
 [ ] 我能把 twist / wrench / `velocity_at_point` 先理解成“挂在某个 frame 上的运动或受力量”，知道它们会在 `05` 的 articulation helper 里再次出现
 [ ] 我能用一句话说明质量、质心、惯量为什么是 geometry 到 articulation 的桥梁
 ```
+
+![Chapter 03 完成门槛、范围与前置依赖](assets/03_readme_completion_scope_prereq.png)
 
 ## 本章目标
 

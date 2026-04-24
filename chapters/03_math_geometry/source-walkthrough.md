@@ -36,6 +36,8 @@ newton_commit: 1a230702
 
 这一页只追后面章节最常复用的那条“图例”主线：
 
+![Chapter 03 source walkthrough pipeline](assets/03_walkthrough_pipeline_overview.png)
+
 ```text
 builder 先记 local frame / 局部关系（也就是“谁相对谁写”）
 -> 同一条 transform chain 组合成 body_q 和 world/local query pose
@@ -72,6 +74,8 @@ compute_inertia_shape + _update_body_mass 把 geometry 压成 mass / com / inert
 
 ## Beginner Path
 
+![Chapter 03 beginner path](assets/03_walkthrough_beginner_path.png)
+
 1. 先看 Stage 1。
    - 想验证什么：`shape_transform`、`joint_X_p / joint_X_c`、`body_com` 为什么会在 builder 里先出现。
    - 看完后应该能说：Newton 先记“谁相对谁”的局部关系，而不是一开始就写死 world 坐标。这是在给 `04_scene_usd` 之后的所有章节打底。
@@ -91,6 +95,8 @@ compute_inertia_shape + _update_body_mass 把 geometry 压成 mass / com / inert
 ## Main Walkthrough
 
 ### Stage 1: Newton 先记局部关系，不先记 world 答案
+
+![Stage 1 local ledger](assets/03_walkthrough_stage1_local_ledger.png)
 
 **Definition**
 
@@ -148,6 +154,8 @@ self.shape_transform.append(xform)  # 记录 shape 相对 body 的局部位姿
 一份局部关系账本。后面所有 FK、shape query、mass update 都要从这里接着读。
 
 ### Stage 2: 同一条 transform chain 把局部关系接成 `body_q`
+
+![Stage 2 transform chain](assets/03_walkthrough_stage2_transform_chain.png)
 
 **Definition**
 
@@ -213,6 +221,8 @@ x_local = wp.transform_point(X_sw, px)  # 把 world-space query point 转成 sha
 
 ### Stage 3: `body_qd` 和 spatial helper 解释了为什么运动要写成 6D
 
+![Stage 3 spatial helpers](assets/03_walkthrough_stage3_spatial_helpers.png)
+
 **Definition**
 
 - `spatial quantity` / `6D quantity`：把线性部分和角部分绑在一起的刚体量。第一遍你可以把它读成“挂在某个 frame 上的 6D 运动量或受力量”。
@@ -276,6 +286,8 @@ def transform_wrench(t: wp.transform, x: wp.spatial_vector) -> wp.spatial_vector
 一套稳定心智模型：当后面章节里出现 `body_qd`、twist、wrench、Jacobian 列时，你知道它们本质上都离不开 frame-aware 的 6D 转换。
 
 ### Stage 4: `GeoType` 不只是标签，它决定 shape 走哪条表示路径
+
+![Stage 4 GeoType dispatch](assets/03_walkthrough_stage4_geotype_dispatch.png)
 
 **Definition**
 
@@ -356,6 +368,8 @@ if geo_type == GeoType.HFIELD:
 
 ### Stage 5: inertia 是 geometry 进入 dynamics 的压缩接口
 
+![Stage 5 inertia compression](assets/03_walkthrough_stage5_inertia_compression.png)
+
 **Definition**
 
 - `inertia`：第一遍先读成“几何对运动和转动有多难被改变”的压缩描述。它通常和质量、质心一起出现，因为 Newton 真正要交给动力学的不是“这个 shape 长什么样”，而是“这个 body 动起来的代价是什么”。
@@ -427,6 +441,8 @@ self.body_com[i] = new_com
 `body_mass / body_com / body_inertia` 这组三件套。它们会在 `05` 的 articulation 与 dynamics 代码里继续被消费。
 
 ## Object Ledger
+
+![Object ledger and stop-here summary](assets/03_walkthrough_object_ledger_stop_here.png)
 
 | 名字 | 第一遍先怎么翻译 | 后面最常在哪再出现 |
 |------|------------------|----------------------|

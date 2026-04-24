@@ -23,9 +23,13 @@ newton_commit: 1a230702
 
 如果把 `02` 看成“Newton 里有哪些核心对象，step 怎样接起来”，那 `03` 更像“这些对象内部为什么会长成这种几何样子”。读完这一章，你不用立刻会推公式，但应该能看懂这些量各自在服务谁。
 
+![Chapter 03 概念主线总览](assets/03_readme_chapter_spine_overview.png)
+
 ## 1. 先把 `frame` 看成“谁在拿谁当参考系”
 
 第一遍读 Newton，不要把 frame 想得太抽象。它就是一个带原点和朝向的参考系。只要有 frame，你就可以说“这个点的位置是相对谁写的”“这根轴的朝向是在哪个坐标系里表达的”。
+
+![Frame reference map](assets/03_principle_frame_reference_map.png)
 
 这也是为什么 `Model` 里很少把一切都直接写成 world 坐标。`body` 有 body frame，joint 有 joint frame，shape 也有自己的局部 frame。这样做不是为了增加术语，而是为了让部件能被组合、复制、挂到不同父节点上，而不是每换一个场景就重写一遍绝对坐标。
 
@@ -42,6 +46,8 @@ newton_commit: 1a230702
 
 `wp.transform` 第一遍完全可以翻译成“一个位置 + 一个朝向”。位置告诉你 frame 原点在哪里，朝向告诉你这个 frame 相对参考系转成了什么方向。先把它看成 rigid placement 的容器，不必一上来就脑补完整矩阵代数。
 
+![Transform chain map](assets/03_principle_transform_chain_map.png)
+
 在 chapter 03 这个深度里，`wp.transform` 主要在做三件事：
 
 1. 说明 joint 锚点怎样落在 parent / child 两侧的局部 frame 里。
@@ -55,6 +61,8 @@ newton_commit: 1a230702
 ## 3. 四元数和旋转：先会读，不急着会推
 
 四元数在这里的任务也不神秘。它只是 Newton 选择的一种旋转表示，让 orientation 能稳定地存、乘、逆和插入到 transform 里。你现在不需要把它当成一门独立课程，只要先认出几个最常见动作。
+
+![Quaternion orientation map](assets/03_principle_quaternion_orientation_map.png)
 
 第一遍最有用的四个读法是：
 
@@ -72,6 +80,8 @@ newton_commit: 1a230702
 ## 4. spatial quantities：先当成“挂在 frame 上的运动和受力”
 
 一旦 frame 和 transform 稍微稳一点，twist 和 wrench 就没那么吓人了。它们不是额外一套神秘物理，而是在把“刚体整体怎么动”“刚体整体受了什么”打包成适合刚体计算的 6D 量。
+
+![Spatial quantity map](assets/03_principle_spatial_quantity_map.png)
 
 - twist：把线速度和角速度放在一起看。
 - wrench：把力和力矩放在一起看。
@@ -92,6 +102,8 @@ newton_commit: 1a230702
 
 先看一个最直接的对比：球和箱子这种 shape，更像“给我几个参数，我就知道它长什么样”；地形、mesh、SDF 这类 shape，则更像“我手里已经有一份几何数据，后面要按这份数据去问表面在哪里”。
 
+![Shape GeoType map](assets/03_principle_shape_geotype_map.png)
+
 `Model` 里不只有 body 和 joint。shape 也同样重要，因为后面的碰撞、可视化、质量属性，都会从 shape 出发。第一遍真正需要的，不是把所有碰撞算法吃透，而是先分清 Newton 在保存哪一类几何。
 
 第一次看到 `HFIELD`、`SDF` 这类大写词，也不用先脑补另一套新学科。对 chapter 03 来说，它们先只是 `_src/geometry/types.py` 这张目录里的表示名，提醒你：后面的查询路径会因为 shape category 不同而分叉。
@@ -111,6 +123,8 @@ newton_commit: 1a230702
 
 这一章里最关键的桥，不是某个公式，而是一个转折点：shape 一旦不只是拿来碰撞或显示，它就必须贡献质量属性。也就是质量、质心和惯量。
 
+![Inertia bridge map](assets/03_principle_inertia_bridge_map.png)
+
 这正是 `_src/geometry/inertia.py` 和 builder 在接力做的事。`compute_inertia_shape(...)` 先根据 shape 类型、尺寸、密度和是否实心，给出该 shape 自己的 `mass / com / inertia`。这些量先是局部的，先属于 shape 自己。
 
 接着 builder 再用 shape 的 transform 把这些局部质量属性搬到 body frame 里，并通过 `transform_inertia(...)` 和 `_update_body_mass(...)` 把多个 shape 的贡献累到同一个 body 上。于是 `body_mass`、`body_com`、`body_inertia` 才真正出现。
@@ -129,6 +143,8 @@ newton_commit: 1a230702
 ## 7. 带着这套词汇，分别走向 `04`、`05`、`06`
 
 如果你读到这里，chapter 03 的目标其实已经达成了大半：你不一定会完整推导这些量，但应该能把它们翻译成人话。`joint_X_p` / `joint_X_c` 不再只是神秘数组，`shape_transform` 不再只是局部位姿噪声，`velocity_at_point()` 不再像突然冒出来的技巧函数，惯量也不再像和 geometry 毫无关系的另一门课。
+
+![Next chapters map](assets/03_principle_next_chapters_map.png)
 
 接下来最自然的分叉有三条：
 
