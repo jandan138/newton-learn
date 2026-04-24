@@ -26,6 +26,8 @@ newton_commit: 1a230702
 
 如果你这时想找真实入口函数和源码落点，直接去 `source-walkthrough.md`；这页只保留概念桥，不展开源码锚点目录。
 
+![04 继承 03 后补上的场景桥](assets/04_principle_after_ch03_bridge.png)
+
 ## 1. 先看一个最小 scene，再把主线压成五步
 
 先想一个最小 scene：一块地面、一个 box、外加一个把 box 挂到父节点上的 revolute joint。第一遍读 chapter 04，最先该问的不是某个 schema resolver 具体叫什么，而是：这些 authored prim 和局部 pose，最后怎样进到 `Model` 的 body / joint / shape 数组里？
@@ -40,6 +42,8 @@ newton_commit: 1a230702
 
 所以 chapter 04 的最小心智模型可以先非常朴素：scene graph 不是直接等于 `Model`，中间隔着一层“读出来”，一层“翻译统一”，一层“累积成 Newton 结构”，最后才“冻结成 `Model`”。
 
+![04 最小场景到 Model 的五步桥](assets/04_principle_min_scene_five_step_flow.png)
+
 ## 2. scene graph 里哪些东西会变成 `Model` 字段
 
 第一遍看 importer，最好一直把 scene graph 里的对象往未来的 `Model` 字段上对。
@@ -51,6 +55,8 @@ newton_commit: 1a230702
 - site：在 Newton 里更像“非碰撞、零密度的参考点 shape”。它保留局部位置关系，但不应该参与正常质量累计。
 
 这也是为什么 importer 代码里总在做 transform 重写。scene graph 可以有很多中间 `Xform` 节点，但 `Model` 不会保留这棵通用 authoring 树。它只保留后面仿真真正需要的局部关系：shape 相对 body，joint 相对 parent / child，body 再属于某条 articulation。
+
+![04 scene 对象与 Model 字段对照](assets/04_principle_scene_object_field_ledger.png)
 
 ## 3. 公共入口、真实入口、还有中间那层 importer
 
@@ -67,6 +73,8 @@ newton_commit: 1a230702
 
 其中一批很关键的 bookkeeping 是 `path_body_map`、`path_joint_map`、`path_shape_map`。这类表面上看起来很“parser”的结构，其实正是在把 scene graph 的 prim path 翻译成 builder 里的整数索引。没有这一步，后面 joint 就没法稳定地说“我到底连的是哪个 body”。
 
+![04 入口与 importer 边界](assets/04_principle_entry_importer_boundary.png)
+
 ## 4. `schema resolver` 先理解到“属性翻译边界”就够了
 
 第一遍完全没必要把 schema resolver 看成另一套大框架。它最实用的一层意义其实很简单：同一个物理意思，在不同 authoring 习惯里名字不一样，importer 不想把这些分支硬编码得到处都是。
@@ -81,6 +89,8 @@ newton_commit: 1a230702
 
 所以 resolver 的边界要先记清：它负责把 authored schema 名字翻译成 importer 能消费的统一语义键，但它不负责读取 mesh 几何、不负责建立 joint 拓扑，也不负责直接生成 `Model`。
 
+![04 schema resolver 属性翻译边界](assets/04_principle_schema_resolver_boundary.png)
+
 ## 5. builder 才是 scene input 真正压成 Newton 结构的地方
 
 一旦 body、joint、shape 的关系被 importer 读清，builder 就开始接手“把这些关系写成 Newton 自己的数据结构”。
@@ -94,6 +104,8 @@ newton_commit: 1a230702
 这里有一个非常值得先记住的点：shape 在 builder 里不只是“几何挂件”。对动态 body 来说，只要 shape 有密度、不是 static，也没有被明确锁死惯量，它就会通过 `compute_inertia_shape(...)` 和 `_update_body_mass(...)` 继续贡献 body 的 `mass / com / inertia`。
 
 也就是说，builder 不只是保存 scene graph；它还在把 scene graph 压缩成 Newton 以后真正消费的物理结构。
+
+![04 builder 累积 Newton 结构](assets/04_principle_builder_accumulation_map.png)
 
 ## 6. mass / inertia 的优先关系，先记桥接版
 
@@ -110,6 +122,8 @@ chapter 04 不需要把所有 MassAPI 细节讲完，但有一条桥接关系一
 
 第一遍还有一个细节很值得知道，但不用深挖：如果 body author 了 mass，却没 author inertia，importer 会倾向于保住现有 shape 累积出来的惯量结构，再按 author 的 mass 做一致性缩放，而不是假装凭空知道一套新的惯量分布。
 
+![04 质量属性优先关系](assets/04_principle_mass_property_priority.png)
+
 ## 7. `finalize()` 才是 `Model` 边界真正闭合的地方
 
 如果说 builder 还是“边读边搭的施工现场”，那 `finalize()` 就是把现场封板。
@@ -117,6 +131,8 @@ chapter 04 不需要把所有 MassAPI 细节讲完，但有一条桥接关系一
 在这一步里，builder 会先做结构检查和必要整理，再把 shape geometry、body、joint、world 分组这些列表真正搬进 `Model`。于是你才会看到那批熟悉的静态字段变成可直接给 solver 用的数组：`shape_transform`、`shape_type`、`shape_scale`、`body_mass`、`body_com`、`body_inertia`、`joint_parent`、`joint_child`、`joint_X_p`、`joint_X_c`。
 
 这也是 `Model` 和 scene graph 的边界差异：scene graph 还能保留 authoring 语义、命名空间和中间层级；`Model` 则已经只剩“仿真真正要消费的静态结构”。到了这里，solver 不再关心某个值原来是 `physx*` 还是 `mjc:*`，也不再关心它原来藏在哪个 `Xform` 下面。
+
+![04 finalize 边界与后续章节](assets/04_principle_finalize_next_chapters.png)
 
 ## 8. 带着这条桥，分别走向 `05` 和 `06`
 

@@ -13,12 +13,16 @@ newton_commit: 1a230702
 
 所以这一章站在 `03` 之后、`05_rigid_articulation` 和 `06_collision` 之前。它先把“外部场景描述 -> Newton `Model`”这段桥接链读顺，让你在进入 articulation 和 collision 之前，知道 body / joint / shape / mass property 到底从哪里来。
 
+![04 场景到 Model 主线](assets/04_readme_scene_to_model_spine.png)
+
 ## 文件分工
 
 - `README.md`：只负责本章范围、完成门槛和阅读入口。
 - `principle.md`：负责把 `scene input -> importer -> schema resolver -> builder -> Model` 这条概念桥讲顺。
 - `source-walkthrough.md`：新手 / 主 walkthrough。第一次追 chapter 04 源码先看这一份；它把 `scene input -> importer -> builder -> Model` 主线直接讲顺。
 - `source-walkthrough-deep.md`：深读锚点版。已经跟上主线后，如果你想精确追上游文件、symbol 和行号，再看这一份。
+
+![04 文件分工与阅读顺序](assets/04_readme_file_roles_reading_order.png)
 
 ## 完成门槛
 
@@ -28,6 +32,8 @@ newton_commit: 1a230702
 [ ] 我能说明 schema resolver 只是属性翻译边界，不是 solver、本体动力学或碰撞系统
 [ ] 我能说清 authored mass property 与 geometry-derived fallback 的第一层优先关系，以及它为什么会影响后面的 `body_mass / body_com / body_inertia`
 ```
+
+![04 完成门槛与范围](assets/04_readme_completion_scope_prereq.png)
 
 ## 本章目标
 

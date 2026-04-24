@@ -40,7 +40,7 @@
 
 ## Task 1: Calibration Image
 
-- [ ] **Step 1: Create chapter 04 assets directory**
+- [x] **Step 1: Create chapter 04 assets directory**
 
 Run:
 
@@ -50,7 +50,7 @@ mkdir -p chapters/04_scene_usd/assets
 
 Expected: `chapters/04_scene_usd/assets/` exists.
 
-- [ ] **Step 2: Generate the calibration PNG**
+- [x] **Step 2: Generate the calibration PNG**
 
 Run Codex native image generation for:
 
@@ -72,7 +72,7 @@ Bottom recap: Model 不是原始 scene graph，而是翻译和冻结后的静态
 Do not invent source code or USD syntax. Do not include long paragraphs. Do not use SVG, HTML, screenshot, terminal UI, or photorealistic 3D rendering. Generate raster PNG.
 ```
 
-- [ ] **Step 3: Inspect calibration**
+- [x] **Step 3: Inspect calibration**
 
 Run:
 
@@ -86,7 +86,7 @@ Open the image visually and check it matches `docs/superpowers/specs/chapter-vis
 
 ## Task 2: README Image Batch
 
-- [ ] **Step 1: Generate README support images**
+- [x] **Step 1: Generate README support images**
 
 Generate:
 
@@ -94,7 +94,7 @@ Generate:
 - `04_readme_file_roles_reading_order.png`: file roles and reading order: `README.md -> principle.md -> source-walkthrough.md -> source-walkthrough-deep.md`.
 - `04_readme_completion_scope_prereq.png`: completion gate, scope, non-scope, prerequisites, and expected output.
 
-- [ ] **Step 2: Integrate README images**
+- [x] **Step 2: Integrate README images**
 
 Insert:
 
@@ -108,7 +108,7 @@ Coverage note:
 
 ## Task 3: Principle Image Batch
 
-- [ ] **Step 1: Generate principle concept images**
+- [x] **Step 1: Generate principle concept images**
 
 Generate:
 
@@ -122,7 +122,7 @@ Generate:
 
 `04_principle_min_scene_five_step_flow.png` already exists from Task 1.
 
-- [ ] **Step 2: Integrate principle images**
+- [x] **Step 2: Integrate principle images**
 
 Insert:
 
@@ -138,7 +138,7 @@ Insert:
 
 ## Task 4: Source Walkthrough Image Batch
 
-- [ ] **Step 1: Generate source-walkthrough images**
+- [x] **Step 1: Generate source-walkthrough images**
 
 Generate:
 
@@ -151,7 +151,7 @@ Generate:
 - `04_walkthrough_stage5_finalize_model_arrays.png`
 - `04_walkthrough_object_ledger_stop_here.png`
 
-- [ ] **Step 2: Integrate source-walkthrough images**
+- [x] **Step 2: Integrate source-walkthrough images**
 
 Insert:
 
@@ -168,7 +168,7 @@ Insert:
 
 ## Task 5: Verification, Review, Commit, Push
 
-- [ ] **Step 1: Verify Markdown image references**
+- [x] **Step 1: Verify Markdown image references**
 
 Run:
 
@@ -198,7 +198,7 @@ PY
 
 Expected: `all image refs exist`.
 
-- [ ] **Step 2: Verify PNG assets**
+- [x] **Step 2: Verify PNG assets**
 
 Run:
 
@@ -208,7 +208,7 @@ file chapters/04_scene_usd/assets/04_*.png
 
 Expected: every line says `PNG image data`.
 
-- [ ] **Step 3: Verify Markdown diff cleanliness**
+- [x] **Step 3: Verify Markdown diff cleanliness**
 
 Run:
 
@@ -218,7 +218,7 @@ git diff --check -- chapters/04_scene_usd docs/superpowers/specs/2026-04-25-chap
 
 Expected: no output.
 
-- [ ] **Step 4: Coverage scan**
+- [x] **Step 4: Coverage scan**
 
 Run:
 
@@ -228,7 +228,7 @@ rg -n '^##|^###|!\[' chapters/04_scene_usd/README.md chapters/04_scene_usd/princ
 
 Expected: each reader-facing section has a nearby image anchor, with documented reuse for short/admin sections.
 
-- [ ] **Step 5: Visual style review**
+- [x] **Step 5: Visual style review**
 
 Create or inspect a contact sheet for all `04_*.png` files and compare against `docs/superpowers/specs/chapter-visual-style-guide.md` and chapter 03 assets.
 
@@ -241,7 +241,7 @@ Expected:
 - no fake code / fake terminal UI / invented USD syntax
 - source-truth shortcuts remain bounded by nearby Markdown
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
@@ -250,7 +250,7 @@ git add chapters/04_scene_usd docs/superpowers/specs/2026-04-25-chapter-04-tutor
 git commit -m "docs: add chapter 04 tutorial infographics"
 ```
 
-- [ ] **Step 7: Merge to main and push**
+- [x] **Step 7: Merge to main and push**
 
 Run:
 
