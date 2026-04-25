@@ -154,7 +154,7 @@ Expected:
 **Files:**
 - Replace in place: `chapters/05_rigid_articulation/assets/05_*.png`
 
-- [ ] **Step 1: Regenerate README assets**
+- [x] **Step 1: Regenerate README assets**
 
 Generate native-imagegen replacements for:
 
@@ -170,7 +170,7 @@ Prompt focus:
 Chapter 05 README navigation. Use concrete small sketches: two-link arm, flat arrays, file-role icons, completion checklist, and handoff from 04 scene fields to 05 articulation.
 ```
 
-- [ ] **Step 2: Regenerate principle assets**
+- [x] **Step 2: Regenerate principle assets**
 
 Generate native-imagegen replacements for:
 
@@ -191,7 +191,7 @@ Prompt focus:
 Chapter 05 principle concepts. Use concrete sketches for two-link arm, joint-space vs body-space cards, FK transform arrows, motion subspace velocity arrow, spatial inertia buffer blocks, and next-chapter handoff.
 ```
 
-- [ ] **Step 3: Regenerate source-walkthrough assets**
+- [x] **Step 3: Regenerate source-walkthrough assets**
 
 Generate native-imagegen replacements for:
 
@@ -212,7 +212,7 @@ Prompt focus:
 Chapter 05 walkthrough path. Use concrete sketches for each stage: flat slice ledger, state layers, FK bridge, Featherstone spatial buffers, solver handoff, and stop-here recap.
 ```
 
-- [ ] **Step 4: Regenerate example assets**
+- [x] **Step 4: Regenerate example assets**
 
 Generate native-imagegen replacements for:
 
@@ -229,7 +229,7 @@ Prompt focus:
 Chapter 05 examples. Use concrete teaching sketches for basic_pendulum, joint frame, joint type comparison, and robot_cartpole imported articulation layout.
 ```
 
-- [ ] **Step 5: Verify chapter 05**
+- [x] **Step 5: Verify chapter 05**
 
 Run:
 
@@ -263,7 +263,7 @@ Expected: `chapter 05 image refs exist`; the `file | rg -v` command prints no PN
 **Files:**
 - Replace in place: `chapters/06_collision/assets/06_*.png`
 
-- [ ] **Step 1: Regenerate README assets**
+- [x] **Step 1: Regenerate README assets**
 
 Generate native-imagegen replacements for:
 
@@ -279,7 +279,7 @@ Prompt focus:
 Chapter 06 README navigation. Use concrete sketches for body pose, shape metadata, collision pipeline, Contacts handoff, file roles, and completion checklist.
 ```
 
-- [ ] **Step 2: Regenerate principle assets**
+- [x] **Step 2: Regenerate principle assets**
 
 Generate native-imagegen replacements for:
 
@@ -300,7 +300,7 @@ Prompt focus:
 Chapter 06 principle concepts. Use concrete sketches for body-vs-shape boundary, AABB and maybe pairs, contact point/normal, shape_type routing, ContactData to Contacts buffer, and 07/08 handoff.
 ```
 
-- [ ] **Step 3: Regenerate source-walkthrough assets**
+- [x] **Step 3: Regenerate source-walkthrough assets**
 
 Generate native-imagegen replacements for:
 
@@ -321,7 +321,7 @@ Prompt focus:
 Chapter 06 walkthrough path. Use concrete sketches for model/state/shape handoff, AABB generation, candidate pairs, narrow-phase ContactData, write_contact(), Contacts, and object ledger.
 ```
 
-- [ ] **Step 4: Regenerate example assets**
+- [x] **Step 4: Regenerate example assets**
 
 Generate native-imagegen replacements for:
 
@@ -338,7 +338,7 @@ Prompt focus:
 Chapter 06 examples. Use concrete teaching sketches for sphere-ground contact, pyramid contact-set growth, and field watchlist for Contacts.
 ```
 
-- [ ] **Step 5: Verify chapter 06**
+- [x] **Step 5: Verify chapter 06**
 
 Run:
 
@@ -372,7 +372,7 @@ Expected: `chapter 06 image refs exist`; the `file | rg -v` command prints no PN
 **Files:**
 - Replace in place: `chapters/07_constraints_contacts_math/assets/07_*.png`
 
-- [ ] **Step 1: Regenerate README assets**
+- [x] **Step 1: Regenerate README assets**
 
 Generate native-imagegen replacements for:
 
@@ -388,7 +388,7 @@ Prompt focus:
 Chapter 07 README navigation. Use concrete sketches for Contacts, contact frame, rows, J, D, chapter 08 handoff, file roles, and completion checklist.
 ```
 
-- [ ] **Step 2: Regenerate principle assets**
+- [x] **Step 2: Regenerate principle assets**
 
 Generate native-imagegen replacements for:
 
@@ -409,7 +409,7 @@ Prompt focus:
 Chapter 07 principle concepts. Use concrete sketches for sphere-ground contact frame, normal/tangent row expansion, J velocity map, lever-arm torque arrow, Delassus/effective-mass response, multi-contact box support, and chapter 08 handoff.
 ```
 
-- [ ] **Step 3: Regenerate source-walkthrough assets**
+- [x] **Step 3: Regenerate source-walkthrough assets**
 
 Generate native-imagegen replacements for:
 
@@ -430,7 +430,7 @@ Prompt focus:
 Chapter 07 walkthrough path. Use concrete sketches for Contacts geometry handoff, solver-facing contact block, contact rows, Jacobian frame and lever arm, Delassus row-space response, and object ledger.
 ```
 
-- [ ] **Step 4: Regenerate example assets**
+- [x] **Step 4: Regenerate example assets**
 
 Generate native-imagegen replacements for:
 
@@ -447,7 +447,7 @@ Prompt focus:
 Chapter 07 examples. Use concrete teaching sketches for sphere-ground one contact expanding to rows, box-ground multiple contacts with lever arms, and self-check handoff.
 ```
 
-- [ ] **Step 5: Verify chapter 07**
+- [x] **Step 5: Verify chapter 07**
 
 Run:
 
@@ -485,7 +485,7 @@ Expected: `chapter 07 image refs exist`; the `file | rg -v` command prints no PN
 - Verify: `docs/superpowers/specs/2026-04-25-chapters-05-07-native-imagegen-redo-design.md`
 - Verify: `docs/superpowers/plans/2026-04-25-chapters-05-07-native-imagegen-redo.md`
 
-- [ ] **Step 1: Verify deep walkthrough files are untouched**
+- [x] **Step 1: Verify deep walkthrough files are untouched**
 
 Run:
 
@@ -495,7 +495,7 @@ git diff -- chapters/05_rigid_articulation/source-walkthrough-deep.md chapters/0
 
 Expected: no output.
 
-- [ ] **Step 2: Verify all image refs in 05/06/07**
+- [x] **Step 2: Verify all image refs in 05/06/07**
 
 Run:
 
@@ -535,7 +535,7 @@ PY
 
 Expected: all image references exist.
 
-- [ ] **Step 3: Verify PNG formats**
+- [x] **Step 3: Verify PNG formats**
 
 Run:
 
@@ -545,7 +545,7 @@ file chapters/05_rigid_articulation/assets/05_*.png chapters/06_collision/assets
 
 Expected: no PNG mismatch output.
 
-- [ ] **Step 4: Run Markdown diff hygiene check**
+- [x] **Step 4: Run Markdown diff hygiene check**
 
 Run:
 
@@ -560,7 +560,7 @@ git diff --check -- \
 
 Expected: no output.
 
-- [ ] **Step 5: Request review**
+- [x] **Step 5: Request review**
 
 Ask a reviewer agent to inspect:
 
@@ -570,7 +570,7 @@ Review the chapters 05-07 native-imagegen redo. Focus on whether the images foll
 
 Expected: no blocking findings, or concrete findings that can be regenerated/fixed.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
@@ -584,7 +584,7 @@ git add \
 git commit -m "docs: redo chapters 05-07 tutorial infographics"
 ```
 
-- [ ] **Step 7: Merge and push**
+- [x] **Step 7: Merge and push**
 
 Run from the main worktree:
 
