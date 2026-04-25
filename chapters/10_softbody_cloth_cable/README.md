@@ -13,6 +13,8 @@ newton_commit: 1a230702
 
 # 10 软体、布料与 Cable
 
+![10 软体、布料与 Cable 主线](assets/10_readme_soft_cloth_cable_spine.png)
+
 `09_variational_solvers` 刚把一个更窄、但很重要的问题讲顺: **同一块 hanging cloth 进入 shared `collide -> step -> swap` loop 之后，Newton 可以怎样组织稳定修正？**
 
 第 10 章把镜头再往前挪一步，不再先问 solver，而是先问对象本身:
@@ -34,6 +36,8 @@ cable    = capsule rigid bodies + cable joints (+ articulation)
 
 ## 文件分工
 
+![10 文件分工与阅读顺序](assets/10_readme_file_roles_reading_order.png)
+
 - `README.md`: 本章范围、阅读顺序、完成门槛。
 - `principle.md`: 解释为什么这三类“看起来都可变形”的东西，在 Newton 里其实属于不同内部对象家族。
 - `source-walkthrough.md`: beginner / main walkthrough。第一次追 chapter 10 源码，先看这一份。
@@ -43,6 +47,8 @@ cable    = capsule rigid bodies + cable joints (+ articulation)
 这章现在有 main walkthrough + deep walkthrough；第一次追源码先看 main，再用 deep 固定精确 handoff。
 
 ## 完成门槛
+
+![10 完成门槛与范围](assets/10_readme_completion_scope_prereq.png)
 
 ```text
 [ ] 我能把 `09 -> 10` 的桥讲清: 上一章先问“谁来解”，这一章先问“到底在解什么对象”

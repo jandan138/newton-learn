@@ -12,6 +12,8 @@ newton_commit: 1a230702
 
 # 08 刚体求解器家族
 
+![08 刚体求解器家族主线](assets/08_readme_solver_family_spine.png)
+
 `07_constraints_contacts_math` 已经把 `Contacts -> rows -> Jacobian -> Delassus` 讲顺了。第 08 章接着回答的不是“还有哪些 solver”，而是另一件更关键的事: **这些对象准备好以后，不同 rigid solver 到底怎样消费它们？为什么大家都长得像 `solver.step(state_in, state_out, control, contacts, dt)`，内部路线却完全不同？**
 
 所以这章不是 flat solver catalog。它先建立 shared public contract，再用四条有代表性的 rigid solver 路线做对照:
@@ -23,6 +25,8 @@ newton_commit: 1a230702
 
 ## 文件分工
 
+![08 文件分工与阅读顺序](assets/08_readme_file_roles_reading_order.png)
+
 - `README.md`: 本章边界、完成门槛、阅读入口。
 - `principle.md`: 先讲 shared solver contract，再讲 maximal / generalized coordinates 的大分野，以及四条 solver 路线分别怎样处理约束。
 - `source-walkthrough.md`: 新手 / 主 walkthrough。第一次追 chapter 08 源码先看这一份；它内嵌关键源码片段，把 `shared contract -> family split -> Kamino continuation` 主线直接讲顺。
@@ -30,6 +34,8 @@ newton_commit: 1a230702
 - `examples.md`: 用 `example_robot_cartpole.py` 做跨 solver 对照，再用 Kamino 的 `example_sim_basics_box_on_plane.py` 把 chapter 07 的 contact math 真正落到 solver step。
 
 ## 完成门槛
+
+![08 完成门槛与范围](assets/08_readme_completion_scope_prereq.png)
 
 ```text
 [ ] 我能先说清所有 solver 共享的 `step(state_in, state_out, control, contacts, dt)` contract

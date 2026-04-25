@@ -17,6 +17,8 @@ newton_commit: 1a230702
 
 # 11 MPM：粒子携材，网格求解
 
+![11 MPM 主线](assets/11_readme_mpm_spine.png)
+
 `10_softbody_cloth_cable` 刚把一个重要误会拆开: 共享 `particle` 这个词，不代表内部对象家族相同。chapter 11 要继续纠正另一层常见误读:
 
 ```text
@@ -38,6 +40,8 @@ particles carry material/history
 这里的 MPM particles 也不是 chapter 10 里 cloth / softbody 那种 mesh vertex family。它们首先是持久的 material carriers；第一遍可以把 grid 读成每一步围着粒子重建的工作区。实现里确实还会复用或暂存一些 grid-derived fields 去服务 warmstart、coupling、rendering 分支，但对象身份仍然先站在粒子这边。
 
 ## 文件分工
+
+![11 文件分工与例子顺序](assets/11_readme_file_roles_examples_order.png)
 
 - `README.md`: 本章范围、阅读顺序、例子分工、完成门槛。
 - `principle.md`: 把 persistent particles / per-step grid 这条原理主线讲顺，并说明 `register_custom_attributes`、`model.mpm.*`、`state.mpm.*` 各放什么。
@@ -81,6 +85,8 @@ particles carry material/history
 - 不要求你第一遍就会完整本构数学；chapter 11 先建立数据流和对象放置，再决定是否下潜到 constitutive details。
 
 ## 完成门槛
+
+![11 完成门槛与范围](assets/11_readme_completion_scope_prereq.png)
 
 ```text
 [ ] 我能解释为什么 chapter 11 不是 “APIC solver vs implicit solver” 二选一

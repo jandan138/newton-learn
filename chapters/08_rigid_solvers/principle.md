@@ -21,6 +21,8 @@ newton_commit: 1a230702
 
 ## 0. 先把 chapter 07 的问题往后推半步
 
+![08 从 07 contact math 推到 solver family](assets/08_principle_after_07_to_solver_family.png)
+
 chapter 07 已经把同一个接触讲成了 rows、Jacobian 和 Delassus。那一章停在这里很合理，因为它的任务是回答: **solver 后面真正会吃什么约束对象？**
 
 第 08 章只把这个问题再往后推半步。现在你不再问“rows 是什么”，而是问:
@@ -37,6 +39,10 @@ chapter 08 教你不同 solver 怎么吃
 ```
 
 ## 1. public contract 看起来一样, 内部数学却完全不同
+
+![08 同一个 step 壳，四条 solver 路线](assets/08_principle_solver_family_split.png)
+
+![08 public contract 相同，内部路线不同](assets/08_principle_public_contract_routes.png)
 
 第一遍先记住 `newton/solvers.py:L5-L8` 和 `newton/_src/solvers/solver.py:L301-L316` 共同在守的一件事:
 
@@ -74,6 +80,8 @@ solver.step(state_in, state_out, control, contacts, dt)
 
 ## 2. 第一层大分野: maximal coordinates vs generalized coordinates
 
+![08 maximal vs generalized coordinates](assets/08_principle_coordinate_family_split.png)
+
 比较 solver 时，最不容易丢的两条轴是:
 
 1. 这个 solver 把什么当成主未知量，是 `body_q / body_qd` 还是 `joint_q / joint_qd`？
@@ -103,6 +111,8 @@ solver.step(state_in, state_out, control, contacts, dt)
 例如 `Featherstone` 最后还是会把 `body_q / body_qd` 重建出来给 public state 用；`Kamino` 也会保留 joint / actuator 相关数据接口。但它们的主解法并不一样。你比较的是“谁在当主角”，不是“谁在台上完全没出现”。
 
 ## 3. `SemiImplicit`: baseline, 但不是 row solver
+
+![08 SemiImplicit force route](assets/08_principle_semiimplicit_force_route.png)
 
 `newton/_src/solvers/semi_implicit/solver_semi_implicit.py:L121-L185` 几乎把它的全部性格都写明白了。更准确的正面说法是：`SemiImplicit` 的主问题是“先把各种力和接触贡献累出来，再做 semi-implicit 积分”。
 
@@ -155,6 +165,8 @@ SemiImplicit 里的 contact 首先是 force kernel，不是 chapter 07 那种显
 
 ## 4. `Featherstone`: articulation-native joint-space solve
 
+![08 Featherstone joint-space route](assets/08_principle_featherstone_joint_space_route.png)
+
 `newton/_src/solvers/featherstone/solver_featherstone.py` 的开头 `L54-L82` 已经给了最重要的提示: 它不是围着 `body_q / body_qd` 做冗余坐标积分，而是把 `joint_q / joint_qd` 当主状态，走 articulation 的 generalized-coordinate 路线。
 
 它的 `step()` 最值钱的读法可以分成四段:
@@ -201,6 +213,8 @@ body/contact forces
 
 ## 5. `MuJoCo`: external backend bridge
 
+![08 MuJoCo backend bridge](assets/08_principle_mujoco_backend_bridge.png)
+
 `SolverMuJoCo` 的教学重点不在“MuJoCo 数学内部怎么推导”，而在“为什么它虽然也长着 `step(...)`，却应该被看成 backend bridge”。
 
 你只要先抓三处源码就够了:
@@ -238,6 +252,8 @@ Newton 主要负责 model/state/contact 的桥接。
 - 但 solver 已经从 “Newton 内部如何推进” 变成了 “Newton 怎样把 scene 交给 MuJoCo backend”。
 
 ## 6. `Kamino`: chapter 07 contact math 的直接 consumer
+
+![08 Kamino contact math consumer](assets/08_principle_kamino_contact_math_consumer.png)
 
 如果说 chapter 08 必须给 chapter 07 找一个最自然的下一站，那就是 `Kamino`。
 
@@ -317,6 +333,8 @@ contacts
 
 ## 7. 最后把四条路再压成一张教学表
 
+![08 四条 solver 路线教学表](assets/08_principle_solver_family_table.png)
+
 下面这张表仍然只围着同样两条轴比较：谁在当主状态主角，constraints / contacts 又在哪一层被处理。
 
 | Solver | 先怎么想 | 主状态是谁 | constraints 在哪一层被处理 | chapter 07 和它的距离 |
@@ -336,6 +354,8 @@ contacts
 这比背 solver 名字稳定得多。
 
 ## 8. 这一章最容易犯的三个混淆
+
+![08 三个常见混淆](assets/08_principle_common_misconceptions.png)
 
 - 同一个 `step(...)` signature，不代表同一种求解数学。
 - `contacts` 作为参数出现，不代表 solver 一定在显式解 chapter 07 那套 rows / Delassus。

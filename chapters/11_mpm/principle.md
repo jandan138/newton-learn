@@ -19,6 +19,8 @@ newton_commit: 1a230702
 
 ## 0. 先把假二选一拆掉
 
+![11 APIC vs implicit 假二选一](assets/11_principle_false_choice_split.png)
+
 chapter 11 最容易被误读成这样一组标题:
 
 ```text
@@ -56,6 +58,8 @@ particles carry material/history
 
 ## 1. particles are persistent material carriers
 
+![11 particles are persistent material carriers](assets/11_principle_persistent_material_particles.png)
+
 MPM 的粒子第一遍不要读成“某个 mesh 的顶点”。更稳的读法是:
 
 ```text
@@ -91,6 +95,8 @@ self.state_0.mpm.particle_Jp.fill_(0.975)
 - `state_0` / `state_1` 交换之后，真正持续代表材料与历史的仍然是粒子状态；实现里也会保留少量 grid-derived fields 去服务 warmstart、coupling、rendering 分支。
 
 ## 2. grid is per-step workspace
+
+![11 grid is per-step workspace](assets/11_principle_grid_per_step_workspace.png)
 
 MPM 的另一半核心不是“再来一种 particle solver”，而是:
 
@@ -135,6 +141,8 @@ def _rebuild_scratchpad(...):
 这也是为什么你第一遍不用先背 basis catalog。你只要先知道: grid 每一步围着粒子重建，然后承接本步求解。
 
 ## 3. 三步梯子: `P2G -> grid solve -> G2P`
+
+![11 P2G -> grid solve -> G2P](assets/11_principle_p2g_grid_solve_g2p_ladder.png)
 
 严格说实现里还有 collider rasterization、warmstart、scratch allocation 等中间环节；但 beginner first pass 最稳的 ladder 仍然只有三步。
 
@@ -250,6 +258,8 @@ fem.interpolate(
 
 ## 4. Newton-specific state placement: 东西到底放哪
 
+![11 Newton state placement](assets/11_principle_newton_state_placement.png)
+
 这一章最值得单独记的一张表，就是 Newton 对 MPM 数据的放置方式。
 
 | 放置位置 | 放什么 | 为什么放这里 |
@@ -277,6 +287,8 @@ name="particle_Jp", assignment=newton.Model.AttributeAssignment.STATE
 
 ## 5. MPM particles 不是 chapter 10 的 particle cloth / softbody
 
+![11 MPM particles 不是 mesh vertices](assets/11_principle_mpm_vs_mesh_particles.png)
+
 chapter 10 里，cloth 和 softbody 虽然都用 particles，但那些 particles 仍然被更稳定地读成 mesh / tet 的 vertex family:
 
 - cloth particle 是 surface mesh vertex。
@@ -294,6 +306,8 @@ chapter 11 的 MPM particle 不是这一路。
 这就是为什么 chapter 11 必须单列出来，而不能只算成“另一种 particle softbody”。
 
 ## 6. 第一遍只带走一句话也够
+
+![11 MPM 粒子携材，网格求解](assets/11_principle_particle_grid_loop.png)
 
 ```text
 MPM 的主线不是 “APIC solver vs implicit solver”。

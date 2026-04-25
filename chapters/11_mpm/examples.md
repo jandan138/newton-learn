@@ -15,6 +15,8 @@ newton_commit: 1a230702
 
 # 11 MPM 例子观察单
 
+![11 examples 观察任务总览](assets/11_examples_overview_observation_tasks.png)
+
 这一页不是 `MPM demos catalog`。它只做一件事: **给 chapter 11 的三个 upstream anchors 各分配一个明确 teaching job。**
 
 所以第一遍不要把三个例子混着看。每个例子只负责回答一个问题。
@@ -28,6 +30,8 @@ newton_commit: 1a230702
 | `newton/examples/mpm/example_mpm_twoway_coupling.py` | advanced coupling branch。证明 grid side 冲量还能反馈到 rigid bodies | `setup_collider(...)`、`collect_collider_impulses(...)` |
 
 ## 教学锚点 1: `example_mpm_granular.py`
+
+![11 mpm_granular 观察锚点](assets/11_examples_mpm_granular_anchor.png)
 
 **唯一 job**
 
@@ -74,6 +78,8 @@ python -m newton.examples mpm_granular
 
 ## 教学锚点 2: `example_mpm_snow_ball.py`
 
+![11 mpm_snow_ball 观察锚点](assets/11_examples_mpm_snow_ball_anchor.png)
+
 **唯一 job**
 
 证明 MPM particles 不是空壳点，而是真的在携带材料差异和历史变量。
@@ -111,6 +117,8 @@ python -m newton.examples mpm_snow_ball
 - 不要把 `Jp` 读成单纯的可视化变量；这里它首先是 history carrier 的证据。
 
 ## 教学锚点 3: `example_mpm_twoway_coupling.py`
+
+![11 mpm_twoway_coupling 观察锚点](assets/11_examples_mpm_twoway_coupling_anchor.png)
 
 **唯一 job**
 
@@ -159,6 +167,8 @@ python -m newton.examples mpm_twoway_coupling
 这个顺序最稳，因为它先建立主数据流，再补“粒子携带材料 / 历史”这条线，最后才扩展到跨系统 coupling。
 
 ## 自检
+
+![11 examples 自检与交接](assets/11_examples_self_check_handoff.png)
 
 - 现在只看 `example_mpm_granular.py`，你能不能不提高级本构，也说清它的 step 数据流？
 - 现在只看 `example_mpm_snow_ball.py`，你能不能解释为什么 `model.mpm.*` 和 `state.mpm.*` 要分开放？

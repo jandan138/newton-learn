@@ -16,6 +16,8 @@ newton_commit: 1a230702
 
 # 08 刚体求解器家族 例子观察单
 
+![08 examples 观察任务总览](assets/08_examples_overview_observation_tasks.png)
+
 `principle.md` 已经把本章的核心问题讲清了: 同一个 `solver.step(...)` contract 后面，可以接完全不同的 rigid solver 路线。这里不再加新理论，只用两个例子把这件事变成可观察现象。
 
 这页故意只留两个 anchor:
@@ -26,6 +28,8 @@ newton_commit: 1a230702
 它们分工不同，最好不要拿一个例子同时承担两件教学任务。
 
 ## 主例子: `newton/examples/robot/example_robot_cartpole.py`
+
+![08 cartpole solver swap 观察](assets/08_examples_cartpole_solver_swap.png)
 
 建议入口:
 
@@ -68,6 +72,8 @@ python -m newton.examples robot_cartpole --world-count 100
 - 如果你在这个例子里硬找 chapter 07 的 rows / Delassus 主线，你就拿错了例子。它不是为那件事准备的。
 
 ## 对照例子: `newton/_src/solvers/kamino/examples/sim/example_sim_basics_box_on_plane.py`
+
+![08 Kamino box_on_plane 观察](assets/08_examples_kamino_box_on_plane.png)
 
 这个例子承担的是另一件事: **把 chapter 07 留下来的 contact math，真正送进 solver。**
 
@@ -148,6 +154,8 @@ cartpole
 - `Kamino` 是 chapter 07 contact math 的直接 continuation。
 
 ## 自检
+
+![08 examples 自检与交接](assets/08_examples_self_check_handoff.png)
 
 - 现在只看 `cartpole`，你能不能解释为什么“外层 loop 一样”不代表“内部数学一样”？
 - 现在只看 `box_on_plane`，你能不能解释为什么 `Kamino` 比 `SemiImplicit` 更像 chapter 07 的直接下一跳？

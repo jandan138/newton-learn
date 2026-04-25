@@ -24,6 +24,8 @@ newton_commit: 1a230702
 
 ## 0. 先把 chapter 08 的外层 contract 带过来
 
+![09 从 08 contract 带过来](assets/09_principle_after_08_contract.png)
+
 chapter 08 最值钱的结论，是所有 solver 都可以先被拉回同一个外层调用面:
 
 ```text
@@ -45,6 +47,8 @@ solver 到底怎样把这一步修正成一个更稳定的结果？
 ```
 
 ## 1. 先看同一张 hanging cloth 的图, 不先背 solver 名字
+
+![09 hanging cloth shared problem](assets/09_principle_hanging_cloth_shared_problem.png)
 
 `newton/examples/cloth/example_cloth_hanging.py` 是本章最好的入口，因为它故意把同一个 hanging cloth scene 写成一个 shared outer loop。
 
@@ -81,6 +85,8 @@ self.state_0, self.state_1 = self.state_1, self.state_0
 
 ## 2. shared problem: 先做一份预测, 再把它修正回稳定状态
 
+![09 先预测，再修正](assets/09_principle_prediction_correction_loop.png)
+
 第一遍可以把三家都压成同一张心智图:
 
 ```text
@@ -112,6 +118,8 @@ self.state_0, self.state_1 = self.state_1, self.state_0
 
 ## 3. 为什么 `SemiImplicit` 在这章里只是 baseline
 
+![09 SemiImplicit baseline](assets/09_principle_semiimplicit_baseline.png)
+
 `example_cloth_hanging.py` 里保留了 `SemiImplicit`，这很有教学价值，但它不是本章的 main trio。
 
 它在这里更像一个对照问题:
@@ -134,6 +142,8 @@ chapter 09 真正要建立的是三条隐式修正路线。
 ```
 
 ## 4. `XPBD`: 从“单条约束怎么修”开始最容易入门
+
+![09 XPBD 单条约束投影](assets/09_principle_xpbd_constraint_projection.png)
 
 `XPBD` 是 chapter 09 最适合作为 canonical entry 的那条路，因为它最容易把复杂问题压回一句简单的话:
 
@@ -180,6 +190,8 @@ XPBD 是从约束投影角度来做隐式修正。
 ```
 
 ## 5. `VBD`: 不再围着一条约束转, 而是围着一个 vertex / block 求局部步
+
+![09 VBD vertex/block 局部解](assets/09_principle_vbd_vertex_block_solve.png)
 
 到了 `VBD`，chapter 09 的比较轴要往前走一步。现在最值钱的变化不是“约束种类更多了”，而是:
 
@@ -238,6 +250,8 @@ VBD 不只是 cloth solver。
 
 ## 6. `Style3D`: 把局部 cloth 能量收束成全局 PD / PCG solve
 
+![09 Style3D PD / PCG route](assets/09_principle_style3d_pd_pcg_route.png)
+
 `Style3D` 换了一层组织方式。它最值钱的差别不是“参数更奇怪”，而是:
 
 ```text
@@ -287,6 +301,8 @@ Style3D 不是“cloth-only 的 VBD”。
 | 它比较像 global solve endpoint | 读者在这里第一次看到真正成型的全局 PCG workflow |
 
 ## 7. 最后把三条主路线压成一张梯子表
+
+![09 三条路线梯子与误解](assets/09_principle_route_ladder_misconceptions.png)
 
 从 chapter 09 带走的最重要比较方法，不是 solver 名字，而是“每步修正先落在哪层”。
 

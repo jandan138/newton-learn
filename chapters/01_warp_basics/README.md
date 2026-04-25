@@ -11,9 +11,13 @@ newton_commit: 1a230702
 
 # 01 Warp 编程模型
 
+![01 Warp 编程模型主线](assets/01_readme_warp_spine.png)
+
 这章不是 Warp 官方文档摘要，也不是 CUDA 速成。它只解决一个更小、但对 Newton 很关键的问题：看到 `kernel`、`wp.array`、`wp.launch`、`wp.atomic_add` 这些词时，你能先把它们放进一个稳定的执行模型里。
 
 ## 文件分工
+
+![01 文件分工与阅读顺序](assets/01_readme_file_roles_reading_order.png)
 
 - `README.md`：只负责本章边界、完成门槛和阅读入口。
 - `principle.md`：先把 `kernel`、`wp.array`、`wp.launch`、`wp.tid()` 这些词翻译成人话。
@@ -21,6 +25,8 @@ newton_commit: 1a230702
 - `source-walkthrough-deep.md`：深读锚点版。已经跟上主线后，如果你想精确追上游文件、symbol 和行号，再看这一份。
 
 ## 完成门槛
+
+![01 完成门槛、范围与前置依赖](assets/01_readme_completion_scope_prereq.png)
 
 ```text
 [ ] 我能把普通 `for` 循环和 `kernel + wp.launch` 的关系讲清楚

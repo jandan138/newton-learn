@@ -22,6 +22,8 @@ newton_commit: 1a230702
 
 # 12 传感器与逆运动学：observe and steer
 
+![12 sensors / IK 主线](assets/12_readme_sensors_ik_spine.png)
+
 chapter 11 刚把一个 solver step 里的状态流讲顺。chapter 12 的自然下一问不是“再背几类 sensor”和“再学一种 optimizer”，而是更直接的一句:
 
 ```text
@@ -56,6 +58,8 @@ observe and steer
 ```
 
 ## 文件分工
+
+![12 文件分工与例子顺序](assets/12_readme_file_roles_examples_order.png)
 
 - `README.md`: 建立 chapter 12 的问题、范围、阅读顺序、完成门槛。
 - `principle.md`: 先讲 `read-side vs write-side`，再讲 shared FK/state backbone 和 update order。
@@ -103,6 +107,8 @@ observe and steer
 - chapter 11 提供的是“状态已经存在，接下来要怎么用”的视角延续；不要求你会 MPM 细节，但建议带着那条 dataflow 脑图进入 chapter 12。
 
 ## 完成门槛
+
+![12 完成门槛与范围](assets/12_readme_completion_scope_prereq.png)
 
 ```text
 [ ] 我能用一句话解释 sensors 为什么是 read-side adapters，IK 为什么是 write-side adapters

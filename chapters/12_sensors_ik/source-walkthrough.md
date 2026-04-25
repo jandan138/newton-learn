@@ -60,6 +60,8 @@ chapter 12 讲的不是“有哪些 sensor”和“有哪些 IK solver”，
 
 ## One-Screen Chapter Map
 
+![12 source walkthrough 主线](assets/12_walkthrough_pipeline_overview.png)
+
 ```text
 task-space target / gizmo / task loop
                 |
@@ -93,6 +95,8 @@ joint_q ------------------------------+
 
 ## Beginner Path
 
+![12 walkthrough 新手路径](assets/12_walkthrough_beginner_path.png)
+
 1. 先看 Stage 1。想验证什么: 为什么 chapter 12 的入口不是 sensor list 或 optimizer list。看完后应该能说: 这章先站在 shared backbone 上，再分成 read-side 和 write-side。
 2. 再看 Stage 2。想验证什么: `SensorIMU` 到底在读哪份账本。看完后应该能说: 它读的是最新的 body state，尤其依赖 `body_qdd`。
 3. 再看 Stage 3。想验证什么: 为什么 `SensorContact` 是必要 side branch。看完后应该能说: contact measurement 读的是 `contacts.force`，所以必须先 `update_contacts(...)`。
@@ -103,6 +107,8 @@ joint_q ------------------------------+
 ## Main Walkthrough
 
 ### Stage 1: chapter 12 的真正入口是 shared backbone，不是 feature catalog
+
+![12 Stage 1 shared backbone](assets/12_walkthrough_stage1_shared_backbone.png)
 
 **Definitions**
 
@@ -164,6 +170,8 @@ def eval_fk_batched(model, joint_q, joint_qd, body_q, body_qd):  # 把一批 can
 
 ### Stage 2: `SensorIMU` 是最干净的 read-side anchor
 
+![12 Stage 2 SensorIMU read branch](assets/12_walkthrough_stage2_sensor_imu_read_branch.png)
+
 **Definitions**
 
 - `SensorIMU`: 在 site frame 下输出 accelerometer / gyroscope 的 sensor。
@@ -223,6 +231,8 @@ inputs=[
 
 ### Stage 3: `SensorContact` 说明 contacts 是另一份 side ledger
 
+![12 Stage 3 SensorContact side ledger](assets/12_walkthrough_stage3_sensor_contact_side_ledger.png)
+
 **Definitions**
 
 - `contacts.force`: contact pipeline 写出来的接触力账本。
@@ -276,6 +286,8 @@ so that contact forces are current.
 现在 read-side 两种最重要的账本都看到了。下一步就该切到 write-side: 任务目标怎样被写成 IK 问题？
 
 ### Stage 4: `example_ik_franka.py` 先把 task-space goal 写成 objectives
+
+![12 Stage 4 IK Franka objectives](assets/12_walkthrough_stage4_ik_franka_objectives.png)
 
 **Definitions**
 
@@ -333,6 +345,8 @@ self.rot_obj.set_target_rotation(0, ...)  # 再刷新姿态目标
 现在 goal 已经写成 objectives 了。下一步要问的就是: `IKSolver.step(...)` 在内部到底怎样用这些 objectives？
 
 ### Stage 5: `IKSolver` 的核心是 `joint_q -> FK -> residuals -> update joint_q`
+
+![12 Stage 5 IKSolver residual update](assets/12_walkthrough_stage5_iksolver_residual_update.png)
 
 **Definitions**
 
@@ -408,6 +422,8 @@ solver 已经写回新的 `joint_q` 了。最后一步只剩下: 外部世界怎
 
 ### Stage 6: external `eval_fk(...)` 把 write-side 结果接回 read-side 世界
 
+![12 Stage 6 eval_fk rejoin](assets/12_walkthrough_stage6_eval_fk_rejoin.png)
+
 **Definition**
 
 - external `eval_fk(...)`: 用户态 / viewer 侧为了刷新 `state.body_q`、`state.body_qd` 而显式调用的 FK。
@@ -469,6 +485,8 @@ wp.copy(dest=joint_target_pos_view[:, :7], src=self.joint_q_ik[:, :7])  # solved
 到这里，chapter 12 的 first-pass 主链已经闭环: world 先被读，再被朝目标写回，然后又重新变成可读 state。
 
 ## Object Ledger
+
+![12 Object Ledger 与 Stop Here](assets/12_walkthrough_object_ledger_stop_here.png)
 
 | 对象 | 谁生产 | 谁消费 | 第一遍最该盯什么 |
 |------|--------|--------|------------------|

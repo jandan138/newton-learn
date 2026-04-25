@@ -22,6 +22,8 @@ newton_commit: 1a230702
 
 ## 0. 先把 chapter 12 的标题改对
 
+![12 标题改对：先读，再写回](assets/12_principle_title_read_then_write.png)
+
 chapter 12 最容易被写坏成两个互不来往的小标题:
 
 ```text
@@ -47,6 +49,8 @@ chapter 12 最容易被写坏成两个互不来往的小标题:
 它们都不是孤立的“功能模块 catalog”；它们都站在同一条 articulated-state backbone 上工作。
 
 ## 1. `read-side` 和 `write-side` 到底在说什么
+
+![12 先读，再写回](assets/12_principle_read_write_backbone.png)
 
 先把两边的 job 说短:
 
@@ -104,6 +108,8 @@ propose joint_q
 
 ## 2. shared FK/state backbone 才是这章真正的中轴
 
+![12 shared FK / state backbone](assets/12_principle_fk_state_backbone.png)
+
 chapter 12 最重要的记忆式是:
 
 ```text
@@ -136,6 +142,8 @@ joint_q
 它们都没有绕开 FK/state backbone。
 
 ## 3. sensors 是从同一条中轴分出去的几条读分支
+
+![12 sensors read-side branches](assets/12_principle_sensor_branches.png)
 
 ### 3.1 `SensorIMU`: 最干净的 body-state read branch
 
@@ -229,6 +237,8 @@ self.plate_contact_sensor.update(self.state_0, self.contacts)
 
 ## 4. IK 是围着 FK 回写 `joint_q` 的 write branch
 
+![12 IK write-side branch](assets/12_principle_ik_write_joint_q_branch.png)
+
 ### 4.1 task-space goal 先被写成 objective
 
 `example_ik_franka.py` 的 mainline 很干净:
@@ -319,6 +329,8 @@ self.solver.step(self.joint_q, self.joint_q, iterations=self.ik_iters)
 
 ## 5. 三个 update-order gotcha 必须一次记住
 
+![12 update-order gotchas](assets/12_principle_update_order_gotchas.png)
+
 ### 5.1 `SensorIMU` 和 `body_qdd`
 
 `SensorIMU` 会在构造时请求 `body_qdd`:
@@ -399,6 +411,8 @@ IK 写回 joint_q
 这也是为什么 `example_ik_cube_stacking.py` 能把 IK 结果继续喂进 `control.joint_target_pos`，再进入更大的任务循环: IK 的输出本来就是一份新的 joint-space 命令或解，不是直接改好的终局世界。
 
 ## 6. 第一遍只带走一句话也够
+
+![12 一句话带走](assets/12_principle_one_sentence_handoff.png)
 
 ```text
 sensors 负责从已有 state / contacts / rendered scene 里读出 measurement，

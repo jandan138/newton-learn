@@ -12,6 +12,8 @@ newton_commit: 1a230702
 
 # 09 变分求解器族
 
+![09 变分求解器族主线](assets/09_readme_variational_solver_spine.png)
+
 `08_rigid_solvers` 已经把 shared `solver.step(...)` contract 和 solver family split 讲顺了。第 09 章接着回答的不是“又多了哪几个 solver”，而是另一件更关键的事: **当同一块 cloth 或 softbody 需要更稳定的隐式更新时，`XPBD`、`VBD`、`Style3D` 到底在解什么共同问题？它们每一步又把修正落在哪一层？**
 
 所以这章不是 flat solver catalog。它先用同一个 `example_cloth_hanging.py` 把 shared problem 立住，再把三条主路线压成一条 beginner-safe 的梯子:
@@ -26,6 +28,8 @@ XPBD: per-constraint projection
 
 ## 文件分工
 
+![09 文件分工与阅读顺序](assets/09_readme_file_roles_reading_order.png)
+
 - `README.md`: 本章边界、完成门槛、阅读入口。
 - `principle.md`: 先讲 shared variational / implicit correction problem，再比较三条更新路线各自把修正落在哪一层。
 - `source-walkthrough.md`: 新手 / 主 walkthrough。第一次追 chapter 09 源码先看这一份；它内嵌关键源码片段，把 `shared variational problem -> XPBD -> VBD -> Style3D` 主线直接讲顺。
@@ -33,6 +37,8 @@ XPBD: per-constraint projection
 - `examples.md`: 用 `example_cloth_hanging.py` 做跨 solver 对照，再用 `example_softbody_hanging.py` 解释 VBD 为什么不只是 cloth solver。
 
 ## 完成门槛
+
+![09 完成门槛与范围](assets/09_readme_completion_scope_prereq.png)
 
 ```text
 [ ] 我能先说清 `08 -> 09` 的桥: 同样是 `solver.step(...)`，但现在关注的是 cloth / softbody 的隐式修正问题

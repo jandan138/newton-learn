@@ -17,6 +17,8 @@ newton_commit: 1a230702
 
 # 09 变分求解器族 例子观察单
 
+![09 examples 观察任务总览](assets/09_examples_overview_observation_tasks.png)
+
 `principle.md` 已经把本章主线讲清了: chapter 09 不是 catalog，而是同一个 implicit correction problem 怎样被三种更新层级处理。这里不再加新理论，只把这件事变成可观察现象。
 
 下面提到的源码行号都以 `newton_commit: 1a230702` 为准。
@@ -29,6 +31,8 @@ newton_commit: 1a230702
 它们分工不同，最好不要拿一个例子同时承担两件教学任务。
 
 ## 主例子: `newton/examples/cloth/example_cloth_hanging.py`
+
+![09 cloth_hanging 观察 XPBD / VBD](assets/09_examples_cloth_hanging_xpbd_vbd.png)
 
 建议入口:
 
@@ -78,6 +82,8 @@ python -m newton.examples cloth_hanging --solver semi_implicit
 - 如果你觉得 `Style3D` 只是 cloth 参数更多的版本，你就没有注意到 custom attributes、`_precompute(builder)` 和 PCG 这条主线。
 
 ## 对照例子: `newton/examples/softbody/example_softbody_hanging.py`
+
+![09 softbody_hanging 是 VBD 延伸](assets/09_examples_softbody_hanging_vbd_extension.png)
 
 这个例子承担的是另一件事: **给 `VBD` 补一条 beyond-cloth 的延伸线。**
 
@@ -151,6 +157,8 @@ softbody_hanging 负责看“VBD 为什么不只是一条布料路线”
 - `Style3D` 是 cloth-specialized global PD / PCG solve 路线。
 
 ## 自检
+
+![09 examples 自检与交接](assets/09_examples_self_check_handoff.png)
 
 - 现在只看 `cloth_hanging`，你能不能解释为什么“外层 loop 一样”不代表“内部修正层级一样”？
 - 现在只看 `softbody_hanging`，你能不能解释为什么这个例子是在扩展 `VBD`，而不是在替代 chapter 09 的主入口？

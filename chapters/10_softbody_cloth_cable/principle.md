@@ -15,6 +15,8 @@ newton_commit: 1a230702
 
 ## 0. 先把 chapter 09 的问题换个方向问
 
+![10 从 09 转向表示问题](assets/10_principle_after_09_representation_question.png)
+
 chapter 09 的重点是 solver family: **同一块 cloth / softbody 进入一步 `dt` 之后，修正先落在 constraint、block，还是 global system？**
 
 chapter 10 不再先问“谁来修”，而是先问:
@@ -26,6 +28,8 @@ chapter 10 不再先问“谁来修”，而是先问:
 这个顺序变化很重要，因为在 Newton 里，`cloth`、`softbody`、`cable` 虽然都能表现出柔性，但它们不是同一种内部对象。
 
 ## 1. 先给出 chapter 10 的一句总答案
+
+![10 先认表示，再谈 solver](assets/10_principle_representation_family_map.png)
 
 最短答案就是这三行:
 
@@ -52,6 +56,8 @@ cable    = capsule rigid bodies + cable joints (+ articulation)
 
 ## 2. 三个对象家族到底差在哪
 
+![10 三个对象家族差在哪](assets/10_principle_three_object_family_compare.png)
+
 | 家族 | 主 builder 入口 | 主状态单位 | 拓扑 / 连接元 | 为什么看起来会“变形” | 这会改变什么 |
 |------|-----------------|------------|---------------|----------------------|----------------|
 | cloth | `add_cloth_grid(...)` | particle | triangles + bending edges + optional springs | 表面三角网格被拉伸、弯折、下垂 | 重点是表面弹性、弯曲和布面碰撞 |
@@ -64,6 +70,8 @@ cable    = capsule rigid bodies + cable joints (+ articulation)
 - cable 连最基础的状态单位都换了，不再是 particle，而是 rigid body transform。
 
 ## 3. cloth: 它是表面粒子网格，不是“薄一点的 softbody”
+
+![10 cloth 是表面粒子网格](assets/10_principle_cloth_surface_grid.png)
 
 `newton/examples/cloth/example_cloth_hanging.py` 的教学价值，在于它先把 cloth 的身份放在 solver 之前。脚本虽然可以切 `semi_implicit / xpbd / vbd / style3d`，但不管 solver 怎么变，场景入口都在围着一张布网格写。
 
@@ -109,6 +117,8 @@ cloth 先是一种表示，再由不同 solver 去消费这套表示。
 ```
 
 ## 4. softbody: 它是体粒子网格，不是“厚一点的 cloth”
+
+![10 softbody 是四面体体网格](assets/10_principle_softbody_tetrahedral_volume.png)
 
 `newton/examples/softbody/example_softbody_hanging.py` 则把另一件事写得很清楚: **softbody 的核心不是表面，而是体积。**
 
@@ -162,6 +172,8 @@ softbody 会长出一层表面碰撞皮肤，但它的核心仍然是 tet volume
 
 ## 5. cable: 它不是 particle softbody，而是刚体链
 
+![10 cable 是刚体链](assets/10_principle_cable_rigidbody_chain.png)
+
 `newton/examples/cable/example_cable_twist.py` 是 chapter 10 最关键的反直觉例子，因为它打破了“凡是能弯的都是粒子物体”这个误会。
 
 它真正的 builder 入口不是 `add_particle_*`，而是:
@@ -213,6 +225,8 @@ cable 在 Newton 里首先是一条刚体链，
 
 ## 6. 为什么 chapter 10 必须是 representation-first
 
+![10 为什么必须 representation-first](assets/10_principle_representation_first_reason.png)
+
 如果你还沿用 chapter 09 的 solver-first 视角，很容易在 chapter 10 里犯两个错:
 
 - 看到 `cloth_hanging.py` 支持多种 solver，就误以为 cloth 的身份来自 solver。
@@ -235,6 +249,8 @@ chapter 10 问“被组织、被修正的对象到底是哪一类？”
 先把这层对象家族分清楚，你后面再看 solver、contacts、coloring、state arrays 才不会串线。
 
 ## 7. 这三种表示具体会改变什么
+
+![10 状态字段变化与常见混淆](assets/10_principle_state_field_changes_misconceptions.png)
 
 | 你接下来会看到的东西 | cloth | softbody | cable |
 |----------------------|-------|----------|-------|

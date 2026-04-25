@@ -51,6 +51,8 @@ chapter 10 比较的不是“谁更会解 deformable”，
 
 ## One-Screen Chapter Map
 
+![10 source walkthrough 主线](assets/10_walkthrough_pipeline_overview.png)
+
 ```text
 same visual impression: all look deformable
                  |
@@ -77,6 +79,8 @@ same visual impression: all look deformable
 
 ## Beginner Path
 
+![10 walkthrough 新手路径](assets/10_walkthrough_beginner_path.png)
+
 1. 先看 Stage 1。
    - 想验证什么: chapter 10 为什么必须从表示而不是 solver 开始。
    - 看完后应该能说: 三个例子共享“看起来会变形”的外观，但 builder 入口已经分家。
@@ -93,6 +97,8 @@ same visual impression: all look deformable
 ## Main Walkthrough
 
 ### Stage 1: chapter 09 的 solver 问题先停一下，先认对象家族
+
+![10 Stage 1 family split](assets/10_walkthrough_stage1_family_split.png)
 
 **Definition**
 
@@ -140,6 +146,8 @@ rod_bodies, _rod_joints = builder.add_rod(...)  # 直接得到刚体段和连接
 先接受一件事: chapter 10 要先辨认对象家族，再去看 solver 怎样消费它们。
 
 ### Stage 2: cloth 先被表示成 particles + triangles + bending edges
+
+![10 Stage 2 cloth particles + triangles](assets/10_walkthrough_stage2_cloth_particles_triangles.png)
 
 **Definition**
 
@@ -222,6 +230,8 @@ if add_springs:
 
 ### Stage 3: softbody 还是 particles，但核心已经换成 tetrahedra
 
+![10 Stage 3 softbody particles + tetrahedra](assets/10_walkthrough_stage3_softbody_particles_tetrahedra.png)
+
 **Definition**
 
 `volumetric particle mesh`：以粒子为顶点，但真正的核心拓扑已经延伸到体单元。第一遍先把它想成“不是一张皮，而是一整块体积网格”。
@@ -293,6 +303,8 @@ The generated surface triangles and optional edges are for collision purposes.
 现在你已经把 particle family 内部的两种对象分开了。下一步要再跨一层: cable 连状态单位都变了。
 
 ### Stage 4: cable 不是 particle deformable，而是 capsule rigid-body chain
+
+![10 Stage 4 cable capsule chain](assets/10_walkthrough_stage4_cable_capsule_chain.png)
 
 **Definition**
 
@@ -377,6 +389,8 @@ builder.body_inv_inertia[first_body] = wp.mat33(0.0)  # 转动自由度也锁死
 到这里，chapter 10 的三条主家族已经分清楚了: cloth 是表面粒子网格，softbody 是体粒子网格，cable 是刚体链。
 
 ## Object Ledger
+
+![10 Object Ledger 与 Stop Here](assets/10_walkthrough_object_ledger_stop_here.png)
 
 | 对象 | 谁生产 | 谁消费 | 盯哪些字段 / 关系 |
 |------|--------|--------|------------------|

@@ -20,6 +20,8 @@ newton_commit: 1a230702
 
 # 12 传感器与逆运动学例子观察单
 
+![12 examples 观察任务总览](assets/12_examples_overview_observation_tasks.png)
+
 这页不是 `sensors + IK demos catalog`。它只做一件事: **给 chapter 12 的 seven upstream anchors 各分配一个明确 teaching job。**
 
 所以第一遍不要把这些例子混着跑。每个例子只负责回答一个问题。
@@ -37,6 +39,8 @@ newton_commit: 1a230702
 | `newton/examples/ik/example_ik_cube_stacking.py` | 说明 IK 输出还能喂给更大的 control/task loop | advanced systems branch | `ik_solver.step -> control.joint_target_pos` |
 
 ## Mainline Anchor 1: `example_sensor_imu.py`
+
+![12 sensor_imu 观察锚点](assets/12_examples_sensor_imu_anchor.png)
 
 **唯一 job**
 
@@ -75,6 +79,8 @@ python -m newton.examples sensor_imu
 
 ## Necessary Side Branch: `example_sensor_contact.py`
 
+![12 sensor_contact 观察锚点](assets/12_examples_sensor_contact_anchor.png)
+
 **唯一 job**
 
 证明 chapter 12 里不是所有 sensor 都只读 `body_q` / `body_qd`；有些读的是 `contacts` side ledger，而且 timing 很关键。
@@ -105,6 +111,8 @@ python -m newton.examples sensor_contact
 - 不要跳过 update timing 去记输出矩阵形状；顺序比表结构更重要。
 
 ## Mainline Anchor 2: `example_ik_franka.py`
+
+![12 ik_franka 观察锚点](assets/12_examples_ik_franka_anchor.png)
 
 **唯一 job**
 
@@ -145,6 +153,8 @@ python -m newton.examples ik_franka
 - 不要把 gizmo 交互当成重点；gizmo 只是一个方便推送 target 的输入口。
 
 ## Second-Pass Branch: `example_ik_h1.py`
+
+![12 advanced branches map](assets/12_examples_advanced_branches_map.png)
 
 **唯一 job**
 
@@ -272,6 +282,8 @@ python -m newton.examples ik_cube_stacking --world-count 16
 这个顺序最稳，因为它先建立最干净的 read-side anchor，再马上补上 contact timing 这个必须知道的 side branch，然后再切到 write-side mainline，最后才扩展到宽传感器、多末端、custom objective 和 systems loop。
 
 ## 自检
+
+![12 examples 自检与交接](assets/12_examples_self_check_handoff.png)
 
 - 现在只看 `example_sensor_imu.py`，你能不能不展开数学，也说清它为什么是最干净的 read-side anchor？
 - 现在只看 `example_sensor_contact.py`，你能不能解释为什么 `solver.update_contacts(...)` 不能省？

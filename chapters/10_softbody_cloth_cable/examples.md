@@ -13,6 +13,8 @@ newton_commit: 1a230702
 
 # 10 软体、布料与 Cable 例子观察单
 
+![10 examples 观察任务总览](assets/10_examples_overview_observation_tasks.png)
+
 这一页不是“deformable demos catalog”。它只做一件事: **给 chapter 10 的三种对象家族各找一个教学锚点。**
 
 所以三个例子不要混着用。每个例子只承担一个 job。
@@ -26,6 +28,8 @@ newton_commit: 1a230702
 | `newton/examples/cable/example_cable_twist.py` | 让你看见 cable 是 rigid capsule chain，不是 particle softbody | `builder.add_rod(...)` |
 
 ## 教学锚点 1: `example_cloth_hanging.py`
+
+![10 cloth_hanging 观察锚点](assets/10_examples_cloth_hanging_anchor.png)
 
 **唯一 job**
 
@@ -67,6 +71,8 @@ solver 只是随后如何更新这张布。
 
 ## 教学锚点 2: `example_softbody_hanging.py`
 
+![10 softbody_hanging 观察锚点](assets/10_examples_softbody_hanging_anchor.png)
+
 **唯一 job**
 
 把 softbody 定位成体粒子网格，并让你看到它会自动生成表面 collision mesh。
@@ -102,6 +108,8 @@ softbody 在 Newton 里是 particles + tetrahedra，
 - 不要把它当成 chapter 10 的 cross-solver 比赛场；它的 job 是认对象，不是比 solver。
 
 ## 教学锚点 3: `example_cable_twist.py`
+
+![10 cable_twist 观察锚点](assets/10_examples_cable_twist_anchor.png)
 
 **唯一 job**
 
@@ -149,6 +157,8 @@ cable 在 Newton 里首先是一串 capsules，
 这个顺序最稳，因为它先让你在 particle family 内部分清 `surface vs volume`，再跳到完全不同的 rigid-body cable family。
 
 ## 自检
+
+![10 examples 自检与交接](assets/10_examples_self_check_handoff.png)
 
 - 现在只看 `cloth_hanging`，你能不能不提 solver 名字，也说清它为什么是 cloth？
 - 现在只看 `softbody_hanging`，你能不能解释为什么 surface mesh 是“长出来的”，而不是它的核心体表示？
