@@ -54,7 +54,7 @@ Generate a raster PNG and save it to the requested workspace path.
 - Verify: `docs/superpowers/specs/2026-04-25-chapter-04-tutorial-infographics-design.md`
 - Verify: `docs/superpowers/specs/2026-04-25-chapters-05-07-native-imagegen-redo-design.md`
 
-- [ ] **Step 1: Verify native image generation is available**
+- [x] **Step 1: Verify native image generation is available**
 
 Run:
 
@@ -64,7 +64,7 @@ codex features list | rg '^image_generation\\s+stable\\s+true'
 
 Expected: one matching line for `image_generation stable true`.
 
-- [ ] **Step 2: Confirm the style source excludes chapter 02 native-imagegen design**
+- [x] **Step 2: Confirm the style source excludes chapter 02 native-imagegen design**
 
 Run:
 
@@ -85,7 +85,7 @@ Expected: matches proving the redo follows 03/04 and rejects the 02 diorama dire
 - Replace: `chapters/06_collision/assets/06_collision_bridge_map.png`
 - Replace: `chapters/07_constraints_contacts_math/assets/07_contact_math_bridge_map.png`
 
-- [ ] **Step 1: Generate chapter 05 calibration**
+- [x] **Step 1: Generate chapter 05 calibration**
 
 Generate `chapters/05_rigid_articulation/assets/05_principle_flat_articulation_layout.png`.
 
@@ -98,7 +98,7 @@ Bottom recap: 关节树先被压平成数组，FK 再把 joint state 推到 body
 Allowed exact terms: articulation_start, joint_parent, joint_child, joint_q_start, joint_qd_start, joint_q, joint_qd, body_q, body_qd, eval_fk().
 ```
 
-- [ ] **Step 2: Generate chapter 06 calibration**
+- [x] **Step 2: Generate chapter 06 calibration**
 
 Generate `chapters/06_collision/assets/06_collision_bridge_map.png`.
 
@@ -111,7 +111,7 @@ Bottom recap: body_q 给运动位置，shape_* 给几何输入，collision 最�
 Allowed exact terms: body_q, shape_transform, shape_type, AABB, broad phase, narrow phase, ContactData, write_contact(), Contacts.
 ```
 
-- [ ] **Step 3: Generate chapter 07 calibration**
+- [x] **Step 3: Generate chapter 07 calibration**
 
 Generate `chapters/07_constraints_contacts_math/assets/07_contact_math_bridge_map.png`.
 
@@ -124,7 +124,7 @@ Bottom recap: Contacts 给几何，07 把它翻译成 solver 能吃的 rows / J 
 Allowed exact terms: Contacts, contact frame, normal, tangent, rows, J, D, effective mass, 08 solver.
 ```
 
-- [ ] **Step 4: Verify calibration PNG files**
+- [x] **Step 4: Verify calibration PNG files**
 
 Run:
 
@@ -137,7 +137,7 @@ file \
 
 Expected: every line says `PNG image data`.
 
-- [ ] **Step 5: Visual calibration review**
+- [x] **Step 5: Visual calibration review**
 
 Open the three calibration images and reject any image that is text-only, decorative, unreadable, or drifting toward Chapter 02 diorama / photorealistic 3D style.
 
