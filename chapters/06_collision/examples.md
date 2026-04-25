@@ -13,9 +13,13 @@ newton_commit: 1a230702
 
 `principle.md` 已经把 `shape world pose -> candidate pair -> contact geometry -> Contacts` 这条桥讲顺；这一页只把两个现成例子改成观察任务。下面提到的命令只是建议入口，不代表已经执行过。chapter 06 第一遍先看“哪个 shape pair 先出现、一个 pair 会长出几个 contact、法线和接触点怎样跟着几何变”，先不把注意力放到 solver 调参或控制逻辑上。
 
+![06 examples 观察任务总览](assets/06_examples_overview_observation_tasks.png)
+
 ## 主例子：`basic_shapes` 里的球落地
 
 如果你要亲自跑，建议入口还是最朴素的 `python -m newton.examples basic_shapes`，但第一遍只盯 sphere 和 ground plane，先把其他 shape 当背景。
+
+![basic_shapes 球落地观察单](assets/06_examples_basic_shapes_sphere_ground.png)
 
 ### 它最适合验证什么
 
@@ -49,6 +53,8 @@ newton_commit: 1a230702
 
 如果你要亲自跑，这个组合比默认大金字塔更适合 chapter 06 第一遍：`python -m newton.examples pyramid --test --pyramid-size 4 --num-pyramids 1`。这里故意先用 `--test` 去掉 wrecking ball，把注意力留给 box-ground 和 box-box 接触本身。
 
+![pyramid contact set 增长观察单](assets/06_examples_pyramid_contact_set_growth.png)
+
 ### 它最适合补哪块观察
 
 - `basic_shapes` 让你看见“最小单 pair”；这个对照例子则让你看见 contact set 怎样因为 shape 数和面接触而长大。
@@ -64,6 +70,8 @@ newton_commit: 1a230702
 | 在理解静态堆叠后，再把 `--test` 去掉让 wrecking ball 回来 | contact set 会从“主要集中在底层支撑面”变成“瞬时增长、迅速重排”的图像；这不是给你调 solver，而是让你看到候选 pair 和最终 contact 都会随几何关系突然扩张。 | `rigid_contact_count` 的峰值变化，以及画面里 arrows 从底层局部区域扩散到整堆 boxes 的过程。 |
 
 ## 这页怎么配合其他文件
+
+![contact 字段观察清单](assets/06_examples_contact_fields_watchlist.png)
 
 - `principle.md`：负责把 `shape world pose -> broad phase candidate -> narrow phase contact -> Contacts` 这条桥讲顺。
 - `source-walkthrough.md`：负责把这里提到的观察点钉回 `compute_shape_aabbs(...)`、broad phase writer、narrow phase 和 `Contacts` 字段。

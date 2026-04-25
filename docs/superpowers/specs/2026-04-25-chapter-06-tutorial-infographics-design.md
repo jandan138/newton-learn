@@ -105,7 +105,7 @@ Expected image count is about 22 PNGs: 3 for `README.md`, 7 for `principle.md`, 
 Create tutorial-navigation images for:
 
 1. Chapter identity: chapter 05 body state plus chapter 04 shape metadata now enter collision.
-2. File responsibilities and reading order: `README.md`, `principle.md`, `source-walkthrough.md`, `source-walkthrough-deep.md`, and `examples.md`.
+2. File responsibilities and reading order: `README.md -> source-walkthrough.md -> principle.md -> examples.md -> source-walkthrough-deep.md -> 07 / 08`, matching the chapter 06 README's first-pass path.
 3. Completion threshold, chapter scope, explicit non-scope, prerequisites, GAMES103 bridge, and expected output.
 
 These should be placed across the README so the file reads like a visual entry map. The GAMES103 and reading-order sections can be covered by nearby scope / file-role images if a separate table image would be redundant.

@@ -13,6 +13,8 @@ newton_commit: 1a230702
 
 所以这一章不是碰撞算法教材，也不是接触求解器章节。它只保住第一次读 collision path 真正需要的桥：body/world state 怎样挂到 shape，shape 怎样进入 broad phase，candidate pair 怎样按 shape type 分流到 narrow phase，以及 contact data 为什么会以 `Contacts` 这种统一缓冲区的形式交给后面的章节。
 
+![06 collision 主线入口](assets/06_readme_collision_spine.png)
+
 ## 文件分工
 
 - `README.md`：只负责本章边界、完成门槛和阅读入口。
@@ -20,6 +22,8 @@ newton_commit: 1a230702
 - `source-walkthrough.md`：新手 / 主 walkthrough。第一次追 chapter 06 源码先看这一份；它内嵌关键源码片段，把 `body/world state -> candidate pairs -> ContactData -> Contacts` 主线直接讲顺。
 - `source-walkthrough-deep.md`：深读锚点版。已经跟上主线后，如果你想精确追 symbol、上游路径和可选分支，再看这一份。
 - `examples.md`：负责用最小 shape 例子把 candidate pair、contact 数量和 contact 几何变成可观察现象。
+
+![06 文件分工与阅读顺序](assets/06_readme_file_roles_reading_order.png)
 
 ## 完成门槛
 
@@ -30,6 +34,8 @@ newton_commit: 1a230702
 [ ] 我能举出至少一种 shape-type branching 的例子，说明不同几何对会走不同 narrow-phase 问题，但最后仍会写成统一 contact data
 [ ] 我能用人话描述 `Contacts` 至少存了 shape id、body-frame 接触点、world-frame 法线、offset / margin 这几类信息，并解释为什么 `07` / `08` 都要从这里继续读
 ```
+
+![06 完成门槛与范围](assets/06_readme_completion_scope_prereq.png)
 
 ## 本章目标
 

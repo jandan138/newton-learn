@@ -1,6 +1,6 @@
 # Chapter 06 Tutorial Infographics Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Generate and integrate PNG tutorial infographics across chapter 06 reader-facing pages.
 
@@ -49,7 +49,7 @@ Temporary ignored implementation files:
 
 ## Task 1: Calibration Renderer and Image
 
-- [ ] **Step 1: Prepare ignored renderer workspace**
+- [x] **Step 1: Prepare ignored renderer workspace**
 
 Run:
 
@@ -59,7 +59,7 @@ mkdir -p tmp/ch06-imagegen/fonts chapters/06_collision/assets
 
 Expected: both directories exist. `tmp/` is ignored by `.gitignore`, so the renderer does not become part of the final commit.
 
-- [ ] **Step 2: Ensure a readable CJK font is available**
+- [x] **Step 2: Ensure a readable CJK font is available**
 
 Run:
 
@@ -78,7 +78,7 @@ PY
 
 Expected: a font path or `missing`. If it prints `missing`, download `NotoSansCJKsc-Regular.otf` into `tmp/ch06-imagegen/fonts/` and re-run the probe. Do not commit the font.
 
-- [ ] **Step 3: Create the deterministic renderer**
+- [x] **Step 3: Create the deterministic renderer**
 
 Write `tmp/ch06-imagegen/render_infographics.py`.
 
@@ -108,7 +108,7 @@ body/world state + shape metadata
 
 The image must explicitly say `broad phase` produces `maybe-list / candidate pairs`, not final contacts.
 
-- [ ] **Step 4: Render calibration only**
+- [x] **Step 4: Render calibration only**
 
 Run:
 
@@ -118,7 +118,7 @@ python3 tmp/ch06-imagegen/render_infographics.py --only 06_collision_bridge_map.
 
 Expected: `chapters/06_collision/assets/06_collision_bridge_map.png` is created or replaced.
 
-- [ ] **Step 5: Inspect calibration file**
+- [x] **Step 5: Inspect calibration file**
 
 Run:
 
@@ -132,12 +132,12 @@ Open the image visually and check it matches `docs/superpowers/specs/chapter-vis
 
 ## Task 2: README Image Batch
 
-- [ ] **Step 1: Render README support images**
+- [x] **Step 1: Render README support images**
 
 Render:
 
 - `06_readme_collision_spine.png`: chapter identity; chapter 05 body state plus chapter 04 shape metadata now enter collision.
-- `06_readme_file_roles_reading_order.png`: file roles and reading order: `README.md -> principle.md -> source-walkthrough.md -> source-walkthrough-deep.md -> examples.md`.
+- `06_readme_file_roles_reading_order.png`: file roles and reading order: `README.md -> source-walkthrough.md -> principle.md -> examples.md -> source-walkthrough-deep.md -> 07 / 08`.
 - `06_readme_completion_scope_prereq.png`: completion gate, scope, non-scope, prerequisites, GAMES103 bridge, and expected output.
 
 Run:
@@ -149,7 +149,7 @@ python3 tmp/ch06-imagegen/render_infographics.py \
   --only 06_readme_completion_scope_prereq.png
 ```
 
-- [ ] **Step 2: Integrate README images**
+- [x] **Step 2: Integrate README images**
 
 Insert:
 
@@ -163,7 +163,7 @@ Coverage note:
 
 ## Task 3: Principle Image Batch
 
-- [ ] **Step 1: Render principle concept images**
+- [x] **Step 1: Render principle concept images**
 
 Render:
 
@@ -188,7 +188,7 @@ python3 tmp/ch06-imagegen/render_infographics.py \
   --only 06_principle_next_chapters_map.png
 ```
 
-- [ ] **Step 2: Integrate principle images**
+- [x] **Step 2: Integrate principle images**
 
 Insert:
 
@@ -202,7 +202,7 @@ Insert:
 
 ## Task 4: Source Walkthrough Image Batch
 
-- [ ] **Step 1: Render source-walkthrough images**
+- [x] **Step 1: Render source-walkthrough images**
 
 Render:
 
@@ -229,7 +229,7 @@ python3 tmp/ch06-imagegen/render_infographics.py \
   --only 06_walkthrough_object_ledger_stop_here.png
 ```
 
-- [ ] **Step 2: Integrate source-walkthrough images**
+- [x] **Step 2: Integrate source-walkthrough images**
 
 Insert:
 
@@ -246,7 +246,7 @@ Insert:
 
 ## Task 5: Examples Image Batch
 
-- [ ] **Step 1: Render examples images**
+- [x] **Step 1: Render examples images**
 
 Render:
 
@@ -265,7 +265,7 @@ python3 tmp/ch06-imagegen/render_infographics.py \
   --only 06_examples_contact_fields_watchlist.png
 ```
 
-- [ ] **Step 2: Integrate examples images**
+- [x] **Step 2: Integrate examples images**
 
 Insert:
 
@@ -276,7 +276,7 @@ Insert:
 
 ## Task 6: Verification, Review, Commit, Push
 
-- [ ] **Step 1: Verify Markdown image references**
+- [x] **Step 1: Verify Markdown image references**
 
 Run:
 
@@ -309,7 +309,7 @@ PY
 
 Expected: `all image refs exist (22 refs)`.
 
-- [ ] **Step 2: Verify expected asset inventory**
+- [x] **Step 2: Verify expected asset inventory**
 
 Run:
 
@@ -354,7 +354,7 @@ PY
 
 Expected: `expected 22 actual 22` and no missing / extra output.
 
-- [ ] **Step 3: Verify PNG assets**
+- [x] **Step 3: Verify PNG assets**
 
 Run:
 
@@ -364,7 +364,7 @@ file chapters/06_collision/assets/06_*.png
 
 Expected: every line says `PNG image data`.
 
-- [ ] **Step 4: Verify Markdown diff cleanliness**
+- [x] **Step 4: Verify Markdown diff cleanliness**
 
 Run:
 
@@ -374,7 +374,7 @@ git diff --check -- chapters/06_collision docs/superpowers/specs/2026-04-25-chap
 
 Expected: no output.
 
-- [ ] **Step 5: Verify deep walkthrough stayed untouched**
+- [x] **Step 5: Verify deep walkthrough stayed untouched**
 
 Run:
 
@@ -385,7 +385,7 @@ git status --short -- chapters/06_collision/source-walkthrough-deep.md
 
 Expected: no output.
 
-- [ ] **Step 6: Run visual / semantic review**
+- [x] **Step 6: Run visual / semantic review**
 
 Review checklist:
 
@@ -399,11 +399,11 @@ Review checklist:
 
 Fix any concrete issues, re-render affected PNGs, and re-run Steps 1-5.
 
-- [ ] **Step 7: Mark this plan complete**
+- [x] **Step 7: Mark this plan complete**
 
 After all checks pass, update every checkbox in this file from `[ ]` to `[x]`.
 
-- [ ] **Step 8: Commit and push**
+- [x] **Step 8: Commit and push**
 
 Run:
 

@@ -68,6 +68,8 @@ body motion + Model.shape_*
 
 第一遍先守住一句话：chapter 06 真正讲的是 **shape 怎样接上 collision pipeline**，不是 body 直接互相碰撞。
 
+![06 walkthrough 主线总览](assets/06_walkthrough_pipeline_overview.png)
+
 ## One-Screen Chapter Map
 
 ```text
@@ -117,6 +119,8 @@ Model.shape_transform / shape_body / shape_type / shape_margin / shape_gap / sha
 4. 最后看 Stage 4 和 Stage 5。
    - 想验证什么：narrow phase 怎样把不同几何分支重新压回统一的 `ContactData`，writer 又怎样把它写进 `Contacts`。
    - 看完后应该能说：chapter 06 的终点不是某个 GJK 函数，而是 solver 能直接消费的 `Contacts` 数组。
+
+![06 walkthrough beginner path](assets/06_walkthrough_beginner_path.png)
 
 ## Main Walkthrough
 
@@ -183,6 +187,8 @@ def collide(self, state: State, contacts: Contacts | None = None, *, collision_p
 **Output passed to next stage**
 
 `CollisionPipeline.collide(state, contacts)` 拿到了两类输入：`state.body_q` 这份 runtime body pose，以及 `model.shape_*` 这份静态 shape 元数据。
+
+![Stage 1：Model / State / shape data handoff](assets/06_walkthrough_stage1_model_state_shape_data.png)
 
 ### Stage 2: `compute_shape_aabbs(...)` 把 body pose 变成每个 shape 的 world-space 表示
 
@@ -262,6 +268,8 @@ geom_xform[shape_id] = X_ws  # 把 shape 的 world pose 留给 narrow phase
 
 每个 shape 的 `world transform + expanded AABB + geom_data`。其中 AABB 交给 broad phase，`geom_*` 交给 narrow phase。
 
+![Stage 2：compute_shape_aabbs 生成 world shape 与 AABB](assets/06_walkthrough_stage2_compute_shape_aabbs.png)
+
 ### Stage 3: broad phase 只写 candidate pairs，不写 contact geometry
 
 **Claim**
@@ -318,6 +326,8 @@ def write_pair(pair, candidate_pair, candidate_pair_count, max_candidate_pair):
 **Output passed to next stage**
 
 一张 candidate shape pair 名单：`broad_phase_shape_pairs + broad_phase_pair_count`。
+
+![Stage 3：broad phase candidate pairs](assets/06_walkthrough_stage3_broad_phase_candidate_pairs.png)
 
 ### Stage 4: narrow phase 可以分很多支，但会重新收束成统一的 `ContactData`
 
@@ -395,6 +405,8 @@ class ContactData:
 
 一条条统一格式的 `ContactData` 记录，已经足够让 writer 把它们写进最终 `Contacts` 缓冲区。
 
+![Stage 4：narrow phase 收束成 ContactData](assets/06_walkthrough_stage4_narrow_phase_contactdata.png)
+
 ### Stage 5: `write_contact()` 把 `ContactData` 变成 solver 能直接消费的 `Contacts`
 
 **Claim**
@@ -466,6 +478,8 @@ self.rigid_contact_margin1 = wp.zeros(rigid_contact_max, dtype=wp.float32)
 
 `Contacts.rigid_contact_count` 以及 `rigid_contact_shape0/1`、`rigid_contact_point0/1`、`rigid_contact_offset0/1`、`rigid_contact_normal`、`rigid_contact_margin0/1`。这就是 `07` 和 `08` 的共同输入。
 
+![Stage 5：write_contact 写入 Contacts](assets/06_walkthrough_stage5_write_contact_contacts.png)
+
 ## Object Ledger
 
 | 对象 | 谁生产 | 谁消费 | 盯哪些字段 |
@@ -477,6 +491,8 @@ self.rigid_contact_margin1 = wp.zeros(rigid_contact_max, dtype=wp.float32)
 | `broad_phase_shape_pairs` | broad phase (`explicit` / `nxn` / `sap`) | `NarrowPhase.launch_custom_write()` | 这里只存 shape pair id |
 | `ContactData` | narrow phase 各分支 | `write_contact()` | `contact_point_center`、`contact_normal_a_to_b`、`contact_distance`、`shape_a/b`、`gap_sum` |
 | `Contacts` | `write_contact()` 写入，`CollisionPipeline.contacts()` 分配 | `07_constraints_contacts_math`、`08_rigid_solvers` | `rigid_contact_count`、`shape0/1`、`point0/1`、`offset0/1`、`normal`、`margin0/1` |
+
+![Object ledger 与 stop-here recap](assets/06_walkthrough_object_ledger_stop_here.png)
 
 ## Stop Here
 
