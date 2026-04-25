@@ -106,6 +106,7 @@ Chapter 08 assets:
 - `08_readme_completion_scope_prereq.png`
 - `08_principle_after_07_to_solver_family.png`
 - `08_principle_public_contract_routes.png`
+- `08_principle_solver_family_split.png`
 - `08_principle_coordinate_family_split.png`
 - `08_principle_semiimplicit_force_route.png`
 - `08_principle_featherstone_joint_space_route.png`
@@ -475,7 +476,7 @@ printf '09 assets '; find chapters/09_variational_solvers/assets -maxdepth 1 -ty
 Expected:
 
 ```text
-08 assets 24
+08 assets 25
 09 assets 22
 ```
 
@@ -630,7 +631,7 @@ print(f'all new-scope image refs exist: {count}')
 PY
 ```
 
-Expected: no missing refs; count equals 144.
+Expected: no missing refs; count equals 145.
 
 - [ ] **Step 2: Check PNG file types**
 

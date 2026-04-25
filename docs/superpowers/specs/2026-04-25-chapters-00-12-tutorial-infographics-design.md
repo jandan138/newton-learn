@@ -125,13 +125,13 @@ Expected target counts:
 | --- | ---: | ---: | ---: | ---: | ---: |
 | 00 | 3 | 5 | 0 | 0 | 8 |
 | 01 | 3 | 8 | 8 | 0 | 19 |
-| 08 | 3 | 9 | 8 | 4 | 24 |
+| 08 | 3 | 10 | 8 | 4 | 25 |
 | 09 | 3 | 8 | 7 | 4 | 22 |
 | 10 | 3 | 8 | 7 | 5 | 23 |
 | 11 | 3 | 7 | 8 | 5 | 23 |
 | 12 | 3 | 7 | 9 | 6 | 25 |
 
-Total expected new PNGs: 144.
+Total expected new PNGs: 145.
 
 This count is intentionally close to the existing 03-07 coverage density. It should not grow further unless review finds a major section without a visual anchor.
 
