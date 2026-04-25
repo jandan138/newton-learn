@@ -15,6 +15,8 @@ newton_commit: 1a230702
 
 所以这一章站在 `03`、`04` 之后，但还没有进入完整接触数学或 solver 家族比较。它只保住第一遍读码真正需要的那层 articulation 心智模型：joint tree 怎样组织、`generalized coordinates` 怎样摆放、body mass / inertia 为什么会继续出现在 `dynamics path` 里。
 
+![05 articulation 动态主线](assets/05_readme_articulation_spine.png)
+
 ## 文件分工
 
 - `README.md`：只负责本章边界、完成门槛和阅读入口。
@@ -22,6 +24,8 @@ newton_commit: 1a230702
 - `source-walkthrough.md`：新手 / 主 walkthrough。第一次追 chapter 05 源码先看这一份；它把 `layout -> FK -> body state -> Featherstone consumption` 主线直接讲顺。
 - `source-walkthrough-deep.md`：深读锚点版。已经跟上主线后，如果你想精确追上游文件、symbol 和行号，再看这一份。
 - `examples.md`：负责用最小 articulation 例子把 `joint_q`、`body_q`、frame 和 inertia bridge 变成可观察现象。
+
+![05 文件分工与阅读顺序](assets/05_readme_file_roles_reading_order.png)
 
 ## 完成门槛
 
@@ -31,6 +35,8 @@ newton_commit: 1a230702
 [ ] 我能解释为什么 `joint_qd` 不能直接拿来当 `body_qd`，而要先经过 motion subspace 才能变成 body-space 速度
 [ ] 我能顺着 `body_mass / body_com / body_inertia` 解释这些量怎样继续进入 articulation / Featherstone 路线，而不是只停留在 importer 或 builder
 ```
+
+![05 完成门槛与范围](assets/05_readme_completion_scope_prereq.png)
 
 ## 本章目标
 
@@ -71,14 +77,15 @@ newton_commit: 1a230702
 
 ## 阅读顺序
 
-1. 先读 `principle.md`，把 articulation 容器、joint-space vs body-space、FK、motion subspace 和 inertia bridge 这条主线读顺。
-2. 第一次追源码时，先看 `source-walkthrough.md`，把 `Model` / runtime state / articulation helper / Featherstone 消费链对到真实源码锚点。
-3. 如果你是从 `02_newton_arch/question-notes.md` 的 `joint 到底在干嘛`、`p / q / axis 为什么这么容易混`、`为什么换一套 joint frame，物理还能不变` 这几节跳过来的，就把这一章当成它们的系统版：这里会把图里的直觉正式落到 `joint_X_p / joint_X_c`、FK 和 motion subspace 上。
+1. 先把当前这份 `README.md` 读完，确认第 05 章的范围、完成门槛和不展开的内容。
+2. 再读 `principle.md`，把 articulation 容器、joint-space vs body-space、FK、motion subspace 和 inertia bridge 这条主线读顺。
+3. 第一次追源码时，先看 `source-walkthrough.md`，把 `Model` / runtime state / articulation helper / Featherstone 消费链对到真实源码锚点。
 4. 想精确追到上游文件、symbol 和行号，再看 `source-walkthrough-deep.md`。
 5. 然后读 `examples.md`，用最小 articulation 例子观察 `joint_q`、`body_q`、joint frame 和质量属性是怎样联动的。
-6. 先进入 `06_collision`，看有了 body/world 状态之后，碰撞几何、pair 和候选接触怎样开始长出来。
-7. 再进入 `07_constraints_contacts_math`，看 Jacobian、约束和接触数学怎样建立在 articulation 结构和碰撞候选之上。
-8. 最后进入 `08_rigid_solvers`，看不同 rigid solver 尤其是 Featherstone 路线怎样消费本章已经读顺的 articulation 结构。
+6. 如果你是从 `02_newton_arch/question-notes.md` 的 `joint 到底在干嘛`、`p / q / axis 为什么这么容易混`、`为什么换一套 joint frame，物理还能不变` 这几节跳过来的，就把这一章当成它们的系统版：这里会把图里的直觉正式落到 `joint_X_p / joint_X_c`、FK 和 motion subspace 上。
+7. 后续先进入 `06_collision`，看有了 body/world 状态之后，碰撞几何、pair 和候选接触怎样开始长出来。
+8. 再进入 `07_constraints_contacts_math`，看 Jacobian、约束和接触数学怎样建立在 articulation 结构和碰撞候选之上。
+9. 最后进入 `08_rigid_solvers`，看不同 rigid solver 尤其是 Featherstone 路线怎样消费本章已经读顺的 articulation 结构。
 
 ## 预期产出
 

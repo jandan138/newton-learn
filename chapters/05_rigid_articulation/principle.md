@@ -26,6 +26,8 @@ newton_commit: 1a230702
 
 这章只补这段桥。它不是完整 Featherstone 教材，不展开接触数学，也不提前做 rigid solver 家族比较。你现在真正需要的，是先把“静态 articulation 布局 -> FK -> velocity propagation -> inertia consumption”这条主线读顺。
 
+![05 从静态字段到动力学路径](assets/05_principle_after_04_fields_start_moving.png)
+
 ## 1. 先把 articulation 看成“一段 joint 范围 + 一棵 body tree”
 
 先想一条最小两连杆：world 上挂着一个 base body，base 再通过一个 revolute joint 连到 child body。运行时系统既要知道“这两个 body 属于同一条树”，也要知道“这个 joint 的角度最后怎样把 child 摆到世界里”。
@@ -43,6 +45,8 @@ builder 里的 `add_articulation()` 先做的也正是这件事。它要求 join
 - `joint_X_p / joint_X_c`：同一个 joint frame 分别怎样落在 parent 和 child 两侧。
 
 所以 articulation 的第一层读法可以非常朴素：它不是一坨新数学，而是“同一条 joint tree 在扁平数组里的打包方式”。这样做的直接好处，是 FK、Jacobian、mass matrix 这些递推都能按 articulation 并行，而不必为每台机器人再造一层对象图。
+
+![05 flat articulation layout](assets/05_principle_flat_articulation_layout.png)
 
 ## 2. `joint_q / joint_qd` 和 `body_q / body_qd` 不是同一层状态
 
@@ -75,6 +79,8 @@ builder 里的 `add_articulation()` 先做的也正是这件事。它要求 join
 
 第二，`joint_qd` 不能直接等于 `body_qd`。尤其对 `FREE / DISTANCE`，公开接口里的 `joint_qd` 约定是“child COM twist 在 joint parent frame 里怎么写”；而 `body_qd` 则是 world-frame 的 body twist。它们服务的坐标系和参考点都不同。
 
+![05 joint-space 与 body-space 状态](assets/05_principle_joint_vs_body_state.png)
+
 ## 3. FK 是 articulation 第一条真正跑起来的链
 
 一旦 `joint_q` 有了值，articulation 最先做的不是求力，而是先把 pose 和 velocity 往 body 侧传播。`newton.eval_fk()` 和 `_src/sim/articulation.py` 里的 `eval_single_articulation_fk()`，就是这条主线第一次真正变成代码的地方。
@@ -94,6 +100,8 @@ builder 里的 `add_articulation()` 先做的也正是这件事。它要求 join
 
 这条链一旦稳住，`joint_q` 和 `body_q` 的关系就不再像两份平行数组，而会变成“同一条 articulation 在两种状态层里的两种写法”。
 
+![05 FK 链路图](assets/05_principle_fk_chain_map.png)
+
 ## 4. `joint_qd -> body_qd` 中间隔着一层 motion subspace
 
 速度这边比 pose 更容易误读，因为 `joint_qd` 看起来像“已经是速度了”，但它还不是 body 自己的世界速度。
@@ -111,6 +119,8 @@ builder 里的 `add_articulation()` 先做的也正是这件事。它要求 join
 
 接下来的传播也就顺了：parent 的速度先沿树传下来，joint 自己再贡献一份相对运动，child 才得到自己的 `body_qd`。在 public FK 里，这个结果会被整理回 body COM 的 world-frame twist；在 Featherstone 路线里，还会保留 solver 更方便消费的内部 velocity 约定，并在需要时做额外转换。
 
+![05 motion subspace 速度桥](assets/05_principle_motion_subspace_bridge.png)
+
 ## 5. `body_mass / body_com / body_inertia` 在这里正式进入 `dynamics path`
 
 如果 `03` 和 `04` 给你留下的最强印象还是“geometry 先变成 body 级质量属性”，那 chapter 05 最关键的新增，就是这批质量属性终于开始被 articulation dynamics 真正消费。
@@ -124,6 +134,8 @@ builder 里的 `add_articulation()` 先做的也正是这件事。它要求 join
 到这里，你就可以把 inertia bridge 读成一句很稳定的人话：builder 已经把 shape 级质量信息压成了 body 级质量属性；Featherstone 再把这些 body 级质量属性改写成递推友好的 spatial form。
 
 后面的 `body_I_s`、`joint_S_s`、`tau`、Jacobian、mass matrix，都是在继续消费这条桥，而不是另起炉灶。也正因为如此，这章不需要先把 ABA / CRBA 完整推完，你也已经能明白为什么 `body_mass / body_com / body_inertia` 不会停在 importer 或 builder 那一层。
+
+![05 inertia 到 spatial buffers](assets/05_principle_inertia_spatial_buffers.png)
 
 ## 6. 带着这条桥，先经过 `06`，再分向 `07` 和 `08`
 
@@ -140,3 +152,5 @@ builder 里的 `add_articulation()` 先做的也正是这件事。它要求 join
 - 去 `08_rigid_solvers`：如果你下一步想问“不同 rigid solver 尤其是 Featherstone、MuJoCo、SemiImplicit、XPBD，分别把这套 articulation 结构当成什么输入，又怎样各自推进”。
 
 所以这章到这里就停。它只负责把 articulation 的结构、坐标布局、FK、motion subspace 和 inertia bridge 接顺；碰撞入口留给 `06`，完整约束数学留给 `07`，solver 家族比较留给 `08`。
+
+![05 后续章节入口](assets/05_principle_next_chapters_map.png)

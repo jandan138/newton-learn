@@ -16,7 +16,11 @@ newton_commit: 1a230702
 
 `principle.md` 负责讲清 `joint_q / joint_qd -> FK -> body_q / body_qd -> inertia bridge` 这条主线；这一页只把三个最小 articulation 例子改成观察任务。下面提到的命令只是建议入口，不代表已经执行过。chapter 05 先看 articulation bridge 本身，不展开 solver family 比较，也不把 `robot_cartpole` 读成控制案例。
 
+![05 examples 观察任务总览](assets/05_examples_overview_observation_tasks.png)
+
 ## 主例子：`basic_pendulum`
+
+![05 basic_pendulum joint frame 观察](assets/05_examples_basic_pendulum_joint_frame.png)
 
 ### 它最适合验证什么
 
@@ -41,6 +45,8 @@ newton_commit: 1a230702
 
 ## 对照例子：`basic_joints`
 
+![05 basic_joints joint type 对照](assets/05_examples_basic_joints_type_compare.png)
+
 ### 它补哪块观察
 
 - `basic_pendulum` 只让你看见“两个 1-DOF revolute joint”；这个例子把 `REVOLUTE / PRISMATIC / BALL` 三种最小 articulation 并排摆出来，更适合对照 `joint_q` 布局不是固定长度。
@@ -55,6 +61,8 @@ newton_commit: 1a230702
 | `builder.joint_q[-4:] = wp.quat_rpy(0.5, 0.6, 0.7)` 这一段 | ball joint 的位置坐标块是 4 维 quaternion，不再是单标量；FK 会把这段姿态写成 `b_ball` 的世界朝向。 | 最值得看的是“一个 joint 的 `joint_q` 块可以是 4 个数”，以及 `child_xform` 怎样让 `b_ball` 围着球铰接点改朝向而不是随便漂走。 |
 
 ## 对照例子：`robot_cartpole`
+
+![05 robot_cartpole imported layout 观察](assets/05_examples_robot_cartpole_imported_layout.png)
 
 ### 它补哪块观察
 

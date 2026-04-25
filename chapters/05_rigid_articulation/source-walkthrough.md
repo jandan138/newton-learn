@@ -38,6 +38,8 @@ newton_commit: 1a230702
 
 ## What This Walkthrough Follows
 
+![05 walkthrough 主线](assets/05_walkthrough_pipeline_overview.png)
+
 这一页只追下面这条 handoff：
 
 ```text
@@ -87,6 +89,8 @@ builder.add_joint / add_articulation
 
 ## Beginner Path
 
+![05 walkthrough 新手路径](assets/05_walkthrough_beginner_path.png)
+
 1. 先看 Stage 1。
    - 想验证什么：最小 articulation 需要先记住哪些结构信息，为什么 Newton 不把它存成嵌套对象树。
    - 看完后应该能说：`joint_q_start / joint_qd_start / articulation_start` 这组切片约定，才是 flat articulation layout 的骨架。
@@ -106,6 +110,8 @@ builder.add_joint / add_articulation
 ## Main Walkthrough
 
 ### Stage 1: articulation 先被记成 flat slice layout，而不是对象树
+
+![05 Stage 1 flat slice layout](assets/05_walkthrough_stage1_flat_slice_layout.png)
 
 **Claim**
 
@@ -168,6 +174,8 @@ articulation_start.append(self.joint_count)  # 末尾 sentinel = 总 joint 数
 
 ### Stage 2: `Model` 和 `State` 同时保留 joint-space 与 body-space 两层状态
 
+![05 Stage 2 state layers](assets/05_walkthrough_stage2_state_layers.png)
+
 **Claim**
 
 在 chapter 05 里，Newton 明确同时持有两层状态：`joint_q / joint_qd` 是 generalized coordinates，`body_q / body_qd` 是 body-space world state。它们会在同一个 `State` 里并存，但并不属于同一层语义。第一遍可以把这件事读成：一层在记“joint 自己现在走到哪”，另一层在记“body 现在在世界里怎样摆、怎样动”。
@@ -229,6 +237,8 @@ s.joint_qd = wp.clone(self.joint_qd, requires_grad=requires_grad)  # 复制 gene
 
 ### Stage 3: FK 和速度传播把 `joint_q / joint_qd` 译成 `body_q / body_qd`
 
+![05 Stage 3 FK velocity bridge](assets/05_walkthrough_stage3_fk_velocity_bridge.png)
+
 **Claim**
 
 `eval_single_articulation_fk()` 的核心任务不是求力，而是先把每个 joint 在 `joint_q / joint_qd` 中的那一段拿出来，构造 `X_j / v_j`，再沿 parent-child 链传播成 child body 的 `body_q / body_qd`。第一遍直接把 FK 读成“joint 坐标怎样长成 body world state”就够了。
@@ -287,6 +297,8 @@ body_qd[child] = origin_twist_to_com_twist(v_wc_origin, X_wc, body_com[child])  
 `body_q / body_qd` 这组 body-space world-state。后面的 collision、Jacobian、solver kernels 都更愿意消费这一层结果。
 
 ### Stage 4: Featherstone 先把质量属性和 FK 结果变成 spatial buffers
+
+![05 Stage 4 Featherstone spatial buffers](assets/05_walkthrough_stage4_featherstone_spatial_buffers.png)
 
 **Claim**
 
@@ -360,6 +372,8 @@ body_I_s[child] = I_s
 一批 solver-side spatial buffers：`body_I_m`、`body_X_com`、`joint_S_s`、`body_v_s`、`body_f_s`、`body_I_s`。
 
 ### Stage 5: `SolverFeatherstone.step()` 没有重造状态，只是继续沿同一条链推进
+
+![05 Stage 5 solver step handoff](assets/05_walkthrough_stage5_solver_step_handoff.png)
 
 **Claim**
 
@@ -444,6 +458,8 @@ eval_fk_with_velocity_conversion(
 | `State.body_q / body_qd` | `Model.state()`，随后由 FK 重写 | collision、solver、viewer | body-space world pose / twist |
 | `body_I_m / body_X_com` | Featherstone 预处理 kernels | Featherstone step | spatial inertia 和 COM transform |
 | `joint_S_s / body_v_s / body_f_s` | Featherstone kernels | Featherstone dynamics path | motion subspace、body velocity、body force |
+
+![05 Object Ledger 与 Stop Here](assets/05_walkthrough_object_ledger_stop_here.png)
 
 ## Stop Here
 

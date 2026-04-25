@@ -6,9 +6,9 @@
 
 **Architecture:** Keep exact source truth in Markdown and add model-generated PNGs as teaching anchors. Reuse chapters 03 / 04's dense Chinese learning-handout visual system, but make chapter 05's articulation handoff the central visual spine: flat layout, joint-space state, FK, motion subspace, body-space state, and Featherstone spatial buffers. Final assets live under `chapters/05_rigid_articulation/assets/`.
 
-**Tech Stack:** Markdown, PNG assets generated through Codex native image generation, shell verification with `rg`, `file`, Python image-reference checks, and `git diff --check`.
+**Tech Stack:** Markdown, PNG assets generated through Codex native image generation, deterministic raster re-rendering for post-review exact-label corrections, shell verification with `rg`, `file`, Python image-reference checks, and `git diff --check`.
 
-**Implementation note:** Adjacent short administrative sections may share one strong nearby image rather than repeating large PNGs immediately after every heading. `source-walkthrough-deep.md` stays intentionally out of scope.
+**Implementation note:** Adjacent short administrative sections may share one strong nearby image rather than repeating large PNGs immediately after every heading. `source-walkthrough-deep.md` stays intentionally out of scope. If image review finds source-truth drift in generated text, the affected PNG should be replaced by a deterministic raster diagram rather than accepted with incorrect labels.
 
 ---
 
@@ -44,7 +44,7 @@
 
 ## Task 1: Calibration Image
 
-- [ ] **Step 1: Create chapter 05 assets directory**
+- [x] **Step 1: Create chapter 05 assets directory**
 
 Run:
 
@@ -54,7 +54,7 @@ mkdir -p chapters/05_rigid_articulation/assets
 
 Expected: `chapters/05_rigid_articulation/assets/` exists.
 
-- [ ] **Step 2: Generate the calibration PNG**
+- [x] **Step 2: Generate the calibration PNG**
 
 Run Codex native image generation for:
 
@@ -77,7 +77,7 @@ Bottom recap: articulation 先是一段可切片的 joint tree，再把 joint-sp
 Do not invent source code. Do not include long paragraphs. Do not use SVG, HTML, screenshot, terminal UI, photorealistic robot rendering, or full ABA/CRBA derivation. Generate raster PNG.
 ```
 
-- [ ] **Step 3: Inspect calibration**
+- [x] **Step 3: Inspect calibration**
 
 Run:
 
@@ -91,7 +91,7 @@ Open the image visually and check it matches `docs/superpowers/specs/chapter-vis
 
 ## Task 2: README Image Batch
 
-- [ ] **Step 1: Generate README support images**
+- [x] **Step 1: Generate README support images**
 
 Generate:
 
@@ -99,7 +99,7 @@ Generate:
 - `05_readme_file_roles_reading_order.png`: file roles and reading order: `README.md -> principle.md -> source-walkthrough.md -> source-walkthrough-deep.md -> examples.md`.
 - `05_readme_completion_scope_prereq.png`: completion gate, scope, non-scope, prerequisites, GAMES103 bridge, and expected output.
 
-- [ ] **Step 2: Integrate README images**
+- [x] **Step 2: Integrate README images**
 
 Insert:
 
@@ -113,7 +113,7 @@ Coverage note:
 
 ## Task 3: Principle Image Batch
 
-- [ ] **Step 1: Generate principle concept images**
+- [x] **Step 1: Generate principle concept images**
 
 Generate:
 
@@ -126,7 +126,7 @@ Generate:
 
 `05_principle_flat_articulation_layout.png` already exists from Task 1.
 
-- [ ] **Step 2: Integrate principle images**
+- [x] **Step 2: Integrate principle images**
 
 Insert:
 
@@ -140,7 +140,7 @@ Insert:
 
 ## Task 4: Source Walkthrough Image Batch
 
-- [ ] **Step 1: Generate source-walkthrough images**
+- [x] **Step 1: Generate source-walkthrough images**
 
 Generate:
 
@@ -153,7 +153,7 @@ Generate:
 - `05_walkthrough_stage5_solver_step_handoff.png`
 - `05_walkthrough_object_ledger_stop_here.png`
 
-- [ ] **Step 2: Integrate source-walkthrough images**
+- [x] **Step 2: Integrate source-walkthrough images**
 
 Insert:
 
@@ -170,7 +170,7 @@ Insert:
 
 ## Task 5: Examples Image Batch
 
-- [ ] **Step 1: Generate examples images**
+- [x] **Step 1: Generate examples images**
 
 Generate:
 
@@ -179,7 +179,7 @@ Generate:
 - `05_examples_basic_joints_type_compare.png`
 - `05_examples_robot_cartpole_imported_layout.png`
 
-- [ ] **Step 2: Integrate examples images**
+- [x] **Step 2: Integrate examples images**
 
 Insert:
 
@@ -191,7 +191,7 @@ Insert:
 
 ## Task 6: Verification, Review, Commit, Push
 
-- [ ] **Step 1: Verify Markdown image references**
+- [x] **Step 1: Verify Markdown image references**
 
 Run:
 
@@ -222,7 +222,7 @@ PY
 
 Expected: `all image refs exist`.
 
-- [ ] **Step 2: Verify PNG assets**
+- [x] **Step 2: Verify PNG assets**
 
 Run:
 
@@ -232,7 +232,7 @@ file chapters/05_rigid_articulation/assets/05_*.png
 
 Expected: every line says `PNG image data`.
 
-- [ ] **Step 3: Verify Markdown diff cleanliness**
+- [x] **Step 3: Verify Markdown diff cleanliness**
 
 Run:
 
@@ -242,7 +242,7 @@ git diff --check -- chapters/05_rigid_articulation docs/superpowers/specs/2026-0
 
 Expected: no output.
 
-- [ ] **Step 4: Coverage scan**
+- [x] **Step 4: Coverage scan**
 
 Run:
 
@@ -252,7 +252,7 @@ rg -n '^##|^###|!\[' chapters/05_rigid_articulation/README.md chapters/05_rigid_
 
 Expected: each reader-facing section has a nearby image anchor, with documented reuse for short/admin sections.
 
-- [ ] **Step 5: Visual style review**
+- [x] **Step 5: Visual style review**
 
 Create or inspect a contact sheet for all `05_*.png` files and compare against `docs/superpowers/specs/chapter-visual-style-guide.md` and chapter 04 assets.
 
@@ -266,7 +266,7 @@ Expected:
 - no `joint_qd == body_qd` visual claim
 - source-truth shortcuts remain bounded by nearby Markdown
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
@@ -275,7 +275,7 @@ git add chapters/05_rigid_articulation docs/superpowers/specs/2026-04-25-chapter
 git commit -m "docs: add chapter 05 tutorial infographics"
 ```
 
-- [ ] **Step 7: Merge to main and push**
+- [x] **Step 7: Merge to main and push**
 
 Run:
 
