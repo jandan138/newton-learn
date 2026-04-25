@@ -49,7 +49,7 @@ Temporary ignored implementation files:
 
 ## Task 1: Calibration Renderer and Image
 
-- [ ] **Step 1: Prepare ignored renderer workspace**
+- [x] **Step 1: Prepare ignored renderer workspace**
 
 Run:
 
@@ -59,7 +59,7 @@ mkdir -p tmp/ch07-imagegen/fonts chapters/07_constraints_contacts_math/assets
 
 Expected: both directories exist. `tmp/` is ignored by `.gitignore`, so the renderer does not become part of the final commit.
 
-- [ ] **Step 2: Ensure a readable CJK font is available**
+- [x] **Step 2: Ensure a readable CJK font is available**
 
 Run:
 
@@ -78,7 +78,7 @@ PY
 
 Expected: a font path or `missing`. If it prints `missing`, download `NotoSansCJKsc-Regular.otf` into `tmp/ch07-imagegen/fonts/` and re-run the probe. Do not commit the font.
 
-- [ ] **Step 3: Create the deterministic renderer**
+- [x] **Step 3: Create the deterministic renderer**
 
 Write `tmp/ch07-imagegen/render_infographics.py`.
 
@@ -108,7 +108,7 @@ Contacts geometry handoff
 
 The image must explicitly say chapter 07 builds row-space math objects but chapter 08 owns solving.
 
-- [ ] **Step 4: Render calibration only**
+- [x] **Step 4: Render calibration only**
 
 Run:
 
@@ -118,7 +118,7 @@ python3 tmp/ch07-imagegen/render_infographics.py --only 07_contact_math_bridge_m
 
 Expected: `chapters/07_constraints_contacts_math/assets/07_contact_math_bridge_map.png` is created.
 
-- [ ] **Step 5: Inspect calibration file**
+- [x] **Step 5: Inspect calibration file**
 
 Run:
 
@@ -132,7 +132,7 @@ Open the image visually and check it matches `docs/superpowers/specs/chapter-vis
 
 ## Task 2: README Image Batch
 
-- [ ] **Step 1: Render README support images**
+- [x] **Step 1: Render README support images**
 
 Render:
 
@@ -149,7 +149,7 @@ python3 tmp/ch07-imagegen/render_infographics.py \
   --only 07_readme_completion_scope_prereq.png
 ```
 
-- [ ] **Step 2: Integrate README images**
+- [x] **Step 2: Integrate README images**
 
 Insert:
 
@@ -163,7 +163,7 @@ Coverage note:
 
 ## Task 3: Principle Image Batch
 
-- [ ] **Step 1: Render principle concept images**
+- [x] **Step 1: Render principle concept images**
 
 Render:
 
@@ -188,7 +188,7 @@ python3 tmp/ch07-imagegen/render_infographics.py \
   --only 07_principle_solver_facing_next_chapter.png
 ```
 
-- [ ] **Step 2: Integrate principle images**
+- [x] **Step 2: Integrate principle images**
 
 Insert:
 
@@ -206,7 +206,7 @@ Coverage note:
 
 ## Task 4: Source Walkthrough Image Batch
 
-- [ ] **Step 1: Render source-walkthrough images**
+- [x] **Step 1: Render source-walkthrough images**
 
 Render:
 
@@ -233,7 +233,7 @@ python3 tmp/ch07-imagegen/render_infographics.py \
   --only 07_walkthrough_object_ledger_stop_here.png
 ```
 
-- [ ] **Step 2: Integrate source-walkthrough images**
+- [x] **Step 2: Integrate source-walkthrough images**
 
 Insert:
 
@@ -250,7 +250,7 @@ Insert:
 
 ## Task 5: Examples Image Batch
 
-- [ ] **Step 1: Render examples images**
+- [x] **Step 1: Render examples images**
 
 Render:
 
@@ -269,7 +269,7 @@ python3 tmp/ch07-imagegen/render_infographics.py \
   --only 07_examples_self_check_handoff.png
 ```
 
-- [ ] **Step 2: Integrate examples images**
+- [x] **Step 2: Integrate examples images**
 
 Insert:
 
@@ -284,15 +284,15 @@ Coverage note:
 
 ## Task 6: Path, Visual, and Source-Truth Review
 
-- [ ] **Step 1: Verify all expected assets exist**
+- [x] **Step 1: Verify all expected assets exist**
 
 Run a script that checks every `07_*.png` filename listed above exists under `chapters/07_constraints_contacts_math/assets/`.
 
-- [ ] **Step 2: Verify Markdown image references resolve**
+- [x] **Step 2: Verify Markdown image references resolve**
 
 Run a script that parses Markdown image references in chapter 07 and confirms each referenced local asset exists.
 
-- [ ] **Step 3: Verify image files are real PNGs**
+- [x] **Step 3: Verify image files are real PNGs**
 
 Run:
 
@@ -302,7 +302,7 @@ file chapters/07_constraints_contacts_math/assets/07_*.png | rg -v 'PNG image da
 
 Expected: no output.
 
-- [ ] **Step 4: Review against visual style guide**
+- [x] **Step 4: Review against visual style guide**
 
 Check the generated batch against `docs/superpowers/specs/chapter-visual-style-guide.md`:
 
@@ -315,7 +315,7 @@ Check the generated batch against `docs/superpowers/specs/chapter-visual-style-g
 - no decorative simulation art
 - no fake code or terminal text
 
-- [ ] **Step 5: Review against chapter 07 source truth**
+- [x] **Step 5: Review against chapter 07 source truth**
 
 Check every image for these source-truth boundaries:
 
@@ -328,7 +328,7 @@ Check every image for these source-truth boundaries:
 - one shape pair is not always one contact
 - one contact is not one row
 
-- [ ] **Step 6: Request independent review**
+- [x] **Step 6: Request independent review**
 
 Ask at least one reviewer agent to inspect the diff for:
 
@@ -340,7 +340,7 @@ Ask at least one reviewer agent to inspect the diff for:
 
 Fix any Critical or Important findings before final commit.
 
-- [ ] **Step 7: Final hygiene**
+- [x] **Step 7: Final hygiene**
 
 Run:
 
@@ -357,18 +357,18 @@ Then mark every completed checkbox in this plan.
 
 ## Task 7: Final Commit and Integration
 
-- [ ] **Step 1: Commit implementation**
+- [x] **Step 1: Commit implementation**
 
 Commit the chapter 07 Markdown integrations, PNG assets, and checked-off plan updates.
 
-- [ ] **Step 2: Merge to `main`**
+- [x] **Step 2: Merge to `main`**
 
 Fast-forward `main` to the feature branch after verification.
 
-- [ ] **Step 3: Push**
+- [x] **Step 3: Push**
 
 Push `main` to `origin`.
 
-- [ ] **Step 4: Cleanup**
+- [x] **Step 4: Cleanup**
 
 Remove the chapter 07 worktree and delete the merged local branch.

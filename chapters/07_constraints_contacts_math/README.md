@@ -13,7 +13,11 @@ newton_commit: 1a230702
 
 所以这章不是碰撞算法复习，也不是完整求解器推导。它只做中间这座桥: `Contacts -> contact directions -> rows -> Jacobian -> effective mass / Delassus`。
 
+![Chapter 07 contact math spine](assets/07_readme_contact_math_spine.png)
+
 ## 文件分工
+
+![Chapter 07 file roles and reading order](assets/07_readme_file_roles_reading_order.png)
 
 - `README.md`: 本章边界、完成门槛、阅读入口。
 - `principle.md`: 从 chapter 06 那张球贴地的图开始，把一条 contact 怎样长成 `1` 条法向 row 和 `2` 条切向 row 讲顺，再解释 Jacobian 和 Delassus 的第一层直觉。
@@ -22,6 +26,8 @@ newton_commit: 1a230702
 - `examples.md`: 用 `sphere-ground` 和 `box-ground` 做观察任务，帮你把“接触几何”和“接触数学”连起来。
 
 ## 完成门槛
+
+![Chapter 07 completion scope and prerequisites](assets/07_readme_completion_scope_prereq.png)
 
 ```text
 [ ] 我能把 `Contacts` 里的接触点、法线和相对分离信息，翻译成“这个接触想阻止什么相对运动”

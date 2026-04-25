@@ -20,7 +20,11 @@ python -m newton.examples basic_shapes
 
 这个例子里本来就同时有 sphere、box 和 ground，所以很适合把 chapter 06 和 chapter 07 连着看。第一遍不必关心所有 shape，只盯 `sphere-ground` 和 `box-ground` 这两组画面。
 
+![Chapter 07 example observation tasks](assets/07_examples_overview_observation_tasks.png)
+
 ## 主例子: `sphere-ground`
+
+![Sphere-ground one contact three rows](assets/07_examples_sphere_ground_one_contact_three_rows.png)
 
 在 `newton/examples/basic/example_basic_shapes.py:L45-L54`，地面和球的最小配置已经摆好了:
 
@@ -56,6 +60,8 @@ python -m newton.examples basic_shapes
 
 ## 对照例子: `box-ground`
 
+![Box-ground multiple contacts and lever arm](assets/07_examples_box_ground_multiple_contacts_lever_arm.png)
+
 同一个文件里，`newton/examples/basic/example_basic_shapes.py:L75-L78` 已经给了最小的 `box-ground` 场景。和球相比，箱子最值钱的地方不是“更复杂”，而是它能把 chapter 07 里两件更难的事同时暴露出来:
 
 - 一个 shape pair 可以长出多个 contact。
@@ -87,6 +93,8 @@ python -m newton.examples basic_shapes
 - 如果你把 Delassus 只想成一个针对单点的小数字，你会看不见多个 contacts 之间通过同一刚体产生的耦合。
 
 ## 这页怎么配合其他文件
+
+![Chapter 07 examples self-check handoff](assets/07_examples_self_check_handoff.png)
 
 - `principle.md`: 负责把这两张图的数学直觉讲顺。
 - `source-walkthrough.md`: 负责把这里的观察点钉回 `Contacts`、`ContactsKamino`、Jacobians 和 Delassus 的源码。

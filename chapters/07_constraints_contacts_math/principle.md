@@ -20,6 +20,8 @@ newton_commit: 1a230702
 
 ## 0. 先把 chapter 06 的球贴地画面带过来
 
+![Chapter 07 contact math bridge map](assets/07_contact_math_bridge_map.png)
+
 chapter 06 里，你关心的是“接触点在哪、法线朝哪、两边还隔多少或已经压进多少”。所以那一章停在 `Contacts` 很合理: 到这里，碰撞器已经把几何结果交出来了。
 
 chapter 07 只是换一个问题继续读同一张图。球已经贴到地面以后，你现在更想问的是: **这次接触到底希望系统阻止哪种相对运动，又怎样把这种“想阻止的方向”写成 solver 后面能继续用的数学对象？**
@@ -27,6 +29,8 @@ chapter 07 只是换一个问题继续读同一张图。球已经贴到地面以
 第一遍先别想矩阵。先守住一个非常具体的事实: 如果球还在沿着接触法线继续往地里钻，系统就必须想办法阻止这件事。如果球已经不再往地里钻，而是在地面上擦着滑，那系统又会关心切向的相对运动。第 07 章要做的，就是把这两件事翻译成约束方向。
 
 ## 1. 为什么一条 contact 会长成三条 row
+
+![One contact expands to three rows](assets/07_principle_contact_to_three_rows.png)
 
 在 chapter 06 里，你容易把“一条 contact”想成一个几何记录: 一个点、一条法线，再加上一份描述两边相对分离程度的信息。
 
@@ -57,6 +61,8 @@ chapter 07 只是换一个问题继续读同一张图。球已经贴到地面以
 | effective mass / Delassus | 沿这些方向推系统时，它有多难动 | 轻球比重球更容易被推开，偏心受力还会顺带带出转动 | `newton/_src/solvers/kamino/_src/dynamics/delassus.py` |
 
 ## 2. Jacobian 先别想成矩阵, 先想成“哪些运动会影响这个接触方向”
+
+![Jacobian as contact motion map](assets/07_principle_jacobian_motion_map.png)
 
 很多人第一次在接触里看到 Jacobian，会直接把它读成抽象矩阵名字。这里更好的顺序正好相反: **先想它在替你回答什么问题，再接受它最后被写成矩阵。**
 
@@ -118,6 +124,8 @@ lever arm 再决定这种相对运动为什么会同时受平移和转动影响
 
 ## 3. 接触点离质心越偏, 角向部分越重要
 
+![Lever arm and angular coupling](assets/07_principle_lever_arm_angular_coupling.png)
+
 球贴地很适合建立第一层直觉，因为球的接触通常比较像“质心正下方附近的一点”。这时法向 row 主要让你看到平移方向，角向耦合没有那么刺眼。
 
 但只要接触点偏离质心，这件事就完全不一样了。
@@ -130,6 +138,8 @@ lever arm 再决定这种相对运动为什么会同时受平移和转动影响
 源码里这一层直觉对应的正是接触 wrench / lever-arm 那部分数学。它没有在说“接触突然变复杂了”，而是在老老实实回答一个物理事实: **同样一条接触方向，作用点不同，系统被推出来的平移和转动组合就不同。**
 
 ## 4. Delassus / effective mass 先看“沿这个方向有多难推”
+
+![Delassus and effective mass intuition](assets/07_principle_delassus_effective_mass.png)
 
 当你已经知道每条 row 在问哪种相对运动，下一步自然就会问: 如果我真的沿这条 row 去推系统，系统到底有多容易动？
 
@@ -161,6 +171,8 @@ D = J M^{-1} J^T
 
 ## 5. 再看 `box-ground`: 一个 pair 为什么会长出多个 contact
 
+![Box-ground multiple contacts and rows](assets/07_principle_box_ground_multi_contacts.png)
+
 球最适合教“单接触 -> 三条 row”。箱子贴地则专门教两件更难的事。
 
 第一件事是: **一个 shape pair 不一定只会产出一个 contact。**
@@ -178,6 +190,8 @@ D = J M^{-1} J^T
 这就是为什么 box-ground 比 sphere-ground 更能让你接受 Delassus 不是“单个数字”，而是 rows 之间也会彼此看到对方。
 
 ## 6. 记住一个工程 caveat: `Contacts` 不是 Kamino 的最终内部格式
+
+![Contacts and solver-facing contact handoff](assets/07_principle_solver_facing_next_chapter.png)
 
 chapter 06 结束时，你认识的是 runtime `Contacts`。这是对的，因为它就是碰撞阶段真正交出来的统一 handoff object。
 
