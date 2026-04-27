@@ -249,13 +249,13 @@ Only expand to the remaining images after this calibration image passes review.
 
 Start with calibration:
 
-1. Generate or deterministically render `07_contact_math_bridge_map.png`.
+1. Generate `07_contact_math_bridge_map.png` through native imagegen.
 2. Review it against `chapter-visual-style-guide.md` and chapter 06 assets.
-3. If it drifts toward decorative art, unreadable text, fake source, or contact/row/solver confusion, tighten the prompt or re-render.
+3. If it drifts toward decorative art, unreadable text, fake source, or contact/row/solver confusion, tighten the prompt and regenerate.
 4. Once accepted, generate the remaining images in batches by target file.
 5. Integrate Markdown links after each batch, so broken paths and awkward placement are caught early.
 
-If review finds source-truth errors in exact labels, stage boundaries, contact-field names, row counts, or contact-math/solver boundaries, regenerate or deterministically re-render those PNGs as raster assets. Exact educational claims are more important than preserving the initial generative output.
+If review finds source-truth errors in exact labels, stage boundaries, contact-field names, row counts, or contact-math/solver boundaries, regenerate the affected PNGs through native imagegen with tighter prompts and keep exact source truth in nearby Markdown. Exact educational claims are more important than preserving the initial generative output.
 
 Prompt direction:
 

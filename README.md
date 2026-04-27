@@ -50,7 +50,7 @@
 | `01_warp_basics` | Warp 编程模型 | Warp 用法 + Newton 中的调用模式 | - | 以最小 kernel 心智模型为主。 |
 | `02_newton_arch` | Newton 总体架构 | `newton/__init__.py`、`newton/_src/core/`、`newton/examples/` | `basic_pendulum` | 首个快速胜利章。 |
 | `03_math_geometry` | 数学与几何基础 | `newton/_src/math/`、`newton/_src/geometry/` | - | 为碰撞、场景和 solver 做几何准备。 |
-| `04_scene_usd` | 场景描述与 USD 解析 | `newton/_src/usd/`、`newton/_src/sim/` | `basic_urdf` | 聚焦 Model 构建与载入链路。 |
+| `04_scene_usd` | 场景描述与 USD 解析 | `newton/_src/usd/`、`newton/_src/sim/` | `basic_urdf`（source-walkthrough 锚点） | 聚焦 Model 构建与载入链路；当前无独立 `examples.md`。 |
 | `05_rigid_articulation` | 刚体与关节动力学 | `newton/_src/sim/`、`newton/_src/solvers/featherstone/` | `basic_pendulum`, `basic_joints`, `robot_cartpole`, `robot_g1` | 从 articulation 和 Featherstone 切入。 |
 | `06_collision` | 碰撞系统 | `newton/_src/geometry/`、`newton/_src/sim/` | `contacts_pyramid` | CLI 名称为 `pyramid`。 |
 | `07_constraints_contacts_math` | 约束与接触数学 | 约束数学与接触中间量 | `robot_cartpole`, `contacts_pyramid` | 先搭数学骨架，再进具体 solver。 |
@@ -59,10 +59,10 @@
 | `10_softbody_cloth_cable` | 软体、布料与 Cable | `newton/_src/solvers/semi_implicit/`、`newton/_src/solvers/xpbd/`、`newton/_src/solvers/vbd/`、`newton/_src/solvers/style3d/` | `cloth_hanging`, `cloth_style3d`, `cable_twist` | 对比 FEM、XPBD、AVBD/VBD。 |
 | `11_mpm` | MPM 双路径 | `newton/_src/solvers/implicit_mpm/` | `mpm_granular`, `mpm_twoway_coupling` | 同时覆盖显式 APIC 与隐式 MPM。 |
 | `12_sensors_ik` | 传感器与 IK | `newton/_src/sensors/`、`newton/_src/sim/ik.py`、`newton/ik.py` | `sensor_contact`, `ik_franka` | 聚焦数据流与求解入口。 |
-| `13_diffsim` | 可微分仿真 | `newton/examples/diffsim/` + 多 solver adjoint 路径 | `diffsim_ball`, `diffsim_soft_body`, `diffsim_drone`, `diffsim_spring_cage` | 必产出各 solver 可微性矩阵表。 |
-| `14_viewer_integration` | Viewer 与生态集成 | `newton/_src/viewer/`、`newton/viewer.py` | - | 看显示链路与外部集成边界。 |
+| `13_diffsim` | 可微分仿真 | `newton/examples/diffsim/` + 多 solver adjoint 路径 | `diffsim_ball`, `diffsim_spring_cage`, `diffsim_soft_body`, `diffsim_drone`, `diffsim_cloth`, `diffsim_bear` | 必产出各 solver 可微性矩阵表。 |
+| `14_viewer_integration` | Viewer 与生态集成 | `newton/_src/viewer/`、`newton/viewer.py` | `basic_pendulum`, `basic_viewer`, `recording`, `ik_franka`, `sensor_tiled_camera`, `robot_policy` | 看显示链路与外部集成边界。 |
 | `15_multiphysics_pipeline` | 多物理耦合流水线 | `newton/examples/multiphysics/` | `mpm_twoway_coupling`, `softbody_dropping_to_cloth` | 关注端到端数据流，而不追求铺全所有耦合。 |
-| `16_self_experiments` | 自制小实验 | `newton/examples/` 反向借鉴 + 自建实验 | - | 用实验验证章节结论，不替代主线学习。 |
+| `16_self_experiments` | 自制小实验 | `newton/examples/` 反向借鉴 + 自建实验 | `basic_pendulum`, `basic_shapes`, `basic_plotting`, `diffsim_ball`, `softbody_dropping_to_cloth`, `mpm_twoway_coupling` | 用实验验证章节结论，不替代主线学习。 |
 
 ## 时间投入反推
 

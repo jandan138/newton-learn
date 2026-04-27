@@ -6,6 +6,7 @@ source_paths:
   - newton/examples/diffsim/example_diffsim_ball.py
   - newton/examples/diffsim/example_diffsim_spring_cage.py
   - newton/examples/diffsim/example_diffsim_soft_body.py
+local_refs:
   - conventions/diffsim-validation.md
 paper_keys: []
 newton_commit: 1a230702

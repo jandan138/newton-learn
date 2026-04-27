@@ -35,7 +35,7 @@ The image should communicate five beginner-safe ideas:
 - Chinese infographic / teaching poster
 - White background
 - Clean card-based layout
-- Similar visual language to the chapter-02 learner diagrams: large title, numbered or left-to-right stages, colored blocks, concise labels
+- Follow `docs/superpowers/specs/chapter-visual-style-guide.md` and the Chapter 03 / 04 dense Chinese tutorial-handout style: large title, numbered or left-to-right stages, colored blocks, concise labels
 - Not photorealistic
 - Minimal decorative detail
 - Text must stay short and readable

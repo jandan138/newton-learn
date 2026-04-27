@@ -9,6 +9,7 @@ source_paths:
   - newton/examples/diffsim/example_diffsim_drone.py
   - newton/examples/diffsim/example_diffsim_cloth.py
   - newton/examples/diffsim/example_diffsim_bear.py
+local_refs:
   - conventions/diffsim-validation.md
 paper_keys: []
 newton_commit: 1a230702

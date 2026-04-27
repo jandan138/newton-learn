@@ -1,3 +1,12 @@
+---
+chapter: 02
+title: 02 Image Inventory
+last_updated: 2026-04-27
+source_paths: []
+paper_keys: []
+newton_commit: 1a230702
+---
+
 # 02 Image Inventory
 
 Current `##` and `###` heading coverage for the chapter 02 full image pass.

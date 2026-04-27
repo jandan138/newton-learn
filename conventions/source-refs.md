@@ -6,6 +6,12 @@
 - 行区间：`newton/_src/geometry/collisions.py:L80-L140`
 - 函数 + 行区间：`solve_constraints()` at `newton/_src/solvers/mujoco/mujoco.py:L200-L280`
 
+## Frontmatter 路径归属
+
+- `source_paths`: 只放上游 Newton checkout 里的源码或上游文档路径，例如 `newton/...`、`docs/concepts/...`。
+- `local_refs`: 放本学习仓自己的约定、计划、验证表或补充材料，例如 `conventions/diffsim-validation.md`。
+- 如果一个章节跨越多个 Newton commit，章节文件自己的 `newton_commit` 优先于 `PROGRESS.md` 的当前 checkout 记录。
+
 ## 禁止项
 
 - 不写“看 mujoco solver 那边”。

@@ -3,9 +3,10 @@
 ## Upstream Baseline
 
 - 上游 Newton 仓库路径：`/shared/smartbot/zhuzihou/dev/newton`
-- 当前追踪的 Newton commit：`1a230702`
+- 当前本地上游 checkout：`0f583176`
+- 章节源码锚点以各章 frontmatter 的 `newton_commit` 为准：`00`-`13` 仍主要绑定 `1a230702`，`14`-`16` 绑定 `0f583176`。
 - 对应设计 spec：`docs/superpowers/specs/2026-04-17-newton-learn-structure-design.md`
-- 最近同步日期：`2026-04-17`
+- 最近同步日期：`2026-04-26`
 - 行号维护规则：`conventions/source-refs.md` 已创建，可作为统一规范；当前按“保留函数名并重新绑定行号”的规则维护并在需要时回填行号。
 
 ## Milestones

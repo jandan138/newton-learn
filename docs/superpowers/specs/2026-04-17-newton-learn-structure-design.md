@@ -450,8 +450,8 @@ cp templates/principle.md.tmpl chapters/NEW_CHAPTER/principle.md
 
 - 仓库根 `assets/`：跨章节图
 - 章节内 `chapters/XX/assets/`：本章专属图
-- 格式：优先 SVG；截图 PNG
-- 命名：`{章节号}_{内容描述}.svg`
+- 格式：教程视觉优先使用 chapter-local native-imagegen raster PNG；只有明确需要源码级精确线稿/图标系统时才单独允许 SVG；真实界面证据可用截图 PNG
+- 命名：`{章节号}_{内容描述}.png`
 - 相对路径引用
 
 ### 4.5 代表性例子清单（v2 扩至 18 个）

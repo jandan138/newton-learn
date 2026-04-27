@@ -6,9 +6,9 @@
 
 **Architecture:** Keep exact source truth in Markdown and add model-generated PNGs as teaching anchors. Reuse chapters 03 / 04's dense Chinese learning-handout visual system, but make chapter 05's articulation handoff the central visual spine: flat layout, joint-space state, FK, motion subspace, body-space state, and Featherstone spatial buffers. Final assets live under `chapters/05_rigid_articulation/assets/`.
 
-**Tech Stack:** Markdown, PNG assets generated through Codex native image generation, deterministic raster re-rendering for post-review exact-label corrections, shell verification with `rg`, `file`, Python image-reference checks, and `git diff --check`.
+**Tech Stack:** Markdown, PNG assets generated through Codex native image generation, shell verification with `rg`, `file`, Python image-reference checks, and `git diff --check`.
 
-**Implementation note:** Adjacent short administrative sections may share one strong nearby image rather than repeating large PNGs immediately after every heading. `source-walkthrough-deep.md` stays intentionally out of scope. If image review finds source-truth drift in generated text, the affected PNG should be replaced by a deterministic raster diagram rather than accepted with incorrect labels.
+**Implementation note:** Adjacent short administrative sections may share one strong nearby image rather than repeating large PNGs immediately after every heading. `source-walkthrough-deep.md` stays intentionally out of scope. If image review finds source-truth drift in generated text, regenerate the affected PNG through native imagegen with a tighter prompt and keep exact claims in Markdown rather than switching the final asset to a local renderer.
 
 ---
 

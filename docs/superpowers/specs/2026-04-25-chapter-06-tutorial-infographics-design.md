@@ -122,7 +122,7 @@ Create conceptual tutorial infographics for:
 6. `ContactData` and `Contacts`: geometry result compressed into a unified runtime handoff object.
 7. Chapter 06 onward split to chapter 07 contact math and chapter 08 solver consumption.
 
-The first principle image should serve as the calibration image. It already exists as `06_collision_bridge_map.png`, but should be regenerated or deterministically re-rendered to match the chapter 05 sample and the current source-truth wording.
+The first principle image should serve as the calibration image. It already exists as `06_collision_bridge_map.png`, but should be regenerated through native imagegen to match the chapter 03 / 04 handout baseline and the current source-truth wording.
 
 ### source-walkthrough.md
 
@@ -246,13 +246,13 @@ Only expand to the remaining images after this calibration image passes review.
 
 Start with calibration:
 
-1. Generate or deterministically re-render `06_collision_bridge_map.png`.
+1. Generate `06_collision_bridge_map.png` through native imagegen.
 2. Review it against `chapter-visual-style-guide.md` and chapter 05 assets.
-3. If it drifts toward decorative art, unreadable text, fake source, or broad-phase/contact confusion, tighten the prompt or re-render.
+3. If it drifts toward decorative art, unreadable text, fake source, or broad-phase/contact confusion, tighten the prompt and regenerate.
 4. Once accepted, generate the remaining images in batches by target file.
 5. Integrate Markdown links after each batch, so broken paths and awkward placement are caught early.
 
-If review finds source-truth errors in exact labels, stage boundaries, contact-field names, or collision/contact/solver boundaries, regenerate or deterministically re-render those PNGs as raster assets. Exact educational claims are more important than preserving the initial generative output.
+If review finds source-truth errors in exact labels, stage boundaries, contact-field names, or collision/contact/solver boundaries, regenerate the affected PNGs through native imagegen with tighter prompts and keep exact source truth in nearby Markdown. Exact educational claims are more important than preserving the initial generative output.
 
 Prompt direction:
 

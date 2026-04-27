@@ -247,7 +247,7 @@ Start with calibration:
 4. Once accepted, generate the remaining images in batches by target file.
 5. Integrate Markdown links after each batch, so broken paths and awkward placement are caught early.
 
-If review finds source-truth errors in exact labels, coordinate dimensions, reading order, or FK / Featherstone buffer boundaries, regenerate or deterministically re-render those PNGs as raster assets. Exact educational claims are more important than preserving the initial generative output.
+If review finds source-truth errors in exact labels, coordinate dimensions, reading order, or FK / Featherstone buffer boundaries, regenerate the affected PNGs through native imagegen with tighter prompts and keep exact source truth in nearby Markdown. Exact educational claims are more important than preserving the initial generative output.
 
 Prompt direction:
 
@@ -261,7 +261,7 @@ Content: teach how flat articulation layout, joint_q / joint_qd, FK, motion subs
 
 For each batch:
 
-1. Generate images through native image generation, using deterministic raster re-rendering when exact labels need source-truth correction.
+1. Generate images through native image generation; when exact labels need correction, regenerate with tighter prompts and keep source-truth details in Markdown rather than switching the final asset to a local renderer.
 2. Inspect generated files and reject blank, decorative, unreadable, or source-contradicting images.
 3. Integrate accepted PNGs into Markdown.
 4. Run path/reference verification.
