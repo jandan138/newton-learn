@@ -1,7 +1,7 @@
 ---
 chapter: 06
 title: 碰撞系统
-last_updated: 2026-04-20
+last_updated: 2026-05-02
 source_paths:
   - docs/concepts/collisions.rst
   - newton/_src/sim/model.py
@@ -338,6 +338,14 @@ narrow phase 的确会按 `shape_type` 分路，但 chapter 06 最重要的不�
 **Why it matters**
 
 只有把这一层读成“分路再收束”，你才会明白为什么 solver 根本不想知道 contact 来自 plane-sphere、box-box，还是 mesh/SDF 分支；solver 只想看到统一格式的接触几何。
+
+**新手补图：`MESH / CONVEX_MESH` 分支为什么要单独看**
+
+![MESH / CONVEX_MESH 查询分支](assets/06_walkthrough_mesh_convex_mesh_query_branch.png)
+
+primitive pair 常常能靠解析公式直接得到距离、法线和接触点；mesh / convex mesh 不能这样偷懒，因为几何已经变成顶点、三角形或凸包数据。第一次读到这条分支时，可以先把它压成一句话：`GeoType` 决定走 mesh 查询路径，mesh query 先找最近表面点，再把 `delta` 压成距离 `d`、法线 `n` 和表面点 `shape_p`，最后仍然要回到统一的 collision / solver handoff。
+
+图里的伪代码是教学压缩，不是 pinned source 的逐行摘录。正文接下来仍然只要求你抓住 stage 级边界：narrow phase 可以分很多支，但最后必须收束成统一的 `ContactData`。
 
 **Source excerpt**
 

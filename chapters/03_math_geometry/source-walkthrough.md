@@ -1,7 +1,7 @@
 ---
 chapter: 03
 title: 数学与几何基础
-last_updated: 2026-04-20
+last_updated: 2026-05-02
 source_paths:
   - newton/_src/sim/model.py
   - newton/_src/sim/builder.py
@@ -153,6 +153,14 @@ self.shape_transform.append(xform)  # 记录 shape 相对 body 的局部位姿
 
 一份局部关系账本。后面所有 FK、shape query、mass update 都要从这里接着读。
 
+**新手补图：为什么先叫“局部关系账本”**
+
+![Builder 局部关系账本](assets/03_question_builder_local_relation_ledger.png)
+
+这张图把 `shape_transform`、`joint_X_p / joint_X_c` 和 `body_com` 放在同一页，是为了先拆掉一个常见误会：builder 一开始并不是急着算所有东西的 world pose，而是在记录“谁相对谁”。`shape_transform` 是 shape 相对 body，`joint_X_p / joint_X_c` 是同一个 joint frame 分别相对 parent / child，`body_com` 是质心相对 body origin。
+
+后面 FK、shape query、mass update 只是继续读这本账。图里的代码框是教学压缩图，精确源码锚点仍然以上面的字段摘录和后续章节为准。
+
 ### Stage 2: 同一条 transform chain 把局部关系接成 `body_q`
 
 ![Stage 2 transform chain](assets/03_walkthrough_stage2_transform_chain.png)
@@ -203,6 +211,14 @@ X_sw = wp.transform_inverse(X_ws)  # 准备把 world query 拉回 shape local
 
 x_local = wp.transform_point(X_sw, px)  # 把 world-space query point 转成 shape local
 ```
+
+**新手补图：`r_new = R * r_old + p` 不只是公式**
+
+![transform point 先旋转再平移](assets/03_question_transform_point_rotate_then_translate.png)
+
+第一次看 `wp.transform_point(...)` 时，可以先把它想成“手里拿一把尺子”：先让这把尺子的方向跟着目标 frame 转过去，再把尺子的起点搬到目标 frame 的原点。也就是先用 `R` 改方向，再用 `p` 改原点。
+
+这张图讲的是通用 transform 直觉，不是某个源码片段的逐行镜像。你只要把它接回上面的两处源码：`X_ws = X_wb * X_bs` 是把 shape 放到 world，`x_local = transform_point(X_sw, px)` 是把 world 点拉回 shape local。
 
 **Verification cues**
 
@@ -400,6 +416,12 @@ elif type == GeoType.MESH or type == GeoType.CONVEX_MESH:
     return m_new, c_new, I_new
 ```
 
+mesh / convex mesh 分支第一次看会比 sphere / box 重很多，因为它没有一个简单半径或半长就能结束。可以先用下面这张图把慢动作补上：表面三角形会和原点拼成有符号四面体碎块，每个碎块贡献 `volume / first / second` 三本账，再由 GPU 线程汇总。
+
+![mesh 表面三角形汇总实体惯量](assets/03_question_mesh_inertia_gpu_accumulation.png)
+
+这张图解释的是 `MESH / CONVEX_MESH` inertia 分支为什么不像 primitive 那样短。第一遍不用推积分，只要知道：`volume` 帮你得到质量规模，`first` 帮你得到质心趋势，`second` 帮你得到惯量原料；最终仍然要压成同一组 shape-local `mass / com / inertia`。
+
 builder 再把 shape 级质量属性合并到 body 上：
 
 以下摘录为教学注释版，注释非原源码。
@@ -425,6 +447,8 @@ self.body_mass[i] = new_mass
 self.body_inertia[i] = new_inertia
 self.body_com[i] = new_com
 ```
+
+如果这里的 `second`、`transform_inertia(...)`、`new_com`、`Ixy` 这类词仍然像黑箱，不要在主 walkthrough 里硬推。先去 `question-notes.md` 看慢速补图：它专门解释 `triangle_inertia(...)` 里的二阶矩账本、mesh inertia 的碎块汇总、对角 / 非对角惯量项，以及 `_update_body_mass()` 为什么要先把两份惯量搬到同一个新质心再相加。
 
 **Verification cues**
 

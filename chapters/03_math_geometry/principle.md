@@ -1,7 +1,7 @@
 ---
 chapter: 03
 title: 数学与几何基础
-last_updated: 2026-04-18
+last_updated: 2026-05-02
 source_paths:
   - newton/_src/math/
   - newton/_src/geometry/
@@ -139,6 +139,8 @@ newton_commit: 1a230702
 - articulation 之后消费的，正是这些已经整理好的 body 级结果。
 
 只要这条桥接线是通的，很多 `Model` 字段就会突然变得合理。
+
+如果你在这里卡住的是更具体的问题，比如 `triangle_inertia(...)` 里的 `s` 到底是什么、mesh 表面三角形为什么能算实体惯量、`Ixy` 这种非对角项为什么不是噪声，先去 `question-notes.md` 看问题补图。那里把这些细节拆成慢速解释；本页这里只保留主线：geometry 先变成 body 级质量属性，再交给 articulation 消费。
 
 ## 7. 带着这套词汇，分别走向 `04`、`05`、`06`
 

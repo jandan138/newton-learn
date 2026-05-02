@@ -1,7 +1,7 @@
 ---
 chapter: 03
 title: 03 数学与几何基础
-last_updated: 2026-04-22
+last_updated: 2026-05-02
 source_paths: []
 paper_keys: []
 newton_commit: 1a230702
@@ -20,9 +20,12 @@ newton_commit: 1a230702
 - `README.md`：只负责本章边界、完成门槛和阅读入口。
 - `principle.md`：先把 frame、transform、quaternion、spatial quantity、shape、inertia 这些词翻译成人话。
 - `source-walkthrough.md`：新手 / 主 walkthrough。第一次追 chapter 03 源码先看这一份；它把 `frame -> transform -> spatial -> shape -> inertia` 主线直接讲顺。
+- `question-notes.md`：问题驱动补充图解。不是新的 completion gate；它专门接住 `transform_point`、mesh inertia、`triangle_inertia`、off-diagonal inertia 和 `_update_body_mass()` 这些第一次看容易卡住的点。
 - `source-walkthrough-deep.md`：深读锚点版。已经跟上主线后，如果你想精确追上游文件、symbol 和行号，再看这一份。
 
 ![Chapter 03 文件分工与阅读顺序](assets/03_readme_file_roles_and_reading_order.png)
+
+上面这张原有阅读顺序图仍然覆盖主线文件；本次新增的 `question-notes.md` 是按需插入的支线，专门服务具体卡点，不改变本章完成门槛。
 
 ## 完成门槛
 
@@ -75,13 +78,15 @@ newton_commit: 1a230702
 1. 先读 `principle.md`，把 frame -> transform -> quaternion -> spatial quantity -> shape -> inertia 这条概念链读顺。
 2. 如果你是从 `02_newton_arch/question-notes.md` 的 `p / q / axis 为什么这么容易混` 或 `为什么换一套 joint frame，物理还能不变` 跳过来的，就把这一章当成那两节的系统版：这里会把图里的直觉重新收束成统一的 frame / transform 语言。
 3. 第一次追源码时，先看 `source-walkthrough.md`，把这些词对到 `_src/math/`、`_src/geometry/`、builder 和 articulation helper 的源码锚点。
-4. 想精确追到上游文件、symbol 和行号，再看 `source-walkthrough-deep.md`。
-5. 然后进入 `04_scene_usd`，看场景输入怎样变成这些对象和局部关系。
-6. 再进入 `05_rigid_articulation`，看 frame、spatial quantity 和 inertia 怎样真正参与 articulation 动力学。
-7. 最后进入 `06_collision`，看 shape representation 怎样被碰撞系统消费，而不是在本章提前深挖算法。
+4. 如果在 `transform_point`、mesh inertia、`triangle_inertia`、off-diagonal inertia 或 `_update_body_mass()` 上卡住，就插入读 `question-notes.md`，看完再回主线。
+5. 想精确追到上游文件、symbol 和行号，再看 `source-walkthrough-deep.md`。
+6. 然后进入 `04_scene_usd`，看场景输入怎样变成这些对象和局部关系。
+7. 再进入 `05_rigid_articulation`，看 frame、spatial quantity 和 inertia 怎样真正参与 articulation 动力学。
+8. 最后进入 `06_collision`，看 shape representation 怎样被碰撞系统消费，而不是在本章提前深挖算法。
 
 ## 预期产出
 
 - `principle.md`：用一条 beginner-safe 主线解释 frame / transform / quaternion / spatial quantity / shape / inertia 为什么会一起出现。
 - `source-walkthrough.md`：把这些词钉到 `_src/math/`、`_src/geometry/`、builder 和 articulation helper 的高价值源码锚点上。
+- `question-notes.md`：给出按需补图，把惯量和 transform 里最常见的新手卡点拆成可单独查阅的小节。
 - 一套稳定的后续阅读入口：去 `04` 时追“这些对象从哪来”，去 `05` 时追“这些 frame 和 inertia 怎样进入 articulation”，去 `06` 时追“这些 shape representation 怎样进入 collision”。

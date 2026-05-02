@@ -1,7 +1,7 @@
 ---
 chapter: 05
 title: 刚体与关节动力学
-last_updated: 2026-04-20
+last_updated: 2026-05-02
 source_paths:
   - docs/concepts/articulations.rst
   - newton/_src/sim/builder.py
@@ -238,6 +238,14 @@ s.joint_qd = wp.clone(self.joint_qd, requires_grad=requires_grad)  # 复制 gene
 ### Stage 3: FK 和速度传播把 `joint_q / joint_qd` 译成 `body_q / body_qd`
 
 ![05 Stage 3 FK velocity bridge](assets/05_walkthrough_stage3_fk_velocity_bridge.png)
+
+**新手补图：joint 不是空中自己转，而是两侧锚点 frame 的关系**
+
+![两根杆子和一个 joint 看懂 JPAF](assets/05_walkthrough_joint_frame_pair_fk.png)
+
+如果你第一次看到 `joint_X_p / joint_X_c` 时只觉得像两份重复字段，先看这张图。一个 revolute joint 不是“在空气里有一个会自转的小零件”，而是 parent body 一侧有一个锚点 frame，child body 一侧也有一个锚点 frame；FK 的任务就是让这两侧 frame 在 joint motion 之后满足约束关系，再推出 child body 的 world pose。
+
+这张图是教学压缩图。精确实现仍然以上面的 stage 图和下面的源码摘录为准：代码里真正串起来的是 `X_pj`、`X_j`、`X_cj`、parent `body_q` 和 child `body_q`。
 
 **Claim**
 
